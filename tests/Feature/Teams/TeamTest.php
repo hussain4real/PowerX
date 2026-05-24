@@ -50,6 +50,22 @@ test('team slug uses next available suffix', function () {
     ]);
 });
 
+test('teams cannot be created with reserved names', function () {
+    $user = User::factory()->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('teams.store'), [
+            'name' => 'admin',
+        ]);
+
+    $response->assertSessionHasErrors('name');
+
+    $this->assertDatabaseMissing('teams', [
+        'slug' => 'admin',
+    ]);
+});
+
 test('the team edit page can be rendered', function () {
     $user = User::factory()->create();
     $team = Team::factory()->create();
