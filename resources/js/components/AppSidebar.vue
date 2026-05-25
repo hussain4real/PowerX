@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-vue-next';
+import {
+    BookOpen,
+    FolderGit2,
+    GraduationCap,
+    LayoutGrid,
+    UsersRound,
+} from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -17,6 +23,8 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { portal as instructorPortal } from '@/routes/instructor';
+import { portal as studentPortal } from '@/routes/student';
 import type { NavItem } from '@/types';
 
 const page = usePage();
@@ -25,13 +33,42 @@ const dashboardUrl = computed(() =>
     page.props.currentTeam ? dashboard(page.props.currentTeam.slug).url : '/',
 );
 
-const mainNavItems = computed<NavItem[]>(() => [
-    {
-        title: 'Dashboard',
-        href: dashboardUrl.value,
-        icon: LayoutGrid,
-    },
-]);
+const instructorPortalUrl = computed(() =>
+    page.props.currentTeam
+        ? instructorPortal(page.props.currentTeam.slug).url
+        : '/',
+);
+
+const studentPortalUrl = computed(() =>
+    page.props.currentTeam
+        ? studentPortal(page.props.currentTeam.slug).url
+        : '/',
+);
+
+const mainNavItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboardUrl.value,
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Student portal',
+            href: studentPortalUrl.value,
+            icon: GraduationCap,
+        },
+    ];
+
+    if (page.props.can.viewInstructorPortal) {
+        items.push({
+            title: 'Instructor portal',
+            href: instructorPortalUrl.value,
+            icon: UsersRound,
+        });
+    }
+
+    return items;
+});
 
 const footerNavItems: NavItem[] = [
     {
