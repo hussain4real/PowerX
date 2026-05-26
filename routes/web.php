@@ -13,6 +13,7 @@ use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\LeadInquiryController;
 use App\Http\Controllers\PaymentReceiptPdfController;
 use App\Http\Controllers\ReportExportController;
+use App\Http\Controllers\StudentLessonMediaController;
 use App\Http\Controllers\StudentPortalController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
@@ -33,6 +34,9 @@ Route::prefix('{current_team}')
     ->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
         Route::get('student-portal', StudentPortalController::class)->name('student.portal');
+        Route::get('student-portal/lessons/{lesson}/media/{media}', StudentLessonMediaController::class)
+            ->middleware(['signed', 'throttle:60,1'])
+            ->name('student.lesson-media.show');
         Route::get('instructor-portal', InstructorPortalController::class)
             ->middleware('can:attendance.manage')
             ->name('instructor.portal');

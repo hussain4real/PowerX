@@ -25,8 +25,6 @@ interface CorporateCompany {
     name: string;
     contactName: string;
     email: string;
-    phone: string | null;
-    address: string | null;
     industry: string;
     employeeCount: number;
     enrollmentCount: number;
@@ -57,9 +55,6 @@ interface CorporateInvoice {
     type: string;
     status: string;
     currency: string;
-    subtotal: number;
-    discountTotal: number;
-    taxTotal: number;
     total: number;
     issuedAt: string | null;
     dueAt: string | null;
@@ -79,15 +74,12 @@ interface CorporatePayment {
     currency: string;
     amount: number;
     paidAt: string | null;
-    approvedAt: string | null;
 }
 
 interface CorporateEnrollment {
     id: number;
     companyName: string;
     studentName: string;
-    profession: string | null;
-    documentStatus: string | null;
     courseTitle: string;
     courseCategory: string | null;
     deliveryMode: string | null;
@@ -95,9 +87,6 @@ interface CorporateEnrollment {
     packageType: string | null;
     status: string;
     paymentStatus: string;
-    accessStartsAt: string | null;
-    accessExpiresAt: string | null;
-    approvedAt: string | null;
     attendanceSessions: number;
     attendedSessions: number;
     issuedCertificates: number;
@@ -107,33 +96,20 @@ interface CorporateAttendance {
     id: number;
     companyName: string;
     studentName: string;
-    profession: string | null;
     courseTitle: string;
-    batchName: string;
-    sessionTitle: string;
-    sessionType: string | null;
-    venue: string | null;
-    sessionStatus: string | null;
-    startsAt: string | null;
-    endsAt: string | null;
     status: string;
-    attendedAt: string | null;
     practicalOutcome: string;
-    practicalScore: number | null;
-    assessedAt: string | null;
 }
 
 interface CorporateCertificate {
     id: number;
     companyName: string;
     studentName: string;
-    profession: string | null;
     courseTitle: string;
     certificateNumber: string;
     status: string;
     result: string;
     issuedAt: string | null;
-    expiresAt: string | null;
     verifyUrl: string;
 }
 
@@ -341,7 +317,7 @@ const statusClass = (status: string | null | undefined): string =>
             <AlertTriangle class="size-8" />
             <div>
                 <p class="text-sm font-black tracking-[0.22em] uppercase">
-                    Sign-off and data-sharing gate
+                    Level 2 data-sharing boundary
                 </p>
                 <p class="mt-2 text-sm leading-6">
                     {{ dataSharingGate.summary }}
@@ -363,9 +339,9 @@ const statusClass = (status: string | null | undefined): string =>
             <p
                 class="mx-auto mt-3 max-w-2xl text-sm leading-6 text-muted-foreground"
             >
-                PowerX must confirm the coordinator-to-company sharing rule
-                before company records or downloadable reports are released to
-                this account.
+                Ask PowerX support to match this login to the approved company
+                coordinator record before company records or downloadable
+                reports are released to this account.
             </p>
         </section>
 
@@ -433,12 +409,6 @@ const statusClass = (status: string | null | undefined): string =>
                                     </dd>
                                 </div>
                                 <div class="flex justify-between gap-4">
-                                    <dt class="text-muted-foreground">Phone</dt>
-                                    <dd class="text-right font-bold">
-                                        {{ label(company.phone) }}
-                                    </dd>
-                                </div>
-                                <div class="flex justify-between gap-4">
                                     <dt class="text-muted-foreground">
                                         Industry
                                     </dt>
@@ -499,7 +469,7 @@ const statusClass = (status: string | null | undefined): string =>
                                 </span>
                             </div>
                             <div
-                                class="mt-4 grid gap-3 text-sm sm:grid-cols-3"
+                                class="mt-4 grid gap-3 text-sm sm:grid-cols-2"
                             >
                                 <div>
                                     <p class="text-muted-foreground">Total</p>
@@ -727,7 +697,7 @@ const statusClass = (status: string | null | undefined): string =>
                                 Attendance
                             </p>
                             <h2 class="mt-2 text-2xl font-black">
-                                Session and practical outcomes
+                                Attendance and practical summary
                             </h2>
                         </div>
                         <CalendarCheck2 class="size-8 text-powerx-yellow" />
@@ -752,7 +722,6 @@ const statusClass = (status: string | null | undefined): string =>
                                     <p
                                         class="mt-1 text-sm text-muted-foreground"
                                     >
-                                        {{ record.sessionTitle }} ·
                                         {{ record.courseTitle }}
                                     </p>
                                 </div>
@@ -767,9 +736,11 @@ const statusClass = (status: string | null | undefined): string =>
                                 class="mt-4 grid gap-3 text-sm sm:grid-cols-3"
                             >
                                 <div>
-                                    <p class="text-muted-foreground">Session</p>
+                                    <p class="text-muted-foreground">
+                                        Attendance
+                                    </p>
                                     <p class="font-black">
-                                        {{ dateLabel(record.startsAt) }}
+                                        {{ label(record.status) }}
                                     </p>
                                 </div>
                                 <div>
@@ -778,12 +749,6 @@ const statusClass = (status: string | null | undefined): string =>
                                     </p>
                                     <p class="font-black">
                                         {{ label(record.practicalOutcome) }}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p class="text-muted-foreground">Score</p>
-                                    <p class="font-black">
-                                        {{ label(record.practicalScore) }}
                                     </p>
                                 </div>
                             </div>
@@ -853,12 +818,6 @@ const statusClass = (status: string | null | undefined): string =>
                                         {{ dateLabel(certificate.issuedAt) }}
                                     </p>
                                 </div>
-                                <div>
-                                    <p class="text-muted-foreground">Expires</p>
-                                    <p class="font-black">
-                                        {{ dateLabel(certificate.expiresAt) }}
-                                    </p>
-                                </div>
                             </div>
                             <a
                                 :href="certificate.verifyUrl"
@@ -886,8 +845,9 @@ const statusClass = (status: string | null | undefined): string =>
                         Corporate coordinators can download only the
                         company-scoped report shown here. Admin tools,
                         operations dashboards, report exports, student contact
-                        details, internal approval notes, and edit actions stay
-                        hidden until PowerX approves broader data-sharing rules.
+                        details, documents, payment proofs, audit metadata,
+                        internal approval notes, and edit actions stay hidden
+                        unless PowerX approves broader data-sharing rules.
                     </p>
                 </div>
             </section>

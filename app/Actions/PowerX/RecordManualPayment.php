@@ -5,6 +5,7 @@ namespace App\Actions\PowerX;
 use App\Models\Invoice;
 use App\Models\PaymentTransaction;
 use Illuminate\Http\UploadedFile;
+use InvalidArgumentException;
 
 class RecordManualPayment
 {
@@ -13,16 +14,22 @@ class RecordManualPayment
      */
     public function handle(Invoice $invoice, array $data, ?UploadedFile $proof = null): PaymentTransaction
     {
+        $method = $data['method'] ?? config('powerx_payments.manual.default_method', PaymentTransaction::METHOD_BANK_TRANSFER);
+
+        if (! array_key_exists($method, PaymentTransaction::manualMethodOptions())) {
+            throw new InvalidArgumentException("Unsupported manual payment method [{$method}].");
+        }
+
         $payment = PaymentTransaction::create([
             'team_id' => $invoice->team_id,
             'enrollment_id' => $invoice->enrollment_id,
             'invoice_id' => $invoice->id,
             'company_id' => $invoice->company_id,
             'student_profile_id' => $invoice->student_profile_id,
-            'method' => $data['method'] ?? 'bank_transfer',
+            'method' => $method,
             'provider' => $data['provider'] ?? null,
             'reference' => $data['reference'] ?? null,
-            'status' => 'pending',
+            'status' => PaymentTransaction::STATUS_PENDING,
             'currency' => $data['currency'] ?? $invoice->currency,
             'amount' => $data['amount'],
             'paid_at' => $data['paid_at'] ?? now(),

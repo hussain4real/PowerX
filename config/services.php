@@ -28,6 +28,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'analytics' => [
+        'google_measurement_id' => env('POWERX_GOOGLE_MEASUREMENT_ID'),
+        'meta_pixel_id' => env('POWERX_META_PIXEL_ID'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

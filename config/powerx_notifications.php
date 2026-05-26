@@ -1,6 +1,21 @@
 <?php
 
 return [
+    'delivery' => [
+        'email' => [
+            'enabled' => env('POWERX_EMAIL_NOTIFICATIONS_ENABLED', true),
+            'queue' => env('POWERX_EMAIL_QUEUE', 'mail'),
+            'dispatch_limit' => (int) env('POWERX_EMAIL_DISPATCH_LIMIT', 100),
+            'backoff' => array_values(array_filter(
+                array_map('intval', explode(',', env('POWERX_EMAIL_RETRY_BACKOFF', '60,300,900'))),
+                fn (int $seconds): bool => $seconds > 0,
+            )) ?: [60, 300, 900],
+        ],
+        'whatsapp' => [
+            'enabled' => env('POWERX_WHATSAPP_NOTIFICATIONS_ENABLED', false),
+        ],
+    ],
+
     'templates' => [
         'registration_confirmation' => [
             'subject' => 'PowerX registration received for {{ course_title }}',

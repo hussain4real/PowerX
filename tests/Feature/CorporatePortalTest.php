@@ -48,11 +48,14 @@ test('corporate portal exposes only matched company read only records', function
             ->where('attendance.0.studentName', 'Visible Employee')
             ->where('certificates.0.certificateNumber', 'PX-CERT-CORP-001')
             ->where('report.available', true)
-            ->where('dataSharingGate.status', 'pending_sign_off'));
+            ->where('dataSharingGate.status', 'level_2_operational'));
 
     $response
         ->assertDontSee('Hidden Employee')
         ->assertDontSee('PX-QUO-HIDDEN')
+        ->assertDontSee('+97455500000')
+        ->assertDontSee('Technician')
+        ->assertDontSee('passport_review_only')
         ->assertDontSee('private.employee@example.test')
         ->assertDontSee('+97455599999');
 
@@ -80,9 +83,12 @@ test('corporate coordinator can download a company scoped csv report', function 
         ->toContain('PX-QUO-CORP-001')
         ->toContain('Visible Employee')
         ->toContain('PX-CERT-CORP-001')
-        ->toContain('Pending PowerX sign-off')
+        ->toContain('Level 2 operational sharing')
         ->not->toContain('Hidden Employee')
         ->not->toContain('PX-QUO-HIDDEN')
+        ->not->toContain('+97455500000')
+        ->not->toContain('Technician')
+        ->not->toContain('passport_review_only')
         ->not->toContain('private.employee@example.test')
         ->not->toContain('+97455599999');
 });
@@ -173,6 +179,7 @@ function corporatePortalFixtures(): array
             'email' => 'private.employee@example.test',
             'mobile' => '+97455599999',
             'profession' => 'Technician',
+            'document_status' => 'passport_review_only',
         ]);
     $hiddenProfile = StudentProfile::factory()
         ->for($team)

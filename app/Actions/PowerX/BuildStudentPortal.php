@@ -3,12 +3,22 @@
 namespace App\Actions\PowerX;
 
 use App\Models\Enrollment;
+use App\Models\Lesson;
 use App\Models\StudentProfile;
 use App\Models\Team;
 use App\Models\User;
+use Illuminate\Support\Facades\URL;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class BuildStudentPortal
 {
+    /**
+     * @var array<int, string>
+     */
+    private const LESSON_MEDIA_COLLECTIONS = ['video', 'learning-materials'];
+
+    private const LESSON_MEDIA_LINK_EXPIRY_MINUTES = 30;
+
     /**
      * @return array<string, mixed>
      */
@@ -22,6 +32,7 @@ class BuildStudentPortal
                 'enrollments.course.exams' => fn ($query) => $query->active()->orderBy('title'),
                 'enrollments.course.modules' => fn ($query) => $query->active()->orderBy('sort_order'),
                 'enrollments.course.modules.lessons' => fn ($query) => $query->active()->orderBy('sort_order'),
+                'enrollments.course.modules.lessons.media',
                 'enrollments.coursePackage',
                 'enrollments.lessonProgress.lesson',
                 'enrollments.examAttempts.exam',
@@ -158,7 +169,7 @@ class BuildStudentPortal
             return 'payment_pending';
         }
 
-        if (! in_array($enrollment->status, ['active', 'completed'], true)) {
+        if (! in_array($enrollment->status, ['active', 'completed'], true) || $enrollment->access_starts_at?->isFuture()) {
             return 'enrollment_pending';
         }
 
@@ -197,8 +208,9 @@ class BuildStudentPortal
                 'title' => $module->title,
                 'summary' => $module->summary,
                 'lessons' => $module->lessons
-                    ->map(function ($lesson) use ($progressByLesson, $hasPaidAccess): array {
+                    ->map(function ($lesson) use ($enrollment, $progressByLesson, $hasPaidAccess): array {
                         $progress = $progressByLesson->get($lesson->id);
+                        $isLocked = ! $hasPaidAccess && ! $lesson->is_preview;
 
                         return [
                             'id' => $lesson->id,
@@ -206,13 +218,48 @@ class BuildStudentPortal
                             'lessonType' => $lesson->lesson_type,
                             'durationMinutes' => $lesson->duration_minutes,
                             'isPreview' => $lesson->is_preview,
-                            'isLocked' => ! $hasPaidAccess && ! $lesson->is_preview,
+                            'isLocked' => $isLocked,
                             'progressPercentage' => (int) ($progress?->progress_percentage ?? 0),
                             'isCompleted' => $progress?->completed_at !== null,
+                            'media' => $this->lessonMediaPayload($enrollment, $lesson, $hasPaidAccess),
                         ];
                     })
                     ->values()
                     ->all(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function lessonMediaPayload(Enrollment $enrollment, Lesson $lesson, bool $hasPaidAccess): array
+    {
+        if (! $hasPaidAccess) {
+            return [];
+        }
+
+        $expiresAt = now()->addMinutes(self::LESSON_MEDIA_LINK_EXPIRY_MINUTES);
+
+        return $lesson->media
+            ->whereIn('collection_name', self::LESSON_MEDIA_COLLECTIONS)
+            ->sortBy('order_column')
+            ->map(fn (Media $media): array => [
+                'id' => $media->id,
+                'name' => $media->name,
+                'fileName' => $media->file_name,
+                'collectionName' => $media->collection_name,
+                'collectionLabel' => $media->collection_name === 'video' ? 'Video' : 'Learning material',
+                'mimeType' => $media->mime_type,
+                'size' => $media->size,
+                'humanReadableSize' => $media->human_readable_size,
+                'url' => URL::temporarySignedRoute('student.lesson-media.show', $expiresAt, [
+                    'current_team' => $enrollment->team,
+                    'lesson' => $lesson,
+                    'media' => $media,
+                ]),
+                'expiresAt' => $expiresAt->toISOString(),
             ])
             ->values()
             ->all();

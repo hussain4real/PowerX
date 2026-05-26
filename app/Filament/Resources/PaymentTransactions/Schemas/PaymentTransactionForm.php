@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PaymentTransactions\Schemas;
 
 use App\Filament\Support\PowerXForm;
+use App\Models\PaymentTransaction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -38,15 +39,9 @@ class PaymentTransactionForm
                                     ->columns(2)
                                     ->schema([
                                         Select::make('method')
-                                            ->options([
-                                                'bank_transfer' => 'Bank transfer',
-                                                'cash' => 'Cash',
-                                                'cheque' => 'Cheque',
-                                                'card' => 'Card',
-                                                'other' => 'Other',
-                                            ])
+                                            ->options(PaymentTransaction::manualMethodOptions())
                                             ->required()
-                                            ->default('bank_transfer')
+                                            ->default(config('powerx_payments.manual.default_method', PaymentTransaction::METHOD_BANK_TRANSFER))
                                             ->native(false),
                                         TextInput::make('provider')
                                             ->maxLength(255),
@@ -78,14 +73,9 @@ class PaymentTransactionForm
                                     ->columns(2)
                                     ->schema([
                                         Select::make('status')
-                                            ->options([
-                                                'pending' => 'Pending',
-                                                'approved' => 'Approved',
-                                                'rejected' => 'Rejected',
-                                                'refunded' => 'Refunded',
-                                            ])
+                                            ->options(PaymentTransaction::statusOptions())
                                             ->required()
-                                            ->default('pending')
+                                            ->default(PaymentTransaction::STATUS_PENDING)
                                             ->disabled()
                                             ->helperText('Payment status is controlled by finance approval actions.'),
                                         Select::make('approved_by_id')

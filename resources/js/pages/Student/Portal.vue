@@ -7,6 +7,7 @@ import {
     CalendarClock,
     CheckCircle2,
     Clock3,
+    Download,
     FileText,
     GraduationCap,
     LockKeyhole,
@@ -46,6 +47,20 @@ interface Lesson {
     isLocked: boolean;
     progressPercentage: number;
     isCompleted: boolean;
+    media: LessonMedia[];
+}
+
+interface LessonMedia {
+    id: number;
+    name: string;
+    fileName: string;
+    collectionName: string;
+    collectionLabel: string;
+    mimeType: string;
+    size: number;
+    humanReadableSize: string;
+    url: string;
+    expiresAt: string;
 }
 
 interface CourseModule {
@@ -419,62 +434,84 @@ const lessonIcon = (lessonType: string): Component =>
                                         <div
                                             v-for="lesson in module.lessons"
                                             :key="lesson.id"
-                                            class="flex items-center justify-between gap-4 rounded-xl bg-muted/50 p-3"
+                                            class="rounded-xl bg-muted/50 p-3"
                                         >
                                             <div
-                                                class="flex items-center gap-3"
+                                                class="flex items-center justify-between gap-4"
                                             >
-                                                <component
-                                                    :is="
-                                                        lessonIcon(
-                                                            lesson.lessonType,
-                                                        )
-                                                    "
-                                                    class="size-5 text-powerx-yellow"
-                                                />
-                                                <div>
-                                                    <p
-                                                        class="text-sm font-bold"
-                                                    >
-                                                        {{ lesson.title }}
-                                                    </p>
-                                                    <p
-                                                        class="text-xs text-muted-foreground"
-                                                    >
-                                                        {{
-                                                            label(
+                                                <div
+                                                    class="flex items-center gap-3"
+                                                >
+                                                    <component
+                                                        :is="
+                                                            lessonIcon(
                                                                 lesson.lessonType,
                                                             )
-                                                        }}
-                                                        ·
+                                                        "
+                                                        class="size-5 text-powerx-yellow"
+                                                    />
+                                                    <div>
+                                                        <p
+                                                            class="text-sm font-bold"
+                                                        >
+                                                            {{ lesson.title }}
+                                                        </p>
+                                                        <p
+                                                            class="text-xs text-muted-foreground"
+                                                        >
+                                                            {{
+                                                                label(
+                                                                    lesson.lessonType,
+                                                                )
+                                                            }}
+                                                            ·
+                                                            {{
+                                                                lesson.durationMinutes ??
+                                                                0
+                                                            }}
+                                                            mins
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="flex items-center gap-2 text-xs font-black"
+                                                >
+                                                    <CheckCircle2
+                                                        v-if="lesson.isCompleted"
+                                                        class="size-4 text-powerx-success"
+                                                    />
+                                                    <LockKeyhole
+                                                        v-else-if="
+                                                            lesson.isLocked
+                                                        "
+                                                        class="size-4 text-muted-foreground"
+                                                    />
+                                                    <span>
                                                         {{
-                                                            lesson.durationMinutes ??
-                                                            0
+                                                            lesson.isCompleted
+                                                                ? 'Done'
+                                                                : lesson.isLocked
+                                                                  ? 'Locked'
+                                                                  : `${lesson.progressPercentage}%`
                                                         }}
-                                                        mins
-                                                    </p>
+                                                    </span>
                                                 </div>
                                             </div>
                                             <div
-                                                class="flex items-center gap-2 text-xs font-black"
+                                                v-if="lesson.media.length > 0"
+                                                class="mt-3 flex flex-wrap gap-2 ps-8"
                                             >
-                                                <CheckCircle2
-                                                    v-if="lesson.isCompleted"
-                                                    class="size-4 text-powerx-success"
-                                                />
-                                                <LockKeyhole
-                                                    v-else-if="lesson.isLocked"
-                                                    class="size-4 text-muted-foreground"
-                                                />
-                                                <span>
-                                                    {{
-                                                        lesson.isCompleted
-                                                            ? 'Done'
-                                                            : lesson.isLocked
-                                                              ? 'Locked'
-                                                              : `${lesson.progressPercentage}%`
-                                                    }}
-                                                </span>
+                                                <a
+                                                    v-for="media in lesson.media"
+                                                    :key="media.id"
+                                                    :href="media.url"
+                                                    class="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-black text-foreground transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                                                >
+                                                    <Download class="size-3.5" />
+                                                    {{ media.collectionLabel }} ·
+                                                    {{ media.fileName }} ·
+                                                    {{ media.humanReadableSize }}
+                                                </a>
                                             </div>
                                         </div>
                                     </div>

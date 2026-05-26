@@ -27,7 +27,7 @@ Both products should be built with the same Laravel/Vue/Inertia architecture so 
 | ------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | Backend framework   | Laravel 13.x on PHP 8.3+.                                                                                   | Primary application framework, routing, validation, queues, scheduler, notifications, policies, and Eloquent ORM.              |
 | Database            | PostgreSQL.                                                                                                 | Primary relational database for tenant data, reporting queries, JSON metadata, and future geospatial expansion where needed.   |
-| Cache and queues    | Redis with Laravel queues and Horizon.                                                                      | Background jobs, email, report generation, media processing, notification retries, and queue visibility.                       |
+| Cache and queues    | Database queue for MVP; Redis/Horizon can be introduced later.                                              | Background jobs, email, report generation, media processing, notification retries, and queue visibility.                       |
 | Frontend            | Laravel official Vue starter kit with Inertia, Vue 3 Composition API, TypeScript, Tailwind, and shadcn-vue. | Main authenticated app experience with server-side Laravel routes and modern Vue pages.                                        |
 | Authentication      | Built-in Laravel auth through Fortify; passkeys enabled with Fortify and laravel/passkeys.                  | Email/password, session auth, passkeys, password reset, email verification, and auth throttling without WorkOS AuthKit.        |
 | Tenancy             | Laravel starter-kit teams.                                                                                  | Team/workspace context for organization scoping, member invitations, current-team switching, and tenant-aware policies.        |
@@ -39,7 +39,7 @@ Both products should be built with the same Laravel/Vue/Inertia architecture so 
 | Reports and exports | spatie/laravel-pdf v2 and maatwebsite/excel 3.1.x.                                                          | PDF statements, certificates, management reports, CSV/XLSX imports and exports.                                                |
 | Realtime            | Laravel notifications by default; Laravel Reverb only for true realtime screens.                            | Realtime status updates are optional and should not be added until a workflow clearly benefits from live updates.              |
 | Testing and quality | Pest v4, Pest browser tests, Laravel Pint, Larastan/PHPStan, TypeScript checks, and Vite build checks.      | Automated feature, unit, browser, static analysis, formatting, and build validation.                                           |
-| Deployment          | Separate Dockerized VPS deployments.                                                                        | Each product has its own repo, domain, database, Redis, queue worker, scheduler, storage path/bucket, backups, and monitoring. |
+| Deployment          | Hetzner or Laravel Cloud deployment target.                                                                 | Production needs its own repo/domain, database, database queue worker, scheduler, S3-compatible object storage, backups, and monitoring. |
 
 # 3\. Package Matrix
 
@@ -50,7 +50,7 @@ Both products should be built with the same Laravel/Vue/Inertia architecture so 
 | Access control      | spatie/laravel-permission:^7.0                                                                             | Use roles/permissions for broad capabilities; use Laravel policies for tenant, ownership, and record-level decisions.                                     |
 | Media               | spatie/laravel-medialibrary:^11.0                                                                          | Store model-linked media in named collections with private disks and signed/temporary access where needed.                                                                                           |
 | PDF and exports     | spatie/laravel-pdf:^2.0, maatwebsite/excel:^3.1                                                            | Use PDF generation for formal statements/certificates/reports; use Excel/CSV for operational exports and imports.                                         |
-| Queues and realtime | laravel/horizon, laravel/reverb when needed                                                                | Horizon is standard for queue visibility. Reverb is optional and should be introduced only for realtime UX requirements.                                  |
+| Queues and realtime | Laravel database queue for MVP; laravel/horizon and laravel/reverb later if needed                         | Run email/report/media jobs on the database queue first. Horizon requires Redis and should be introduced only if queue volume or monitoring needs justify it. |
 | Frontend            | @inertiajs/vue3, vue, typescript, tailwindcss, shadcn-vue, lucide-vue-next                                 | Use Vue pages for product UI, shadcn-vue for controls, and lucide icons for actions.                                                                      |
 | Testing and quality | pestphp/pest:^4, pestphp/pest-plugin-laravel, pestphp/pest-plugin-browser, laravel/pint, larastan/larastan | Feature/unit/browser tests, code style checks, static analysis, TypeScript checks, and Vite build must pass before release.                               |
 
@@ -60,6 +60,7 @@ Both products should be built with the same Laravel/Vue/Inertia architecture so 
 - Keep domain logic in service/action classes rather than placing business rules inside controllers, Filament resources, or Vue components.
 - Use Filament panels for admin and operations users; use Inertia/Vue for the main product experience seen by customers, students, investors, farmers, and staff.
 - Store files through Media Library on private storage by default; expose public files only when the business requirement explicitly allows it.
+- Deliver private lesson media through authenticated, signed application routes that re-check student ownership, enrollment payment, enrollment status, and access-window rules before streaming the file.
 - Dispatch slow or retryable work to queues: emails, WhatsApp callbacks, media conversions, report generation, certificate/report PDFs, imports, exports, and webhook follow-up.
 - Use policies, permissions, and current-team scope on every business model that belongs to a tenant or organization.
 
@@ -69,12 +70,26 @@ Both products should be built with the same Laravel/Vue/Inertia architecture so 
 | ------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | App runtime   | Nginx plus PHP-FPM container or equivalent VPS service layout.                | Deploy each product independently with its own environment variables and release directory/container image.     |
 | Database      | PostgreSQL per application.                                                   | No shared production database between Farmwell and PowerX. Enable nightly backups and tested restore procedure. |
-| Redis         | Redis per application or isolated Redis database/key prefix.                  | Required for queues, cache, sessions if selected, Horizon, and optional Reverb scaling.                         |
-| Workers       | Dedicated queue worker/Horizon process.                                       | Run under Supervisor/systemd/Docker service with restart policy and failed-job monitoring.                      |
+| Cache/Redis   | Database/cache defaults for MVP; Redis can be added later.                    | Redis is not required for MVP because the approved queue driver is database. Add Redis only for cache scale, Horizon, or Reverb. |
+| Workers       | Dedicated database queue worker.                                              | Run under Supervisor/systemd/Docker service with restart policy and failed-job monitoring; add Horizon only if Redis is introduced. |
 | Scheduler     | Laravel scheduler process or cron invoking schedule:run.                      | Required for reminders, renewals, report jobs, cleanup, and recurring notifications.                            |
 | Storage       | S3-compatible object storage or isolated server storage path.                 | Separate buckets/prefixes per product and environment; private default visibility.                              |
 | PDF runtime   | spatie/laravel-pdf driver selected during infrastructure setup.               | Browsershot/Chrome gives best CSS fidelity; DOMPDF can be used where zero external binaries are preferred.      |
 | Monitoring    | Application logs, uptime checks, queue/failed-job alerts, and error tracking. | Sentry or equivalent is recommended but can be finalized during implementation procurement.                     |
+
+# 5.1 Production Launch Readiness Checklist
+
+This checklist covers the BRS NFR-04/NFR-05/NFR-06 launch hardening work. Production launch still requires named client owners, approver names, and dates.
+
+| **Area** | **Readiness requirement** |
+| -------- | ------------------------- |
+| Environment | Confirm `APP_ENV=production`, `APP_DEBUG=false`, HTTPS `APP_URL`, passkey origin, database queue connection, mail sender, storage disk, PDF runtime, scheduler, and queue worker process. |
+| Backups and restore (NFR-04) | Back up the database plus private media/PDF storage for student profiles, payments, invoices, exams, certificates, audit records, and lesson files. Record retention, alert owner, and restore-test cadence. |
+| Restore test (NFR-04) | Restore into a non-production environment and spot-check login, catalog, registration, payment record, lesson media download, exam attempt, certificate PDF, and public certificate verification. |
+| Access review | Re-check public, student, instructor, corporate, sales, finance, support, admin, and management routes so paid content, reports, Filament resources, team management, and private media stay least-privilege. |
+| Performance and analytics (NFR-05) | Test homepage, course catalog, registration, corporate quotation, login, and certificate verification on mobile. GA/Meta Pixel scripts must stay optional and non-blocking. |
+| Language scope (NFR-06) | English-only MVP is the approved default. Arabic/RTL public pages, forms, PDFs, and notifications stay post-launch unless PowerX assigns translation and RTL review owners. |
+| Go/no-go | Launch only after legal issuer, catalog/pricing/tax, certificate wording, sender DNS, host/domain/SSL, backup owner, admin owners, support owner, and rollback plan are signed off. |
 
 # 6\. Security and Engineering Controls
 
@@ -145,16 +160,17 @@ Current implementation note: PowerX only includes the internal `PaymentGateway` 
 | Finance             | Invoice, payment transaction, manual payment proof, refund/adjustment.       | Finance/admin manage; students/corporate users see own receipts/invoices.                    |
 | Certificates        | Certificate number, template, issue/expiry, verification token, PDF, status. | Students see own certificates; public verification exposes limited validity data only.       |
 | Audit               | Payment approval, certificate issuance, exam edits, role changes, exports.   | Visible only to authorized admin/management roles.                                           |
+| Corporate portal    | Company profile, quotations, invoices, payments, employee enrollments, attendance summary, practical outcome, certificate links. | Coordinators see only matched company-scoped Level 2 operational fields; student contacts, documents, payment proofs, exam answers, audit metadata, and other-company records stay hidden. |
 
 # 12\. PowerX Integrations
 
 | **Integration** | **MVP approach**                                                                              | **Technical notes**                                                                                       |
 | --------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Email           | Registration confirmations, receipts, course access, class reminders, certificates, renewals. | Use queued mail and verified PowerX sender domain.                                                        |
-| WhatsApp        | Click-to-chat and template-assisted follow-up in MVP; Business API later.                     | Keep message templates configurable and log outbound communication attempts.                              |
-| Payment gateway | Adapter architecture with provider chosen before implementation buildout.                     | Stripe/Cashier can be a first adapter if accepted; local Qatar gateway may be chosen after client review. |
-| Video/storage   | Private storage or secure video host for paid materials.                                      | Use signed URLs or provider access controls to reduce unauthorized sharing.                               |
-| Analytics       | GA/UTM and Meta Pixel support on public pages.                                                | Avoid blocking registration if analytics script fails.                                                    |
+| Email           | Registration confirmations, receipts, course access, class reminders, certificates, renewals. | Use queued mail, database queue workers, and verified PowerX sender domain.                               |
+| WhatsApp        | Manual/click-to-chat follow-up for now; Business API later.                                   | Keep message templates configurable and log outbound communication attempts.                              |
+| Payment gateway | Deferred. Manual cash, bank transfer, and cheque are approved for MVP.                        | Keep adapter architecture inert until a future online provider is approved.                               |
+| Video/storage   | Private S3-compatible object storage for MVP; secure streaming provider later if needed.      | Use signed application routes or provider access controls to reduce unauthorized sharing.                 |
+| Analytics       | GA/UTM and Meta Pixel support on public pages via environment-configured IDs.                 | Avoid blocking registration if analytics script fails.                                                    |
 | AI assistant    | Optional FAQ/course recommendation and lead capture assistant.                                | Must answer only from approved course/FAQ data and create CRM lead handoff when needed.                   |
 
 # 13\. PowerX Reporting and Document Generation
@@ -170,7 +186,7 @@ Current implementation note: PowerX only includes the internal `PaymentGateway` 
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | Phase 1   | Starter app, auth/passkeys, roles, course catalog, landing pages, CRM, registration, course setup, batches, manual payment proofs, basic dashboards. | PowerX can manage leads, registrations, manual payments, and class operations in one system.         |
 | Phase 2   | LMS content, private media, question bank, mock exams, progress, attendance, practical assessment, certificates, public verification, reports.       | Paid students can access course materials and eligible students can receive verifiable certificates. |
-| Phase 3   | Online payment adapter, WhatsApp API, AI assistant, advanced analytics, corporate portal, renewal and referral automation.                           | Sales and student operations become more automated and measurable.                                   |
+| Phase 3   | Online payment adapter, WhatsApp API, AI assistant, advanced analytics, expanded corporate self-service, renewal and referral automation.             | Sales, student, and corporate operations become more automated and measurable.                       |
 
 # 15\. PowerX Assumptions and Risks
 

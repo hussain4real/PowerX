@@ -106,7 +106,7 @@ class BuildCorporatePortal
                 $this->sectionFromRows(
                     key: 'enrollments',
                     title: 'Enrollments',
-                    description: 'Company employee enrollment status without student contact details or private notes.',
+                    description: 'Company employee enrollment status without student contact details, document status, or private notes.',
                     columns: ['Employee', 'Company', 'Course', 'Status', 'Payment', 'Attendance', 'Certificates'],
                     rows: $portal['enrollments'],
                     map: fn (array $enrollment): array => [
@@ -138,7 +138,7 @@ class BuildCorporatePortal
                 $this->sectionFromRows(
                     key: 'payments',
                     title: 'Payments',
-                    description: 'Payment receipts summarized without internal approval details.',
+                    description: 'Payment receipts summarized without internal approval details or proof files.',
                     columns: ['Invoice', 'Company', 'Method', 'Status', 'Amount', 'Paid'],
                     rows: $portal['finance']['payments'],
                     map: fn (array $payment): array => [
@@ -153,23 +153,21 @@ class BuildCorporatePortal
                 $this->sectionFromRows(
                     key: 'attendance',
                     title: 'Attendance',
-                    description: 'Attendance and practical completion outcomes for visible company enrollments.',
-                    columns: ['Employee', 'Course', 'Session', 'Status', 'Practical outcome', 'Practical score'],
+                    description: 'Attendance summary and practical completion outcomes for visible company enrollments.',
+                    columns: ['Employee', 'Course', 'Status', 'Practical outcome'],
                     rows: $portal['attendance'],
                     map: fn (array $attendance): array => [
                         'Employee' => (string) $attendance['studentName'],
                         'Course' => (string) $attendance['courseTitle'],
-                        'Session' => (string) $attendance['sessionTitle'],
                         'Status' => (string) $attendance['status'],
                         'Practical outcome' => (string) $attendance['practicalOutcome'],
-                        'Practical score' => $attendance['practicalScore'] === null ? 'Not scored' : (string) $attendance['practicalScore'],
                     ],
                 ),
                 $this->sectionFromRows(
                     key: 'certificates',
                     title: 'Completions and certificates',
-                    description: 'Completion and certificate records using PowerX-safe wording pending final sign-off.',
-                    columns: ['Employee', 'Course', 'Certificate', 'Status', 'Result', 'Issued', 'Expires'],
+                    description: 'Issued certificate records and public verification links within the company scope.',
+                    columns: ['Employee', 'Course', 'Certificate', 'Status', 'Result', 'Issued'],
                     rows: $portal['certificates'],
                     map: fn (array $certificate): array => [
                         'Employee' => (string) $certificate['studentName'],
@@ -178,7 +176,6 @@ class BuildCorporatePortal
                         'Status' => (string) $certificate['status'],
                         'Result' => (string) $certificate['result'],
                         'Issued' => $this->dateLabel($certificate['issuedAt']),
-                        'Expires' => $this->dateLabel($certificate['expiresAt']),
                     ],
                 ),
             ],
@@ -197,7 +194,7 @@ class BuildCorporatePortal
                     ->where('email', $coordinator->email)
                     ->orWhere('metadata->coordinator_email', $coordinator->email);
             })
-            ->select(['id', 'team_id', 'name', 'contact_name', 'email', 'phone', 'address', 'metadata'])
+            ->select(['id', 'team_id', 'name', 'contact_name', 'email', 'metadata'])
             ->withCount([
                 'studentProfiles as employee_count',
                 'enrollments as enrollment_count',
@@ -222,7 +219,7 @@ class BuildCorporatePortal
             ->whereIn('company_id', $companyIds)
             ->with([
                 'company:id,name',
-                'studentProfile:id,full_name,profession,document_status',
+                'studentProfile:id,full_name',
                 'course:id,title,category,delivery_mode,slug',
                 'coursePackage:id,name,package_type,validity_days,includes_certificate',
             ])
@@ -240,10 +237,7 @@ class BuildCorporatePortal
                 'course_package_id',
                 'status',
                 'payment_status',
-                'access_starts_at',
-                'access_expires_at',
                 'approved_at',
-                'metadata',
             ])
             ->orderByDesc('approved_at')
             ->orderByDesc('id')
@@ -278,9 +272,6 @@ class BuildCorporatePortal
                 'type',
                 'status',
                 'currency',
-                'subtotal',
-                'discount_total',
-                'tax_total',
                 'total',
                 'issued_at',
                 'due_at',
@@ -316,7 +307,6 @@ class BuildCorporatePortal
                 'currency',
                 'amount',
                 'paid_at',
-                'approved_at',
             ])
             ->orderByDesc('paid_at')
             ->orderByDesc('id')
@@ -339,21 +329,16 @@ class BuildCorporatePortal
             ->with([
                 'enrollment:id,company_id,student_profile_id,course_id',
                 'enrollment.company:id,name',
-                'enrollment.studentProfile:id,full_name,profession',
+                'enrollment.studentProfile:id,full_name',
                 'enrollment.course:id,title',
-                'trainingSession:id,training_batch_id,title,session_type,venue,status,starts_at,ends_at',
-                'trainingSession.trainingBatch:id,name',
             ])
             ->select([
                 'id',
                 'team_id',
-                'training_session_id',
                 'enrollment_id',
                 'status',
                 'attended_at',
                 'practical_outcome',
-                'practical_score',
-                'assessed_at',
             ])
             ->orderByDesc('attended_at')
             ->orderByDesc('id')
@@ -376,7 +361,7 @@ class BuildCorporatePortal
             ->with([
                 'enrollment:id,company_id',
                 'enrollment.company:id,name',
-                'studentProfile:id,full_name,profession',
+                'studentProfile:id,full_name',
                 'course:id,title',
             ])
             ->select([
@@ -390,7 +375,6 @@ class BuildCorporatePortal
                 'status',
                 'result',
                 'issued_at',
-                'expires_at',
             ])
             ->orderByDesc('issued_at')
             ->orderByDesc('id')
@@ -409,8 +393,6 @@ class BuildCorporatePortal
                 'name' => $company->name,
                 'contactName' => $company->contact_name,
                 'email' => $company->email,
-                'phone' => $company->phone,
-                'address' => $company->address,
                 'industry' => data_get($company->metadata, 'industry', 'Not recorded'),
                 'employeeCount' => (int) $company->employee_count,
                 'enrollmentCount' => (int) $company->enrollment_count,
@@ -431,8 +413,6 @@ class BuildCorporatePortal
                 'id' => $enrollment->id,
                 'companyName' => $enrollment->company?->name ?? 'Not linked',
                 'studentName' => $enrollment->studentProfile?->full_name ?? 'Not linked',
-                'profession' => $enrollment->studentProfile?->profession,
-                'documentStatus' => $enrollment->studentProfile?->document_status,
                 'courseTitle' => $enrollment->course?->title ?? 'Not linked',
                 'courseCategory' => $enrollment->course?->category,
                 'deliveryMode' => $enrollment->course?->delivery_mode,
@@ -440,9 +420,6 @@ class BuildCorporatePortal
                 'packageType' => $enrollment->coursePackage?->package_type,
                 'status' => $enrollment->status,
                 'paymentStatus' => $enrollment->payment_status,
-                'accessStartsAt' => $this->isoDate($enrollment->access_starts_at),
-                'accessExpiresAt' => $this->isoDate($enrollment->access_expires_at),
-                'approvedAt' => $this->isoDate($enrollment->approved_at),
                 'attendanceSessions' => (int) $enrollment->attendance_sessions_count,
                 'attendedSessions' => (int) $enrollment->attended_sessions_count,
                 'issuedCertificates' => (int) $enrollment->issued_certificates_count,
@@ -464,9 +441,6 @@ class BuildCorporatePortal
                 'type' => $invoice->type,
                 'status' => $invoice->status,
                 'currency' => $invoice->currency,
-                'subtotal' => (float) $invoice->subtotal,
-                'discountTotal' => (float) $invoice->discount_total,
-                'taxTotal' => (float) $invoice->tax_total,
                 'total' => (float) $invoice->total,
                 'issuedAt' => $this->isoDate($invoice->issued_at),
                 'dueAt' => $this->isoDate($invoice->due_at),
@@ -496,7 +470,6 @@ class BuildCorporatePortal
                 'currency' => $payment->currency,
                 'amount' => (float) $payment->amount,
                 'paidAt' => $this->isoDate($payment->paid_at),
-                'approvedAt' => $this->isoDate($payment->approved_at),
             ])
             ->values()
             ->all();
@@ -513,20 +486,9 @@ class BuildCorporatePortal
                 'id' => $attendanceRecord->id,
                 'companyName' => $attendanceRecord->enrollment?->company?->name ?? 'Not linked',
                 'studentName' => $attendanceRecord->enrollment?->studentProfile?->full_name ?? 'Not linked',
-                'profession' => $attendanceRecord->enrollment?->studentProfile?->profession,
                 'courseTitle' => $attendanceRecord->enrollment?->course?->title ?? 'Not linked',
-                'batchName' => $attendanceRecord->trainingSession?->trainingBatch?->name ?? 'Not linked',
-                'sessionTitle' => $attendanceRecord->trainingSession?->title ?? 'Not linked',
-                'sessionType' => $attendanceRecord->trainingSession?->session_type,
-                'venue' => $attendanceRecord->trainingSession?->venue,
-                'sessionStatus' => $attendanceRecord->trainingSession?->status,
-                'startsAt' => $this->isoDate($attendanceRecord->trainingSession?->starts_at),
-                'endsAt' => $this->isoDate($attendanceRecord->trainingSession?->ends_at),
                 'status' => $attendanceRecord->status,
-                'attendedAt' => $this->isoDate($attendanceRecord->attended_at),
                 'practicalOutcome' => $attendanceRecord->practical_outcome ?? 'Not assessed',
-                'practicalScore' => $attendanceRecord->practical_score === null ? null : (float) $attendanceRecord->practical_score,
-                'assessedAt' => $this->isoDate($attendanceRecord->assessed_at),
             ])
             ->values()
             ->all();
@@ -543,13 +505,11 @@ class BuildCorporatePortal
                 'id' => $certificate->id,
                 'companyName' => $certificate->enrollment?->company?->name ?? 'Not linked',
                 'studentName' => $certificate->studentProfile?->full_name ?? 'Not linked',
-                'profession' => $certificate->studentProfile?->profession,
                 'courseTitle' => $certificate->course?->title ?? 'Not linked',
                 'certificateNumber' => $certificate->certificate_number,
                 'status' => $certificate->status,
                 'result' => $certificate->result,
                 'issuedAt' => $this->isoDate($certificate->issued_at),
-                'expiresAt' => $this->isoDate($certificate->expires_at),
                 'verifyUrl' => route('certificates.verify', ['token' => $certificate->verification_token]),
             ])
             ->values()
@@ -597,10 +557,10 @@ class BuildCorporatePortal
     private function dataSharingGate(): array
     {
         return [
-            'status' => 'pending_sign_off',
-            'releaseLabel' => 'Pending PowerX sign-off',
-            'summary' => 'Public release wording, certificate claims, and company coordinator data-sharing rules still require PowerX sign-off before broad launch.',
-            'scopeRule' => 'This portal only shows company records directly matched to the signed-in coordinator; no write workflows, internal approvals, student contact details, private notes, or other-company records are exposed.',
+            'status' => 'level_2_operational',
+            'releaseLabel' => 'Level 2 operational sharing',
+            'summary' => 'Corporate coordinators can review company-scoped operational records approved for the MVP: profile, quotation, invoice, payment status, employee enrollment, attendance summary, practical outcome, and issued certificate verification links.',
+            'scopeRule' => 'This portal only shows company records directly matched to the signed-in coordinator; no write workflows, internal approvals, student contact details, documents, private notes, payment proofs, audit metadata, exam answers, or other-company records are exposed.',
         ];
     }
 

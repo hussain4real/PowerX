@@ -27,12 +27,12 @@ class ApproveManualPayment
             $before = null;
             $wasApproved = false;
 
-            if ($payment->status !== 'approved') {
+            if ($payment->status !== PaymentTransaction::STATUS_APPROVED) {
                 $before = $this->paymentAuditSnapshot($payment);
                 $wasApproved = true;
 
                 $payment->update([
-                    'status' => 'approved',
+                    'status' => PaymentTransaction::STATUS_APPROVED,
                     'approved_by_id' => $approver->id,
                     'approved_at' => now(),
                     'paid_at' => $payment->paid_at ?? now(),

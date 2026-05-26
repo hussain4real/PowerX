@@ -82,7 +82,7 @@ class PaymentTransactionsTable
                     ->modalHeading('Approve manual payment')
                     ->modalDescription('This will approve the payment and synchronize the linked invoice and enrollment.')
                     ->authorize(fn (): bool => Auth::user()?->can(PowerXPermission::ManagePayments->value) ?? false)
-                    ->visible(fn (PaymentTransaction $record): bool => $record->status === 'pending')
+                    ->visible(fn (PaymentTransaction $record): bool => $record->status === PaymentTransaction::STATUS_PENDING)
                     ->action(function (PaymentTransaction $record, ApproveManualPayment $approveManualPayment): void {
                         $approver = Auth::user();
 

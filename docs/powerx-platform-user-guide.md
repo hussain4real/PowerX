@@ -93,15 +93,15 @@ Instructors do not see the management dashboard, report exports, student portal,
 
 ### Student
 
-Student users land on `/{team}/student-portal`. They can see only their own student profile, enrollments, paid access status, lesson progress, assigned schedule, exams, invoice/payment summary, and certificate verification links.
+Student users land on `/{team}/student-portal`. They can see only their own student profile, enrollments, paid access status, lesson progress, assigned schedule, exams, invoice/payment summary, certificate verification links, and time-limited lesson media links for active paid enrollments.
 
 Students do not see team-level operational records, management metrics, report exports, admin panel, team switcher, team creation, team settings, instructor rosters, or other students' records.
 
 ### Corporate
 
-Corporate users land on `/{team}/corporate-portal`. The MVP corporate portal is intentionally limited while the full coordinator portal is pending. It explains quotation requests, enrollment status boundaries, and the safe access model for company coordinators.
+Corporate users land on `/{team}/corporate-portal`. The MVP corporate portal uses Level 2 operational sharing: matched company profile, quotations, invoice/payment status, employee names, enrollment/course status, attendance summary, practical outcome, and issued certificate verification links.
 
-Corporate users do not see student portal records by default, operations dashboards, reports, admin panel, team settings, team creation, instructor views, or finance internals.
+Corporate users do not see student portal records by default, operations dashboards, report exports outside their company-scoped CSV, admin panel, team settings, team creation, instructor views, student contact details, documents, payment proofs, exam answers, audit metadata, internal approval notes, or finance internals.
 
 ### Support
 
@@ -172,10 +172,10 @@ Use this process:
 1. Select the correct communication template and channel.
 2. Confirm the linked lead, student profile, company, or user.
 3. Review the generated subject and message before sending externally.
-4. For WhatsApp, copy the prepared text or use the generated click-to-chat link where available.
-5. Keep the communication status updated as draft, scheduled, sent, or failed.
+4. Use email for automated delivery. WhatsApp-ready copy may be prepared for manual follow-up only until WhatsApp provider approval.
+5. Keep the communication status updated as draft, scheduled, queued, delivered, retry, opted out, or failed.
 
-The platform prepares message copy only. WhatsApp Business API, automated mail sending, and real-time notification delivery remain deferred until PowerX approves the provider and operational policy.
+The platform queues scheduled email communications with the database queue driver and records delivery lifecycle timestamps. WhatsApp Business API, SMS automation, and real-time notification delivery remain deferred until PowerX approves the provider and operational policy.
 
 ## Finance workflow
 
@@ -185,8 +185,8 @@ Use this process for manual payments:
 
 1. Issue an invoice for the enrollment.
 2. Confirm subtotal, discount, tax, total, due date, and invoice metadata.
-3. Record the manual payment when the student or company provides payment details.
-4. Upload proof for bank transfers, cheques, or other manual payment evidence when available.
+3. Record the manual payment when the student or company provides cash, bank-transfer, or cheque payment details.
+4. Upload proof for bank transfers, cheques, cash receipts, or other approved manual payment evidence when available.
 5. Approve the payment only after verification.
 6. Confirm that the invoice, payment transaction, and enrollment payment status are synchronized.
 
@@ -210,7 +210,7 @@ Recommended content process:
 5. Mark only approved public courses as published.
 6. Use private media collections for course files and student documents.
 
-Paid course content should only be available to students with active, paid enrollments inside the configured access window.
+Paid course content should only be available to students with active, paid enrollments inside the configured access window. Lesson media in the student portal is delivered through signed, authenticated download links and should not be shared as raw storage URLs.
 
 ## Batch, attendance, and practical assessment workflow
 
@@ -339,6 +339,6 @@ The current MVP intentionally defers several advanced features from the broader 
 - Excel export workflows
 - Queue dashboard and Horizon operations
 - Real-time classroom notifications
-- Advanced analytics and BI exports
+- Advanced BI exports beyond GA/Meta Pixel and internal campaign ROI
 
 These can be added later without changing the core course, enrollment, payment, exam, and certificate workflows.

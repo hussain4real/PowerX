@@ -18,6 +18,45 @@ class PaymentTransaction extends Model implements HasMedia
     /** @use HasFactory<PaymentTransactionFactory> */
     use HasFactory, InteractsWithMedia, SoftDeletes;
 
+    public const METHOD_BANK_TRANSFER = 'bank_transfer';
+
+    public const METHOD_CASH = 'cash';
+
+    public const METHOD_CHEQUE = 'cheque';
+
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_APPROVED = 'approved';
+
+    public const STATUS_REJECTED = 'rejected';
+
+    public const STATUS_REFUNDED = 'refunded';
+
+    /**
+     * @return array<string, string>
+     */
+    public static function manualMethodOptions(): array
+    {
+        return config('powerx_payments.manual.methods', [
+            self::METHOD_BANK_TRANSFER => 'Bank transfer',
+            self::METHOD_CASH => 'Cash',
+            self::METHOD_CHEQUE => 'Cheque',
+        ]);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function statusOptions(): array
+    {
+        return [
+            self::STATUS_PENDING => 'Pending',
+            self::STATUS_APPROVED => 'Approved',
+            self::STATUS_REJECTED => 'Rejected',
+            self::STATUS_REFUNDED => 'Refunded',
+        ];
+    }
+
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
@@ -50,12 +89,12 @@ class PaymentTransaction extends Model implements HasMedia
 
     public function scopePendingApproval(Builder $query): Builder
     {
-        return $query->where('status', 'pending');
+        return $query->where('status', self::STATUS_PENDING);
     }
 
     public function scopeApproved(Builder $query): Builder
     {
-        return $query->where('status', 'approved');
+        return $query->where('status', self::STATUS_APPROVED);
     }
 
     public function registerMediaCollections(): void
