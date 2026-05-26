@@ -2,10 +2,11 @@
 
 namespace App\Filament\Resources\CourseModules\Schemas;
 
-use Filament\Forms\Components\Select;
+use App\Filament\Support\PowerXForm;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class CourseModuleForm
@@ -14,21 +15,25 @@ class CourseModuleForm
     {
         return $schema
             ->components([
-                Select::make('course_id')
-                    ->relationship('course', 'title')
-                    ->required(),
-                TextInput::make('title')
-                    ->required(),
-                Textarea::make('summary')
+                Section::make('Module details')
+                    ->columns(2)
+                    ->schema([
+                        PowerXForm::relationshipSelect('course_id', 'course', 'title')
+                            ->required(),
+                        TextInput::make('title')
+                            ->required()
+                            ->maxLength(255),
+                        PowerXForm::integerInput('sort_order')
+                            ->required()
+                            ->default(0),
+                        Toggle::make('is_active')
+                            ->required(),
+                        Textarea::make('summary')
+                            ->autosize()
+                            ->columnSpanFull(),
+                    ])
                     ->columnSpanFull(),
-                TextInput::make('sort_order')
-                    ->required()
-                    ->numeric()
-                    ->default(0),
-                Toggle::make('is_active')
-                    ->required(),
-                Textarea::make('metadata')
-                    ->columnSpanFull(),
+                PowerXForm::metadataSection(),
             ]);
     }
 }

@@ -1,13 +1,19 @@
 <?php
 
+use App\Enums\PowerXRole;
 use App\Enums\TeamRole;
 use App\Http\Middleware\EnsureTeamMembership;
 use App\Models\Team;
 use App\Models\User;
+use Database\Seeders\PowerXAccessSeeder;
 use Illuminate\Support\Facades\Route;
 
+beforeEach(function () {
+    $this->seed(PowerXAccessSeeder::class);
+});
+
 test('dashboard route switches the authenticated user to the route team', function () {
-    $user = User::factory()->create();
+    $user = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
     $team = Team::factory()->create(['name' => 'Second Team']);
     $team->members()->attach($user, ['role' => TeamRole::Member->value]);
 

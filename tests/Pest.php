@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\PowerXRole;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,7 +18,7 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('Feature');
+    ->in('Feature', 'Browser');
 
 /*
 |--------------------------------------------------------------------------
@@ -44,7 +46,9 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function grantPowerXRole(User $user, PowerXRole $role): User
 {
-    // ..
+    $user->assignRole($role->value);
+
+    return $user;
 }

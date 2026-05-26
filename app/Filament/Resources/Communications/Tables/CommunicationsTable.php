@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Communications\Tables;
 
+use App\Models\Communication;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -35,13 +36,39 @@ class CommunicationsTable
                 TextColumn::make('subject')
                     ->searchable(),
                 TextColumn::make('status')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => Communication::statusOptions()[$state] ?? str($state)->headline()->toString())
                     ->searchable(),
                 TextColumn::make('scheduled_at')
                     ->dateTime()
                     ->sortable(),
+                TextColumn::make('queued_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('sent_at')
                     ->dateTime()
                     ->sortable(),
+                TextColumn::make('delivered_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('failed_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('retry_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('retry_count')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('opted_out_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

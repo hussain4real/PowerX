@@ -16,6 +16,11 @@ use Illuminate\Support\Collection;
 
 class BuildOperationalReport
 {
+    public function __construct(
+        private BuildExamAnalytics $buildExamAnalytics,
+        private BuildCampaignAttributionMetrics $buildCampaignAttributionMetrics,
+    ) {}
+
     /**
      * @return array{title: string, team: string, generatedAt: string, sections: array<int, array{key: string, title: string, description: string, columns: array<int, string>, rows: array<int, array<string, string>>}>}
      */
@@ -32,6 +37,7 @@ class BuildOperationalReport
                 $this->courseEnrollmentReport($team),
                 $this->attendancePracticalReport($team),
                 $this->examPerformanceReport($team),
+                $this->examAnalyticsReport($team),
                 $this->certificateReport($team),
                 $this->corporateAccountReport($team),
             ],
@@ -43,31 +49,27 @@ class BuildOperationalReport
      */
     private function leadSourceReport(Team $team): array
     {
-        $rows = Lead::query()
-            ->whereBelongsTo($team)
-            ->select('source', 'campaign')
-            ->selectRaw('COUNT(*) as leads_count')
-            ->selectRaw("SUM(CASE WHEN status = 'qualified' THEN 1 ELSE 0 END) as qualified_count")
-            ->selectRaw("SUM(CASE WHEN status = 'converted' THEN 1 ELSE 0 END) as converted_count")
-            ->groupBy('source', 'campaign')
-            ->orderBy('source')
-            ->orderBy('campaign')
-            ->get()
-            ->map(fn (Lead $lead): array => [
-                'Source' => $lead->source ?: 'Unattributed',
-                'Campaign' => $lead->campaign ?: 'Not set',
-                'Lead count' => (string) (int) $lead->leads_count,
-                'Qualified count' => (string) (int) $lead->qualified_count,
-                'Converted count' => (string) (int) $lead->converted_count,
-                'Conversion rate' => $this->percentage((int) $lead->converted_count, (int) $lead->leads_count),
-                'Revenue' => $this->money('QAR', 0),
+        $rows = $this->buildCampaignAttributionMetrics
+            ->handle($team)
+            ->sortBy(fn (array $campaign): string => "{$campaign['source']}|{$campaign['campaign']}")
+            ->map(fn (array $campaign): array => [
+                'Source' => $campaign['source'],
+                'Campaign' => $campaign['campaign'],
+                'Lead count' => (string) $campaign['leadCount'],
+                'Qualified count' => (string) $campaign['qualifiedCount'],
+                'Converted count' => (string) $campaign['convertedCount'],
+                'Conversion rate' => $campaign['conversionRate'],
+                'Cost' => $campaign['costLabel'],
+                'Revenue' => $campaign['revenueLabel'],
+                'ROI' => $campaign['roiLabel'],
+                'Attribution' => $campaign['attributionStatus'],
             ]);
 
         return $this->section(
             'lead_source',
             'Lead source report',
-            'Measures channel performance and qualified lead conversion.',
-            ['Source', 'Campaign', 'Lead count', 'Qualified count', 'Converted count', 'Conversion rate', 'Revenue'],
+            'Measures internal CRM campaign conversion, approved finance revenue, spend, and ROI with external tracking blocked.',
+            ['Source', 'Campaign', 'Lead count', 'Qualified count', 'Converted count', 'Conversion rate', 'Cost', 'Revenue', 'ROI', 'Attribution'],
             $rows,
         );
     }
@@ -215,26 +217,104 @@ class BuildOperationalReport
     {
         $rows = ExamAttempt::query()
             ->whereBelongsTo($team)
-            ->with(['exam:id,course_id,title', 'exam.course:id,title', 'studentProfile:id,full_name'])
-            ->select(['id', 'exam_id', 'student_profile_id', 'attempt_number', 'result', 'score', 'submitted_at', 'metadata'])
+            ->with([
+                'exam:id,course_id,title',
+                'exam.course:id,title',
+                'studentProfile:id,full_name',
+                'enrollment:id,student_profile_id,course_id',
+                'enrollment.attendanceRecords:id,enrollment_id,training_session_id',
+                'enrollment.attendanceRecords.trainingSession:id,training_batch_id',
+                'enrollment.attendanceRecords.trainingSession.trainingBatch:id,course_id,instructor_id,name',
+                'enrollment.attendanceRecords.trainingSession.trainingBatch.instructor:id,name',
+            ])
+            ->select(['id', 'exam_id', 'enrollment_id', 'student_profile_id', 'attempt_number', 'result', 'score', 'submitted_at', 'metadata'])
             ->orderByDesc('submitted_at')
             ->orderByDesc('id')
             ->get()
-            ->map(fn (ExamAttempt $attempt): array => [
-                'Course' => $attempt->exam?->course?->title ?? 'Not linked',
-                'Exam' => $attempt->exam?->title ?? 'Not linked',
-                'Student' => $attempt->studentProfile?->full_name ?? 'Not linked',
-                'Attempt' => (string) $attempt->attempt_number,
-                'Score' => (string) $attempt->score,
-                'Result' => $attempt->result,
-                'Weak topic' => data_get($attempt->metadata ?? [], 'weak_topic', 'Not recorded'),
-            ]);
+            ->map(function (ExamAttempt $attempt): array {
+                $delivery = $this->deliveryLabels($attempt);
+
+                return [
+                    'Course' => $attempt->exam?->course?->title ?? 'Not linked',
+                    'Batch' => $delivery['batch'],
+                    'Instructor' => $delivery['instructor'],
+                    'Exam' => $attempt->exam?->title ?? 'Not linked',
+                    'Student' => $attempt->studentProfile?->full_name ?? 'Not linked',
+                    'Attempt' => (string) $attempt->attempt_number,
+                    'Score' => (string) $attempt->score,
+                    'Result' => $attempt->result,
+                    'Weak topic' => data_get($attempt->metadata ?? [], 'weak_topic', 'Not recorded'),
+                ];
+            });
 
         return $this->section(
             'exam_performance',
             'Exam performance report',
             'Monitors pass rates, attempts, scores, and weak topics.',
-            ['Course', 'Exam', 'Student', 'Attempt', 'Score', 'Result', 'Weak topic'],
+            ['Course', 'Batch', 'Instructor', 'Exam', 'Student', 'Attempt', 'Score', 'Result', 'Weak topic'],
+            $rows,
+        );
+    }
+
+    /**
+     * @return array{key: string, title: string, description: string, columns: array<int, string>, rows: array<int, array<string, string>>}
+     */
+    private function examAnalyticsReport(Team $team): array
+    {
+        $analytics = $this->buildExamAnalytics->handle($team);
+        $rows = collect($analytics['courses'])
+            ->map(fn (array $course): array => [
+                'Dimension' => 'Course',
+                'Name' => $course['courseTitle'],
+                'Attempts' => (string) $course['attempts'],
+                'Pass rate' => $course['passRate'].'%',
+                'Average score' => (string) $course['averageScore'],
+                'Weak topic' => $analytics['summary']['top_weak_topic'] ?? 'Not recorded',
+                'Details' => "{$course['passed']} passed / {$course['failed']} failed",
+            ])
+            ->merge(collect($analytics['batches'])->map(fn (array $batch): array => [
+                'Dimension' => 'Batch',
+                'Name' => $batch['batchName'],
+                'Attempts' => (string) $batch['attempts'],
+                'Pass rate' => $batch['passRate'].'%',
+                'Average score' => (string) $batch['averageScore'],
+                'Weak topic' => $analytics['summary']['top_weak_topic'] ?? 'Not recorded',
+                'Details' => $batch['courseTitle'],
+            ]))
+            ->merge(collect($analytics['instructors'])->map(fn (array $instructor): array => [
+                'Dimension' => 'Instructor',
+                'Name' => $instructor['instructorName'],
+                'Attempts' => (string) $instructor['attempts'],
+                'Pass rate' => $instructor['passRate'].'%',
+                'Average score' => (string) $instructor['averageScore'],
+                'Weak topic' => $analytics['summary']['top_weak_topic'] ?? 'Not recorded',
+                'Details' => $instructor['courseTitle'],
+            ]))
+            ->merge(collect($analytics['questions'])->map(fn (array $question): array => [
+                'Dimension' => 'Question',
+                'Name' => $question['topic'],
+                'Attempts' => (string) $question['attempts'],
+                'Pass rate' => $question['accuracyRate'].'%',
+                'Average score' => 'Question accuracy',
+                'Weak topic' => (string) $question['incorrectAnswers'],
+                'Details' => $question['difficulty'] ?? 'Not set',
+            ]))
+            ->merge(collect($analytics['weakTopics'])->map(fn (array $topic): array => [
+                'Dimension' => 'Weak topic',
+                'Name' => $topic['topic'],
+                'Attempts' => (string) $topic['occurrences'],
+                'Pass rate' => 'Needs review',
+                'Average score' => (string) $topic['averageScore'],
+                'Weak topic' => $topic['topic'],
+                'Details' => "{$topic['questionCount']} linked questions",
+            ]))
+            ->values();
+
+        return $this->section(
+            'exam_analytics',
+            'Exam analytics report',
+            'Breaks exam outcomes down by course, batch, instructor, question, and weak topic.',
+            ['Dimension', 'Name', 'Attempts', 'Pass rate', 'Average score', 'Weak topic', 'Details'],
             $rows,
         );
     }
@@ -306,6 +386,26 @@ class BuildOperationalReport
     }
 
     /**
+     * @return array{batch: string, instructor: string}
+     */
+    private function deliveryLabels(ExamAttempt $attempt): array
+    {
+        $courseId = $attempt->exam?->course_id;
+        $attendanceRecords = $attempt->enrollment?->attendanceRecords ?? collect();
+        $batches = $attendanceRecords
+            ->filter(fn (AttendanceRecord $attendanceRecord): bool => $attendanceRecord->trainingSession?->trainingBatch?->course_id === $courseId)
+            ->map(fn (AttendanceRecord $attendanceRecord) => $attendanceRecord->trainingSession?->trainingBatch)
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        return [
+            'batch' => $batches->pluck('name')->implode(' / ') ?: 'Unassigned batch',
+            'instructor' => $batches->pluck('instructor.name')->filter()->unique()->implode(' / ') ?: 'Unassigned instructor',
+        ];
+    }
+
+    /**
      * @param  Collection<int, array<string, string>>  $rows
      * @return array{key: string, title: string, description: string, columns: array<int, string>, rows: array<int, array<string, string>>}
      */
@@ -328,10 +428,5 @@ class BuildOperationalReport
     private function money(string $currency, float $amount): string
     {
         return $currency.' '.number_format($amount, 2);
-    }
-
-    private function percentage(int $value, int $total): string
-    {
-        return $total > 0 ? number_format(($value / $total) * 100, 1).'%' : '0.0%';
     }
 }

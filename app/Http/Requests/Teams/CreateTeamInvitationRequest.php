@@ -3,13 +3,25 @@
 namespace App\Http\Requests\Teams;
 
 use App\Enums\TeamRole;
+use App\Models\Team;
 use App\Rules\UniqueTeamInvitation;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class CreateTeamInvitationRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        $team = $this->route('team');
+
+        return $team instanceof Team && Gate::allows('inviteMember', $team);
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *

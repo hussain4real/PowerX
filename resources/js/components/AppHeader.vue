@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
+import {
+    BookOpen,
+    BriefcaseBusiness,
+    Folder,
+    GraduationCap,
+    LayoutGrid,
+    Menu,
+    Search,
+    Settings,
+    ShieldCheck,
+    UsersRound,
+} from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
@@ -37,6 +48,10 @@ import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { portal as corporatePortal } from '@/routes/corporate';
+import { portal as instructorPortal } from '@/routes/instructor';
+import { portal as studentPortal } from '@/routes/student';
+import { index as teamsIndex } from '@/routes/teams';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {
@@ -55,16 +70,128 @@ const dashboardUrl = computed(() =>
     page.props.currentTeam ? dashboard(page.props.currentTeam.slug).url : '/',
 );
 
+const instructorPortalUrl = computed(() =>
+    page.props.currentTeam
+        ? instructorPortal(page.props.currentTeam.slug).url
+        : '/',
+);
+
+const studentPortalUrl = computed(() =>
+    page.props.currentTeam
+        ? studentPortal(page.props.currentTeam.slug).url
+        : '/',
+);
+
+const corporatePortalUrl = computed(() =>
+    page.props.currentTeam
+        ? corporatePortal(page.props.currentTeam.slug).url
+        : '/',
+);
+
+const defaultWorkspaceUrl = computed(() => {
+    if (page.props.can.viewOperationsDashboard) {
+        return dashboardUrl.value;
+    }
+
+    if (page.props.can.viewInstructorPortal) {
+        return instructorPortalUrl.value;
+    }
+
+    if (page.props.can.viewStudentPortal) {
+        return studentPortalUrl.value;
+    }
+
+    if (page.props.can.viewCorporatePortal) {
+        return corporatePortalUrl.value;
+    }
+
+    if (page.props.can.viewAdminPanel) {
+        return '/admin';
+    }
+
+    return '/';
+});
+
+const defaultWorkspaceReloadsPage = computed(
+    () =>
+        !page.props.can.viewOperationsDashboard &&
+        !page.props.can.viewInstructorPortal &&
+        !page.props.can.viewStudentPortal &&
+        !page.props.can.viewCorporatePortal &&
+        page.props.can.viewAdminPanel,
+);
+
+function visitWithPageReload(href: NavItem['href']): void {
+    const url = toUrl(href);
+
+    if (!url) {
+        throw new Error('Navigation item href must resolve to a URL.');
+    }
+
+    window.location.assign(url);
+}
+
+function visitDefaultWorkspaceWithPageReload(): void {
+    window.location.assign(defaultWorkspaceUrl.value);
+}
+
 const activeItemStyles =
     'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100';
 
-const mainNavItems = computed<NavItem[]>(() => [
-    {
-        title: 'Dashboard',
-        href: dashboardUrl.value,
-        icon: LayoutGrid,
-    },
-]);
+const mainNavItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [];
+
+    if (page.props.can.viewOperationsDashboard) {
+        items.push({
+            title: 'Dashboard',
+            href: dashboardUrl.value,
+            icon: LayoutGrid,
+        });
+    }
+
+    if (page.props.can.viewStudentPortal) {
+        items.push({
+            title: 'Student portal',
+            href: studentPortalUrl.value,
+            icon: GraduationCap,
+        });
+    }
+
+    if (page.props.can.viewInstructorPortal) {
+        items.push({
+            title: 'Instructor portal',
+            href: instructorPortalUrl.value,
+            icon: UsersRound,
+        });
+    }
+
+    if (page.props.can.viewCorporatePortal) {
+        items.push({
+            title: 'Corporate portal',
+            href: corporatePortalUrl.value,
+            icon: BriefcaseBusiness,
+        });
+    }
+
+    if (page.props.can.viewAdminPanel) {
+        items.push({
+            title: 'Admin panel',
+            href: '/admin',
+            icon: ShieldCheck,
+            fullPageReload: true,
+        });
+    }
+
+    if (page.props.can.manageTeams) {
+        items.push({
+            title: 'Team settings',
+            href: teamsIndex().url,
+            icon: Settings,
+        });
+    }
+
+    return items;
+});
 
 const rightNavItems: NavItem[] = [
     {
@@ -109,25 +236,50 @@ const rightNavItems: NavItem[] = [
                                 class="flex h-full flex-1 flex-col justify-between space-y-4 py-6"
                             >
                                 <nav class="-mx-3 space-y-1">
-                                    <Link
+                                    <template
                                         v-for="item in mainNavItems"
                                         :key="item.title"
-                                        :href="item.href"
-                                        class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
-                                        :class="
-                                            whenCurrentUrl(
-                                                item.href,
-                                                activeItemStyles,
-                                            )
-                                        "
                                     >
-                                        <component
-                                            v-if="item.icon"
-                                            :is="item.icon"
-                                            class="h-5 w-5"
-                                        />
-                                        {{ item.title }}
-                                    </Link>
+                                        <a
+                                            v-if="item.fullPageReload"
+                                            :href="toUrl(item.href)"
+                                            class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                                            :class="
+                                                whenCurrentUrl(
+                                                    item.href,
+                                                    activeItemStyles,
+                                                )
+                                            "
+                                            @click.prevent.stop="
+                                                visitWithPageReload(item.href)
+                                            "
+                                        >
+                                            <component
+                                                v-if="item.icon"
+                                                :is="item.icon"
+                                                class="h-5 w-5"
+                                            />
+                                            {{ item.title }}
+                                        </a>
+                                        <Link
+                                            v-else
+                                            :href="item.href"
+                                            class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                                            :class="
+                                                whenCurrentUrl(
+                                                    item.href,
+                                                    activeItemStyles,
+                                                )
+                                            "
+                                        >
+                                            <component
+                                                v-if="item.icon"
+                                                :is="item.icon"
+                                                class="h-5 w-5"
+                                            />
+                                            {{ item.title }}
+                                        </Link>
+                                    </template>
                                 </nav>
                                 <div class="flex flex-col space-y-4">
                                     <a
@@ -151,7 +303,19 @@ const rightNavItems: NavItem[] = [
                     </Sheet>
                 </div>
 
-                <Link :href="dashboardUrl" class="flex items-center gap-x-2">
+                <a
+                    v-if="defaultWorkspaceReloadsPage"
+                    :href="defaultWorkspaceUrl"
+                    class="flex items-center gap-x-2"
+                    @click.prevent.stop="visitDefaultWorkspaceWithPageReload()"
+                >
+                    <AppLogo />
+                </a>
+                <Link
+                    v-else
+                    :href="defaultWorkspaceUrl"
+                    class="flex items-center gap-x-2"
+                >
                     <AppLogo />
                 </Link>
 
@@ -166,7 +330,30 @@ const rightNavItems: NavItem[] = [
                                 :key="index"
                                 class="relative flex h-full items-center"
                             >
+                                <a
+                                    v-if="item.fullPageReload"
+                                    :class="[
+                                        navigationMenuTriggerStyle(),
+                                        whenCurrentUrl(
+                                            item.href,
+                                            activeItemStyles,
+                                        ),
+                                        'h-9 cursor-pointer px-3',
+                                    ]"
+                                    :href="toUrl(item.href)"
+                                    @click.prevent.stop="
+                                        visitWithPageReload(item.href)
+                                    "
+                                >
+                                    <component
+                                        v-if="item.icon"
+                                        :is="item.icon"
+                                        class="mr-2 h-4 w-4"
+                                    />
+                                    {{ item.title }}
+                                </a>
                                 <Link
+                                    v-else
                                     :class="[
                                         navigationMenuTriggerStyle(),
                                         whenCurrentUrl(
@@ -271,7 +458,10 @@ const rightNavItems: NavItem[] = [
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                    <TeamSwitcher :in-header="true" />
+                    <TeamSwitcher
+                        v-if="page.props.can.manageTeams"
+                        :in-header="true"
+                    />
                 </div>
             </div>
         </div>

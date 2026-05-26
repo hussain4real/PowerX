@@ -35,12 +35,37 @@ class CommunicationInfolist
                 TextEntry::make('message')
                     ->placeholder('-')
                     ->columnSpanFull(),
-                TextEntry::make('status'),
+                TextEntry::make('status')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => Communication::statusOptions()[$state] ?? str($state)->headline()->toString()),
                 TextEntry::make('scheduled_at')
+                    ->dateTime()
+                    ->placeholder('-'),
+                TextEntry::make('queued_at')
                     ->dateTime()
                     ->placeholder('-'),
                 TextEntry::make('sent_at')
                     ->dateTime()
+                    ->placeholder('-'),
+                TextEntry::make('delivered_at')
+                    ->dateTime()
+                    ->placeholder('-'),
+                TextEntry::make('failed_at')
+                    ->dateTime()
+                    ->placeholder('-'),
+                TextEntry::make('retry_at')
+                    ->dateTime()
+                    ->placeholder('-'),
+                TextEntry::make('retry_count')
+                    ->numeric()
+                    ->placeholder('-'),
+                TextEntry::make('failure_reason')
+                    ->placeholder('-')
+                    ->columnSpanFull(),
+                TextEntry::make('opted_out_at')
+                    ->dateTime()
+                    ->placeholder('-'),
+                TextEntry::make('opt_out_reason')
                     ->placeholder('-'),
                 TextEntry::make('metadata')
                     ->placeholder('-')

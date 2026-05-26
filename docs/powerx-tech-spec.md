@@ -125,6 +125,8 @@ Both products should be built with the same Laravel/Vue/Inertia architecture so 
 
 PowerX includes online payment support, but the final provider remains a client decision. The implementation must isolate provider-specific logic behind an internal adapter so the application domain talks to a stable payment interface.
 
+Current implementation note: PowerX only includes the internal `PaymentGateway` seam, checkout/webhook/reconciliation status DTOs, and a null adapter that logs redacted metadata without creating gateway sessions. Real provider credentials, checkout and webhook callback URLs, refunds/voids, legal/tax wording, and settlement/reconciliation details remain gated for client sign-off.
+
 | **Interface / record** | **Required behavior**                                                                                                | **Notes**                                                                                           |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | PaymentGateway         | Create checkout/session, verify callback/webhook, fetch payment status, request refund/void if provider supports it. | Concrete adapters may include Stripe/Cashier, MyFatoorah, PayTabs, or bank-transfer manual adapter. |

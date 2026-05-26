@@ -13,7 +13,7 @@ class TeamPolicy
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->canManagePowerXTeams();
     }
 
     /**
@@ -21,7 +21,8 @@ class TeamPolicy
      */
     public function view(User $user, Team $team): bool
     {
-        return $user->belongsToTeam($team);
+        return $user->belongsToTeam($team)
+            && $user->canManagePowerXTeams();
     }
 
     /**
@@ -29,7 +30,7 @@ class TeamPolicy
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->canManagePowerXTeams();
     }
 
     /**
@@ -37,7 +38,8 @@ class TeamPolicy
      */
     public function update(User $user, Team $team): bool
     {
-        return $user->hasTeamPermission($team, TeamPermission::UpdateTeam);
+        return $this->view($user, $team)
+            && $user->hasTeamPermission($team, TeamPermission::UpdateTeam);
     }
 
     /**
@@ -45,7 +47,8 @@ class TeamPolicy
      */
     public function addMember(User $user, Team $team): bool
     {
-        return $user->hasTeamPermission($team, TeamPermission::AddMember);
+        return $this->view($user, $team)
+            && $user->hasTeamPermission($team, TeamPermission::AddMember);
     }
 
     /**
@@ -53,7 +56,8 @@ class TeamPolicy
      */
     public function updateMember(User $user, Team $team): bool
     {
-        return $user->hasTeamPermission($team, TeamPermission::UpdateMember);
+        return $this->view($user, $team)
+            && $user->hasTeamPermission($team, TeamPermission::UpdateMember);
     }
 
     /**
@@ -61,7 +65,8 @@ class TeamPolicy
      */
     public function removeMember(User $user, Team $team): bool
     {
-        return $user->hasTeamPermission($team, TeamPermission::RemoveMember);
+        return $this->view($user, $team)
+            && $user->hasTeamPermission($team, TeamPermission::RemoveMember);
     }
 
     /**
@@ -69,7 +74,8 @@ class TeamPolicy
      */
     public function inviteMember(User $user, Team $team): bool
     {
-        return $user->hasTeamPermission($team, TeamPermission::CreateInvitation);
+        return $this->view($user, $team)
+            && $user->hasTeamPermission($team, TeamPermission::CreateInvitation);
     }
 
     /**
@@ -77,7 +83,8 @@ class TeamPolicy
      */
     public function cancelInvitation(User $user, Team $team): bool
     {
-        return $user->hasTeamPermission($team, TeamPermission::CancelInvitation);
+        return $this->view($user, $team)
+            && $user->hasTeamPermission($team, TeamPermission::CancelInvitation);
     }
 
     /**
@@ -85,6 +92,8 @@ class TeamPolicy
      */
     public function delete(User $user, Team $team): bool
     {
-        return ! $team->is_personal && $user->hasTeamPermission($team, TeamPermission::DeleteTeam);
+        return ! $team->is_personal
+            && $this->view($user, $team)
+            && $user->hasTeamPermission($team, TeamPermission::DeleteTeam);
     }
 }

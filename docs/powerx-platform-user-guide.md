@@ -13,7 +13,7 @@ The current MVP focuses on the core PowerX workflow:
 5. Students complete lessons and exams.
 6. Management reviews reports and issues certificates for eligible students.
 
-## Main access points
+## Main access points and access boundaries
 
 | Area | Path | Used by |
 | --- | --- | --- |
@@ -21,9 +21,15 @@ The current MVP focuses on the core PowerX workflow:
 | Course catalog | `/courses` | Visitors, prospects, students |
 | Course details and registration | `/courses/{course-slug}` | Visitors, prospects |
 | Certificate verification | `/certificates/verify/{token}` | Public verifiers |
-| Dashboard | `/dashboard` | Authenticated users |
+| Operations dashboard | `/{team}/dashboard` | Management and Admin only |
+| Student portal | `/{team}/student-portal` | Students with a student profile or student role |
+| Instructor portal | `/{team}/instructor-portal` | Instructors and authorized attendance users |
+| Corporate portal | `/{team}/corporate-portal` | Corporate coordinators |
 | Admin panel | `/admin` | Authorized PowerX staff |
+| Team settings | `/settings/teams` | Management/Admin team owners only |
 | Style guide | `/style-guide` | Internal review during build |
+
+Students and corporate coordinators should not see operations dashboards, report exports, admin resources, team creation, or team-management pages. Staff roles without report permission land in the admin panel instead of the management dashboard.
 
 ## Local demo data
 
@@ -39,6 +45,7 @@ All demo users use the password `password`:
 
 | Persona | Email | Use for |
 | --- | --- | --- |
+| Test management user | `test@example.com` | Local management dashboard with populated demo records |
 | Management | `management@powerx.test` | Dashboard, reports, certificate oversight |
 | Admin | `admin@powerx.test` | Course setup, registrations, operations |
 | Sales | `sales@powerx.test` | Leads, follow-ups, campaigns |
@@ -52,20 +59,67 @@ The demo workspace is named `PowerX Training Center` and includes fictional comp
 
 Demo data must not be treated as real customer data. It uses fictional `.test` email addresses and public-safe content inspired by PowerX marketing themes.
 
-## Roles and responsibilities
+## Role-based operating guide
 
-| Role | Main responsibilities |
-| --- | --- |
-| Management | Reviews dashboards, oversees revenue, enrollments, certificates, and operational performance. |
-| Admin | Manages users, roles, permissions, courses, settings, and day-to-day platform configuration. |
-| Sales | Captures and follows up on leads, manages inquiries, and supports registration conversion. |
-| Finance | Issues invoices, records manual payments, verifies payment proofs, and updates payment status. |
-| Instructor | Manages batches, attendance, practical assessment outcomes, and course delivery records. |
-| Student | Registers for courses, accesses approved course materials, completes lessons and exams. |
-| Corporate | Represents a company or group inquiry and tracks company-linked training needs. |
-| Support | Helps users, monitors communications, and handles operational support requests. |
+### Management
 
-Access in the admin panel depends on the role and permissions assigned to the user. If a staff member cannot open `/admin` or cannot see a feature, confirm that they have the correct PowerX role and the `Access admin panel` permission.
+Management users use `/{team}/dashboard` as their landing page. They can see the operations dashboard, CSV/PDF report exports, admin panel, and team settings when they own or manage the team. Use this role for executive oversight, revenue review, enrollment trends, attendance performance, exam outcomes, certificate issuance, renewal opportunities, and audit-sensitive reporting.
+
+Management should not bypass finance approval, certificate eligibility, or audit workflows. Use `test@example.com` locally when you want an immediately populated management dashboard.
+
+### Admin
+
+Admin users can access `/admin` and the operations dashboard when assigned the seeded Admin role. They manage platform configuration, PowerX courses, packages, modules, lessons, batches, exams, certificates, settings, and team administration where their team role allows it.
+
+Admins should use team settings only for PowerX workspace administration. They should not use personal teams for operational demo review.
+
+### Sales
+
+Sales users land in `/admin` and see CRM/admissions resources such as leads, companies, student profiles, enrollments, and communication follow-ups. They should qualify prospects, update campaign/source information, maintain follow-up dates, and support registration conversion.
+
+Sales users do not see the management dashboard, report exports, finance approval tools, team settings, student portal, instructor portal, or corporate portal.
+
+### Finance
+
+Finance users land in `/admin` and see admissions context plus finance resources such as invoices and payment transactions. They issue invoices, review manual payment evidence, approve verified payments, and confirm invoice/payment/enrollment synchronization.
+
+Finance users do not see the management dashboard, report exports, team settings, student portal, instructor portal, or corporate portal unless their role is intentionally expanded.
+
+### Instructor
+
+Instructor users land on `/{team}/instructor-portal`. They can review assigned batches, session rosters, attendance status, practical outcomes, comments, and course resources. Instructors also have admin access to training delivery resources that support their assigned operational work.
+
+Instructors do not see the management dashboard, report exports, student portal, corporate portal, or team settings.
+
+### Student
+
+Student users land on `/{team}/student-portal`. They can see only their own student profile, enrollments, paid access status, lesson progress, assigned schedule, exams, invoice/payment summary, and certificate verification links.
+
+Students do not see team-level operational records, management metrics, report exports, admin panel, team switcher, team creation, team settings, instructor rosters, or other students' records.
+
+### Corporate
+
+Corporate users land on `/{team}/corporate-portal`. The MVP corporate portal is intentionally limited while the full coordinator portal is pending. It explains quotation requests, enrollment status boundaries, and the safe access model for company coordinators.
+
+Corporate users do not see student portal records by default, operations dashboards, reports, admin panel, team settings, team creation, instructor views, or finance internals.
+
+### Support
+
+Support users land in `/admin` and focus on communications, support follow-up, leads, registrations, and user assistance workflows. They help keep communication history accurate and route issues to sales, finance, instructors, or management.
+
+Support users do not see the management dashboard, report exports, finance approval tools, team settings, student portal, instructor portal, or corporate portal.
+
+Access in the admin panel depends on the role and permissions assigned to the user. If a staff member cannot open `/admin` or cannot see a feature, confirm that they have the correct PowerX role and the `Access admin panel` permission. If a user sees a menu item outside their role, treat that as an access-control bug and review the shared Inertia `can` flags and backend policy/permission gates.
+
+## Admin form conventions
+
+Filament admin forms are organized by workflow instead of raw database order. Use the visible sections, tabs, and wizard steps to complete records in the intended sequence: customer or learner first, then course/package or financial details, then approval, scheduling, publishing, or review state.
+
+Status, type, method, currency, result, delivery mode, question type, and document status fields use controlled choices to prevent inconsistent values. Advanced metadata is available only in collapsed structured fields for support/import context.
+
+Some fields are intentionally read-only in forms because they are controlled by audited workflows: payment approval status and approver, delivery sent timestamps, enrollment approval markers, attendance marker/assessor fields, exam attempt payloads, certificate approver, and certificate PDF timestamps. Use the relevant table action or workflow instead of manually editing those fields.
+
+Upload fields in Filament use private Media Library collections. Staff can attach course cover images, course syllabi, lesson videos, lesson learning materials, student documents, and payment proof files from the relevant resource forms. Generated invoice and certificate PDFs remain read-only in forms and should be created or replaced through the controlled finance/certificate workflows.
 
 ## Public course and inquiry workflow
 
@@ -175,6 +229,16 @@ For each training session, instructors or authorized staff can record attendance
 
 Practical assessment outcomes can be recorded against attendance records. Use the outcome, score, and comments fields to document the instructor's practical evaluation.
 
+Authorized staff can also manage schedule changes without bypassing the operational record:
+
+1. Reschedule a session when the date, time, or venue changes.
+2. Cancel a session with a reason when it should no longer appear as an active class.
+3. Transfer an enrollment to another batch for the same team and course when capacity is available.
+4. Record make-up classes for missed sessions, optionally linking the original missed attendance record.
+5. Review the generated communication drafts before sending class updates externally.
+
+These workflows create audit events and keep student/instructor portal schedules aligned with the latest batch and session records.
+
 ## Exam workflow
 
 Exams are connected to courses and use active questions from the course question bank.
@@ -196,6 +260,8 @@ When submitting an attempt, the platform checks that:
 - Submitted questions belong to the exam course and are active.
 
 The platform stores normalized answers, score, pass or fail result, duration, and submission time.
+
+Exam analytics aggregate outcomes by course, exam, student, batch, instructor, question, topic, and weak-topic signals. Use these analytics to identify topics that need additional revision, classes that need instructor follow-up, and question-bank items that may need review.
 
 ## Certificate workflow
 
@@ -239,7 +305,7 @@ Current dashboard metrics include:
 - Weekly revenue
 - Pending payments
 - Attendance counts
-- Exam pass rate
+- Exam pass rate, average score, and top weak topic
 - Issued certificates
 - Renewal opportunities, overdue renewals, and tracked campaigns
 
@@ -247,7 +313,7 @@ Management should use these metrics for daily oversight and follow up with the r
 
 Authorized management and reporting users can export the operational report from the dashboard:
 
-1. Use **CSV export** for spreadsheet review of lead source, sales pipeline, weekly revenue, course enrollment, attendance and practical, exam performance, certificate, and corporate account sections.
+1. Use **CSV export** for spreadsheet review of lead source, sales pipeline, weekly revenue, course enrollment, attendance and practical, exam performance, exam analytics, certificate, and corporate account sections.
 2. Use **PDF report** for printable management summaries and formal review packs.
 3. Treat every export as sensitive business data. The platform records an audit event when a report file is generated.
 

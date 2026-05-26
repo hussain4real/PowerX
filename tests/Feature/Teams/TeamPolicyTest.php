@@ -1,20 +1,28 @@
 <?php
 
+use App\Enums\PowerXRole;
 use App\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\User;
 use App\Policies\TeamPolicy;
+use Database\Seeders\PowerXAccessSeeder;
+
+beforeEach(function () {
+    $this->seed(PowerXAccessSeeder::class);
+});
 
 test('team policy authorizes actions based on membership roles', function () {
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
-    $member = User::factory()->create();
+    $owner = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
+    $admin = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
+    $member = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
     $outsider = User::factory()->create();
+    $student = grantPowerXRole(User::factory()->create(), PowerXRole::Student);
     $team = Team::factory()->create();
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
     $team->members()->attach($admin, ['role' => TeamRole::Admin->value]);
     $team->members()->attach($member, ['role' => TeamRole::Member->value]);
+    $team->members()->attach($student, ['role' => TeamRole::Owner->value]);
 
     $policy = new TeamPolicy;
 
@@ -22,6 +30,7 @@ test('team policy authorizes actions based on membership roles', function () {
         ->and($policy->create($owner))->toBeTrue()
         ->and($policy->view($owner, $team))->toBeTrue()
         ->and($policy->view($outsider, $team))->toBeFalse()
+        ->and($policy->view($student, $team))->toBeFalse()
         ->and($policy->update($owner, $team))->toBeTrue()
         ->and($policy->update($admin, $team))->toBeTrue()
         ->and($policy->update($member, $team))->toBeFalse()

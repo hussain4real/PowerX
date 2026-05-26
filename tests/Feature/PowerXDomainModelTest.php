@@ -142,3 +142,33 @@ it('persists the core PowerX training workflow relationships', function () {
         ->and($certificate->verification_token)->not->toBeEmpty()
         ->and($communication->studentProfile->is($profile))->toBeTrue();
 });
+
+it('tracks internal course and lesson content retirement without hiding active records', function () {
+    $team = Team::factory()->create();
+    $replacementCourse = Course::factory()->for($team)->create(['title' => 'Updated Electrical Prep']);
+    $course = Course::factory()->for($team)->create([
+        'content_revision' => 2,
+        'content_retired_at' => now()->subDay(),
+        'replacement_course_id' => $replacementCourse->id,
+        'content_retirement_note' => 'Preparing updated course content.',
+    ]);
+    $module = CourseModule::factory()->for($course)->create(['is_active' => true]);
+    $replacementLesson = Lesson::factory()->for($module, 'courseModule')->create(['title' => 'Updated safety overview']);
+    $lesson = Lesson::factory()->for($module, 'courseModule')->create([
+        'content_revision' => 3,
+        'content_retired_at' => now()->subDay(),
+        'replacement_lesson_id' => $replacementLesson->id,
+        'content_retirement_note' => 'Preparing updated lesson content.',
+        'is_active' => true,
+    ]);
+
+    expect(Course::contentRetired()->whereKey($course)->exists())->toBeTrue()
+        ->and($course->fresh()->isContentRetired())->toBeTrue()
+        ->and($course->fresh()->replacementCourse->is($replacementCourse))->toBeTrue()
+        ->and($replacementCourse->replacedCourses()->whereKey($course)->exists())->toBeTrue()
+        ->and(Lesson::active()->whereKey($lesson)->exists())->toBeTrue()
+        ->and(Lesson::contentRetired()->whereKey($lesson)->exists())->toBeTrue()
+        ->and($lesson->fresh()->isContentRetired())->toBeTrue()
+        ->and($lesson->fresh()->replacementLesson->is($replacementLesson))->toBeTrue()
+        ->and($replacementLesson->replacedLessons()->whereKey($lesson)->exists())->toBeTrue();
+});

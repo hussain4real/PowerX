@@ -41,6 +41,10 @@ class CourseFactory extends Factory
             'is_featured' => fake()->boolean(30),
             'metadata' => ['level' => fake()->randomElement(['foundation', 'intermediate', 'advanced'])],
             'published_at' => now(),
+            'content_revision' => 1,
+            'content_retired_at' => null,
+            'replacement_course_id' => null,
+            'content_retirement_note' => null,
         ];
     }
 }

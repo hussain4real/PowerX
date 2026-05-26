@@ -37,6 +37,13 @@ class LessonsTable
                     ->boolean(),
                 IconColumn::make('is_active')
                     ->boolean(),
+                TextColumn::make('content_revision')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('content_retired_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

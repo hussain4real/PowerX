@@ -35,8 +35,11 @@ class UpdateLessonProgress
 
             $completedAt = $progress?->completed_at
                 ?? ($progressPercentage >= 100 ? ($data['completed_at'] ?? now()) : null);
+            $lessonContentRevision = $progress?->lesson_content_revision
+                ?? (int) ($lesson->content_revision ?? 1);
 
             $attributes = [
+                'lesson_content_revision' => $lessonContentRevision,
                 'progress_percentage' => $progressPercentage,
                 'last_position_seconds' => $lastPositionSeconds,
                 'started_at' => $data['started_at'] ?? $progress?->started_at ?? now(),

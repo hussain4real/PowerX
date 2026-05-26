@@ -41,6 +41,13 @@ class CoursesTable
                     ->sortable(),
                 IconColumn::make('is_featured')
                     ->boolean(),
+                TextColumn::make('content_revision')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('content_retired_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('published_at')
                     ->dateTime()
                     ->sortable(),

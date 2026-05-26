@@ -49,6 +49,9 @@ test('authorized staff can download operational reports as csv', function (): vo
         ->toContain('Course enrollment report')
         ->toContain('Attendance and practical report')
         ->toContain('Exam performance report')
+        ->toContain('PX-REPORT-001')
+        ->toContain('Reporting Manager')
+        ->toContain('Exam analytics report')
         ->toContain('Switchgear safety')
         ->toContain('Certificate report')
         ->toContain('Corporate account report')
@@ -106,9 +109,31 @@ test('operational report builder returns empty sections for new teams', function
 
     expect($report['title'])->toBe('PowerX Operational Report')
         ->and($report['team'])->toBe('Empty Reporting Team')
-        ->and($report['sections'])->toHaveCount(8)
+        ->and($report['sections'])->toHaveCount(9)
         ->and($report['sections'][0]['rows'])->toBe([])
-        ->and($report['sections'][7]['rows'])->toBe([]);
+        ->and($report['sections'][8]['rows'])->toBe([]);
+});
+
+test('operational report attributes campaign revenue and roi from internal records', function (): void {
+    [$manager, $team] = powerxReportFixtures();
+
+    $report = app(BuildOperationalReport::class)->handle($team);
+    $leadSource = collect($report['sections'])->firstWhere('key', 'lead_source');
+    $campaign = collect($leadSource['rows'])->firstWhere('Campaign', 'Website Blitz');
+
+    expect($campaign)->toMatchArray([
+        'Source' => 'website',
+        'Campaign' => 'Website Blitz',
+        'Lead count' => '2',
+        'Qualified count' => '1',
+        'Converted count' => '1',
+        'Conversion rate' => '50.0%',
+        'Cost' => 'QAR 300.00',
+        'Revenue' => 'QAR 1,200.00',
+        'ROI' => '300.0%',
+        'Attribution' => 'Blocked - internal CRM/finance attribution only',
+    ])
+        ->and($manager->exists)->toBeTrue();
 });
 
 /**
@@ -202,6 +227,8 @@ function powerxReportFixtures(): array
             'metadata' => [
                 'quotation_number' => 'PX-QUO-REPORT',
                 'payment_status' => 'quotation sent',
+                'campaign_cost' => 300,
+                'campaign_cost_currency' => 'QAR',
             ],
         ]);
     Lead::factory()

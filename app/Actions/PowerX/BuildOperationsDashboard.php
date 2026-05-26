@@ -13,7 +13,10 @@ use Illuminate\Support\Collection;
 
 class BuildOperationsDashboard
 {
-    public function __construct(private BuildRenewalGrowthOpportunities $buildRenewalGrowthOpportunities) {}
+    public function __construct(
+        private BuildRenewalGrowthOpportunities $buildRenewalGrowthOpportunities,
+        private BuildExamAnalytics $buildExamAnalytics,
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -23,7 +26,8 @@ class BuildOperationsDashboard
         $leads = $this->leadMetrics($team);
         $enrollments = $this->enrollmentMetrics($team);
         $finance = $this->financeMetrics($team);
-        $learning = $this->learningMetrics($team);
+        $examAnalytics = $this->buildExamAnalytics->handle($team);
+        $learning = $this->learningMetrics($team, $examAnalytics);
         $growth = $this->growthMetrics($team);
 
         return [
@@ -138,9 +142,10 @@ class BuildOperationsDashboard
     }
 
     /**
-     * @return array<string, int|float>
+     * @param  array<string, mixed>  $examAnalytics
+     * @return array<string, int|float|string|null>
      */
-    private function learningMetrics(Team $team): array
+    private function learningMetrics(Team $team, array $examAnalytics): array
     {
         $attendanceTotal = AttendanceRecord::query()
             ->whereBelongsTo($team)
@@ -165,6 +170,9 @@ class BuildOperationsDashboard
             'exam_attempts' => $examAttempts,
             'passed_attempts' => $passedAttempts,
             'exam_pass_rate' => $examAttempts > 0 ? round(($passedAttempts / $examAttempts) * 100, 1) : 0.0,
+            'average_exam_score' => $examAnalytics['summary']['average_score'],
+            'top_weak_topic' => $examAnalytics['summary']['top_weak_topic'] ?? null,
+            'top_weak_topic_count' => $examAnalytics['summary']['top_weak_topic_occurrences'],
             'certificates_issued' => Certificate::query()
                 ->whereBelongsTo($team)
                 ->where('status', 'issued')
@@ -173,16 +181,22 @@ class BuildOperationsDashboard
     }
 
     /**
-     * @return array<string, int>
+     * @return array<string, int|string|null>
      */
     private function growthMetrics(Team $team): array
     {
         $opportunities = $this->buildRenewalGrowthOpportunities->handle($team);
+        $summary = $opportunities['summary'];
 
         return [
-            'renewal_opportunities' => $opportunities['summary']['renewal_count'],
-            'overdue_renewals' => $opportunities['summary']['overdue_count'],
-            'campaigns_tracked' => $opportunities['summary']['campaign_count'],
+            'renewal_opportunities' => $summary['renewal_count'],
+            'overdue_renewals' => $summary['overdue_count'],
+            'campaigns_tracked' => $summary['campaign_count'],
+            'campaign_revenue_label' => $summary['campaign_revenue_label'],
+            'campaign_cost_label' => $summary['campaign_cost_label'],
+            'campaign_roi_label' => $summary['campaign_roi_label'],
+            'campaign_roi_leader' => $summary['campaign_roi_leader'],
+            'tracking_status' => $summary['tracking_status'],
         ];
     }
 

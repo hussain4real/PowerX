@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\Companies\Schemas;
 
-use Filament\Forms\Components\Select;
+use App\Filament\Support\PowerXForm;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class CompanyForm
@@ -13,19 +14,28 @@ class CompanyForm
     {
         return $schema
             ->components([
-                Select::make('team_id')
-                    ->relationship('team', 'name'),
-                TextInput::make('name')
-                    ->required(),
-                TextInput::make('contact_name'),
-                TextInput::make('email')
-                    ->label('Email address')
-                    ->email(),
-                TextInput::make('phone')
-                    ->tel(),
-                TextInput::make('address'),
-                Textarea::make('metadata')
+                PowerXForm::teamId(),
+                Section::make('Company details')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        TextInput::make('contact_name')
+                            ->maxLength(255),
+                        TextInput::make('email')
+                            ->label('Email address')
+                            ->email()
+                            ->maxLength(255),
+                        TextInput::make('phone')
+                            ->tel()
+                            ->maxLength(50),
+                        Textarea::make('address')
+                            ->autosize()
+                            ->columnSpanFull(),
+                    ])
                     ->columnSpanFull(),
+                PowerXForm::metadataSection(),
             ]);
     }
 }

@@ -13,11 +13,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-#[Fillable(['team_id', 'title', 'slug', 'category', 'status', 'delivery_mode', 'currency', 'base_price', 'validity_days', 'summary', 'description', 'is_featured', 'metadata', 'published_at'])]
+#[Fillable(['team_id', 'title', 'slug', 'category', 'status', 'delivery_mode', 'currency', 'base_price', 'validity_days', 'summary', 'description', 'is_featured', 'metadata', 'published_at', 'content_revision', 'content_retired_at', 'replacement_course_id', 'content_retirement_note'])]
 class Course extends Model implements HasMedia
 {
     /** @use HasFactory<CourseFactory> */
     use HasFactory, InteractsWithMedia, SoftDeletes;
+
+    protected $attributes = [
+        'content_revision' => 1,
+    ];
 
     public function team(): BelongsTo
     {
@@ -64,6 +68,16 @@ class Course extends Model implements HasMedia
         return $this->hasMany(Certificate::class);
     }
 
+    public function replacementCourse(): BelongsTo
+    {
+        return $this->belongsTo(Course::class, 'replacement_course_id');
+    }
+
+    public function replacedCourses(): HasMany
+    {
+        return $this->hasMany(Course::class, 'replacement_course_id');
+    }
+
     public function scopePublished(Builder $query): Builder
     {
         return $query
@@ -80,6 +94,16 @@ class Course extends Model implements HasMedia
             && ($this->published_at === null || $this->published_at->isPast());
     }
 
+    public function scopeContentRetired(Builder $query): Builder
+    {
+        return $query->whereNotNull('content_retired_at');
+    }
+
+    public function isContentRetired(): bool
+    {
+        return $this->content_retired_at !== null && $this->content_retired_at->isPast();
+    }
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('cover-image')->singleFile()->useDisk('local');
@@ -93,9 +117,11 @@ class Course extends Model implements HasMedia
     {
         return [
             'base_price' => 'decimal:2',
+            'content_revision' => 'integer',
             'is_featured' => 'boolean',
             'metadata' => 'array',
             'published_at' => 'datetime',
+            'content_retired_at' => 'datetime',
         ];
     }
 

@@ -23,7 +23,14 @@ declare module '@inertiajs/core' {
             currentTeam: Team | null;
             teams: Team[];
             can: {
+                viewAdminPanel: boolean;
+                viewOperationsDashboard: boolean;
+                viewStudentPortal: boolean;
                 viewInstructorPortal: boolean;
+                viewCorporatePortal: boolean;
+                viewReports: boolean;
+                manageTeams: boolean;
+                createTeams: boolean;
             };
             [key: string]: unknown;
         };

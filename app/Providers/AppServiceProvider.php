@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
+use App\Contracts\Payments\PaymentGateway;
+use App\Payments\NullPaymentGateway;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Psr\Log\LoggerInterface;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -15,7 +18,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(PaymentGateway::class, fn ($app): PaymentGateway => new NullPaymentGateway(
+            $app->make(LoggerInterface::class),
+            config('powerx_payments.gateway.pending_sign_off', []),
+        ));
     }
 
     /**

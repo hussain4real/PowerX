@@ -32,6 +32,10 @@ class LessonFactory extends Factory
             'is_preview' => fake()->boolean(20),
             'is_active' => true,
             'metadata' => ['requires_completion' => true],
+            'content_revision' => 1,
+            'content_retired_at' => null,
+            'replacement_lesson_id' => null,
+            'content_retirement_note' => null,
         ];
     }
 }

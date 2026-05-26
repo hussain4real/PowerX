@@ -35,6 +35,7 @@ const updateIsMobile = () => {
 
 const currentTeam = computed(() => page.props.currentTeam);
 const teams = computed(() => page.props.teams ?? []);
+const canCreateTeams = computed(() => page.props.can.createTeams);
 const menuContentClass = computed(() =>
     props.inHeader
         ? 'w-56'
@@ -154,8 +155,8 @@ onUnmounted(() => {
                     :class="checkIconClass"
                 />
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <CreateTeamModal>
+            <DropdownMenuSeparator v-if="canCreateTeams" />
+            <CreateTeamModal v-if="canCreateTeams">
                 <DropdownMenuItem
                     data-test="team-switcher-new-team"
                     :class="teamItemClass"

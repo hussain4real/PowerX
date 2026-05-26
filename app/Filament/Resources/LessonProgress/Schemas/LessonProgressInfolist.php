@@ -16,6 +16,8 @@ class LessonProgressInfolist
                     ->label('Enrollment'),
                 TextEntry::make('lesson.title')
                     ->label('Lesson'),
+                TextEntry::make('lesson_content_revision')
+                    ->numeric(),
                 TextEntry::make('progress_percentage')
                     ->numeric(),
                 TextEntry::make('last_position_seconds')

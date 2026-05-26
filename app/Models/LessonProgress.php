@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['enrollment_id', 'lesson_id', 'progress_percentage', 'last_position_seconds', 'started_at', 'completed_at', 'metadata'])]
+#[Fillable(['enrollment_id', 'lesson_id', 'lesson_content_revision', 'progress_percentage', 'last_position_seconds', 'started_at', 'completed_at', 'metadata'])]
 class LessonProgress extends Model
 {
     /** @use HasFactory<LessonProgressFactory> */
@@ -19,6 +19,7 @@ class LessonProgress extends Model
     protected $table = 'lesson_progress';
 
     protected $attributes = [
+        'lesson_content_revision' => 1,
         'progress_percentage' => 0,
         'last_position_seconds' => 0,
     ];
@@ -44,6 +45,7 @@ class LessonProgress extends Model
     protected function casts(): array
     {
         return [
+            'lesson_content_revision' => 'integer',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
             'metadata' => 'array',

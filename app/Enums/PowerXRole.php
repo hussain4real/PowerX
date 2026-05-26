@@ -39,13 +39,11 @@ enum PowerXRole: string
                 PowerXPermission::ManageLeads,
                 PowerXPermission::ManageRegistrations,
                 PowerXPermission::ManageCommunications,
-                PowerXPermission::ViewReports,
             ],
             self::Finance => [
                 PowerXPermission::AdminAccess,
                 PowerXPermission::ManageRegistrations,
                 PowerXPermission::ManagePayments,
-                PowerXPermission::ViewReports,
             ],
             self::Instructor => [
                 PowerXPermission::AdminAccess,
@@ -54,7 +52,6 @@ enum PowerXRole: string
                 PowerXPermission::ManageBatches,
                 PowerXPermission::ManageAttendance,
                 PowerXPermission::ManageExams,
-                PowerXPermission::ViewReports,
             ],
             self::Support => [
                 PowerXPermission::AdminAccess,

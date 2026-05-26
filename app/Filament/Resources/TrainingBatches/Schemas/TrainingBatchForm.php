@@ -2,10 +2,11 @@
 
 namespace App\Filament\Resources\TrainingBatches\Schemas;
 
+use App\Filament\Support\PowerXForm;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class TrainingBatchForm
@@ -14,28 +15,46 @@ class TrainingBatchForm
     {
         return $schema
             ->components([
-                Select::make('team_id')
-                    ->relationship('team', 'name'),
-                Select::make('course_id')
-                    ->relationship('course', 'title')
-                    ->required(),
-                Select::make('instructor_id')
-                    ->relationship('instructor', 'name'),
-                TextInput::make('name')
-                    ->required(),
-                TextInput::make('delivery_mode')
-                    ->required()
-                    ->default('classroom'),
-                TextInput::make('venue'),
-                TextInput::make('capacity')
-                    ->numeric(),
-                TextInput::make('status')
-                    ->required()
-                    ->default('scheduled'),
-                DateTimePicker::make('starts_at'),
-                DateTimePicker::make('ends_at'),
-                Textarea::make('metadata')
+                PowerXForm::teamId(),
+                Section::make('Batch setup')
+                    ->columns(2)
+                    ->schema([
+                        PowerXForm::relationshipSelect('course_id', 'course', 'title')
+                            ->required(),
+                        Select::make('instructor_id')
+                            ->relationship('instructor', 'name')
+                            ->searchable(),
+                        TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        Select::make('delivery_mode')
+                            ->options([
+                                'classroom' => 'Classroom',
+                                'online' => 'Online',
+                                'blended' => 'Blended',
+                            ])
+                            ->required()
+                            ->default('classroom')
+                            ->native(false),
+                        TextInput::make('venue')
+                            ->maxLength(255),
+                        PowerXForm::integerInput('capacity'),
+                        Select::make('status')
+                            ->options([
+                                'scheduled' => 'Scheduled',
+                                'active' => 'Active',
+                                'completed' => 'Completed',
+                                'cancelled' => 'Cancelled',
+                            ])
+                            ->required()
+                            ->default('scheduled')
+                            ->native(false),
+                        DateTimePicker::make('starts_at'),
+                        DateTimePicker::make('ends_at')
+                            ->afterOrEqual('starts_at'),
+                    ])
                     ->columnSpanFull(),
+                PowerXForm::metadataSection(),
             ]);
     }
 }

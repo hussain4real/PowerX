@@ -1,11 +1,17 @@
 <?php
 
+use App\Enums\PowerXRole;
 use App\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\User;
+use Database\Seeders\PowerXAccessSeeder;
+
+beforeEach(function () {
+    $this->seed(PowerXAccessSeeder::class);
+});
 
 test('the teams index page can be rendered', function () {
-    $user = User::factory()->create();
+    $user = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
 
     $response = $this
         ->actingAs($user)
@@ -15,7 +21,7 @@ test('the teams index page can be rendered', function () {
 });
 
 test('teams can be created', function () {
-    $user = User::factory()->create();
+    $user = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
 
     $response = $this
         ->actingAs($user)
@@ -32,7 +38,7 @@ test('teams can be created', function () {
 });
 
 test('team slug uses next available suffix', function () {
-    $user = User::factory()->create();
+    $user = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
 
     Team::factory()->create(['name' => 'Acme', 'slug' => 'acme']);
     Team::factory()->create(['name' => 'Acme One', 'slug' => 'acme-1']);
@@ -51,7 +57,7 @@ test('team slug uses next available suffix', function () {
 });
 
 test('teams cannot be created with reserved names', function () {
-    $user = User::factory()->create();
+    $user = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
 
     $response = $this
         ->actingAs($user)
@@ -67,7 +73,7 @@ test('teams cannot be created with reserved names', function () {
 });
 
 test('the team edit page can be rendered', function () {
-    $user = User::factory()->create();
+    $user = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
     $team = Team::factory()->create();
 
     $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
@@ -80,7 +86,7 @@ test('the team edit page can be rendered', function () {
 });
 
 test('teams can be updated by owners', function () {
-    $user = User::factory()->create();
+    $user = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
     $team = Team::factory()->create(['name' => 'Original Name']);
 
     $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
@@ -101,7 +107,7 @@ test('teams can be updated by owners', function () {
 
 test('teams cannot be updated by members', function () {
     $owner = User::factory()->create();
-    $member = User::factory()->create();
+    $member = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
     $team = Team::factory()->create();
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
@@ -117,7 +123,7 @@ test('teams cannot be updated by members', function () {
 });
 
 test('teams can be deleted by owners', function () {
-    $user = User::factory()->create();
+    $user = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
     $team = Team::factory()->create();
 
     $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
@@ -136,7 +142,7 @@ test('teams can be deleted by owners', function () {
 });
 
 test('team deletion requires name confirmation', function () {
-    $user = User::factory()->create();
+    $user = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
     $team = Team::factory()->create();
 
     $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
@@ -156,7 +162,7 @@ test('team deletion requires name confirmation', function () {
 });
 
 test('deleting current team switches to alphabetically first remaining team', function () {
-    $user = User::factory()->create(['name' => 'Mike']);
+    $user = grantPowerXRole(User::factory()->create(['name' => 'Mike']), PowerXRole::Management);
 
     $zuluTeam = Team::factory()->create(['name' => 'Zulu Team']);
     $zuluTeam->members()->attach($user, ['role' => TeamRole::Owner->value]);
@@ -185,7 +191,7 @@ test('deleting current team switches to alphabetically first remaining team', fu
 });
 
 test('deleting current team falls back to personal team when alphabetically first', function () {
-    $user = User::factory()->create();
+    $user = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
     $personalTeam = $user->personalTeam();
     $team = Team::factory()->create(['name' => 'Zulu Team']);
     $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
@@ -208,7 +214,7 @@ test('deleting current team falls back to personal team when alphabetically firs
 });
 
 test('deleting non current team leaves current team unchanged', function () {
-    $user = User::factory()->create();
+    $user = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
     $personalTeam = $user->personalTeam();
     $team = Team::factory()->create();
     $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
@@ -231,7 +237,7 @@ test('deleting non current team leaves current team unchanged', function () {
 });
 
 test('deleting team switches other affected users to their personal team', function () {
-    $owner = User::factory()->create();
+    $owner = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
     $member = User::factory()->create();
 
     $team = Team::factory()->create();
@@ -253,7 +259,7 @@ test('deleting team switches other affected users to their personal team', funct
 });
 
 test('personal teams cannot be deleted', function () {
-    $user = User::factory()->create();
+    $user = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
 
     $personalTeam = $user->personalTeam();
 
@@ -273,7 +279,7 @@ test('personal teams cannot be deleted', function () {
 
 test('teams cannot be deleted by non owners', function () {
     $owner = User::factory()->create();
-    $member = User::factory()->create();
+    $member = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
     $team = Team::factory()->create();
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
@@ -289,7 +295,7 @@ test('teams cannot be deleted by non owners', function () {
 });
 
 test('users can switch teams', function () {
-    $user = User::factory()->create();
+    $user = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
     $team = Team::factory()->create();
 
     $team->members()->attach($user, ['role' => TeamRole::Member->value]);
@@ -318,4 +324,24 @@ test('guests cannot access teams', function () {
     $response = $this->get(route('teams.index'));
 
     $response->assertRedirect(route('login'));
+});
+
+test('students cannot access team management surfaces', function () {
+    $student = grantPowerXRole(User::factory()->create(), PowerXRole::Student);
+    $team = $student->currentTeam;
+
+    $this
+        ->actingAs($student)
+        ->get(route('teams.index'))
+        ->assertForbidden();
+
+    $this
+        ->actingAs($student)
+        ->post(route('teams.store'), ['name' => 'Student Team'])
+        ->assertForbidden();
+
+    $this
+        ->actingAs($student)
+        ->get(route('teams.edit', $team))
+        ->assertForbidden();
 });

@@ -30,6 +30,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('PowerX Operations')
             ->profile()
             ->sidebarCollapsibleOnDesktop()
+            ->databaseNotifications()
             ->colors([
                 'primary' => Color::Amber,
             ])

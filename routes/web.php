@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\CertificatePdfController;
 use App\Http\Controllers\CertificateVerificationController;
+use App\Http\Controllers\CorporatePortalController;
+use App\Http\Controllers\CorporatePortalReportController;
 use App\Http\Controllers\CorporateQuotationController;
 use App\Http\Controllers\CourseCatalogController;
 use App\Http\Controllers\CourseRegistrationController;
@@ -34,7 +36,9 @@ Route::prefix('{current_team}')
         Route::get('instructor-portal', InstructorPortalController::class)
             ->middleware('can:attendance.manage')
             ->name('instructor.portal');
-        Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('corporate-portal', CorporatePortalController::class)->name('corporate.portal');
+        Route::get('corporate-portal/report.csv', [CorporatePortalReportController::class, 'csv'])->name('corporate.portal.report.csv');
+        Route::prefix('reports')->middleware('can:reports.view')->name('reports.')->group(function () {
             Route::get('operational.csv', [ReportExportController::class, 'csv'])->name('operational.csv');
             Route::get('operational.pdf', [ReportExportController::class, 'pdf'])->name('operational.pdf');
         });

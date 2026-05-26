@@ -82,6 +82,7 @@ class PowerXDemoSeeder extends Seeder
     private function seedUsers(Team $team): array
     {
         $personas = [
+            'test' => ['name' => 'Test User', 'email' => 'test@example.com', 'role' => PowerXRole::Management, 'teamRole' => TeamRole::Owner],
             'management' => ['name' => 'Mariam PowerX Manager', 'email' => 'management@powerx.test', 'role' => PowerXRole::Management, 'teamRole' => TeamRole::Owner],
             'admin' => ['name' => 'Omar Admin', 'email' => 'admin@powerx.test', 'role' => PowerXRole::Admin, 'teamRole' => TeamRole::Admin],
             'sales' => ['name' => 'Noura Sales', 'email' => 'sales@powerx.test', 'role' => PowerXRole::Sales, 'teamRole' => TeamRole::Member],
@@ -602,7 +603,13 @@ class PowerXDemoSeeder extends Seeder
                 'follow_up_at' => now()->addDay(),
                 'outcome' => null,
                 'converted_at' => null,
-                'metadata' => ['demo' => true, 'utm_source' => 'local-demo'],
+                'metadata' => [
+                    'demo' => true,
+                    'utm_source' => 'local-demo',
+                    'campaign_cost' => 450,
+                    'campaign_cost_currency' => 'QAR',
+                    'attribution_basis' => 'Internal demo CRM spend only; external tracking remains blocked.',
+                ],
             ],
         );
 
@@ -622,7 +629,13 @@ class PowerXDemoSeeder extends Seeder
                 'follow_up_at' => now()->addDays(2),
                 'outcome' => null,
                 'converted_at' => null,
-                'metadata' => ['demo' => true, 'team_size' => 8],
+                'metadata' => [
+                    'demo' => true,
+                    'team_size' => 8,
+                    'campaign_cost' => 900,
+                    'campaign_cost_currency' => 'QAR',
+                    'attribution_basis' => 'Internal demo referral spend only; external tracking remains blocked.',
+                ],
             ],
         );
 
@@ -657,7 +670,15 @@ class PowerXDemoSeeder extends Seeder
                 'message' => 'Hello Rashid, PowerX can help with Kahramaa-focused preparation, mock exams, and practical sessions. Would you like the next weekend batch details?',
                 'status' => Communication::STATUS_SCHEDULED,
                 'scheduled_at' => now()->addHours(4),
+                'queued_at' => null,
                 'sent_at' => null,
+                'delivered_at' => null,
+                'failed_at' => null,
+                'retry_at' => null,
+                'retry_count' => 0,
+                'failure_reason' => null,
+                'opted_out_at' => null,
+                'opt_out_reason' => null,
                 'metadata' => ['demo' => true, 'whatsapp_url' => 'https://wa.me/97456667788'],
             ],
         );
@@ -673,7 +694,15 @@ class PowerXDemoSeeder extends Seeder
                 'message' => 'Your PowerX course access is active. This demo reminder shows how finance follow-up messages are tracked before external sending is enabled.',
                 'status' => Communication::STATUS_DRAFT,
                 'scheduled_at' => null,
+                'queued_at' => null,
                 'sent_at' => null,
+                'delivered_at' => null,
+                'failed_at' => null,
+                'retry_at' => null,
+                'retry_count' => 0,
+                'failure_reason' => null,
+                'opted_out_at' => null,
+                'opt_out_reason' => null,
                 'metadata' => ['demo' => true],
             ],
         );

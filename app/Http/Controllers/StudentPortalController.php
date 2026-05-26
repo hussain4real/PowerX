@@ -11,6 +11,8 @@ class StudentPortalController extends Controller
 {
     public function __invoke(Request $request, BuildStudentPortal $buildStudentPortal): Response
     {
+        abort_unless($request->user()->canViewStudentPortal($request->user()->currentTeam), 403);
+
         return Inertia::render('Student/Portal', $buildStudentPortal->handle(
             user: $request->user(),
             team: $request->user()->currentTeam,

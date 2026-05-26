@@ -26,6 +26,7 @@ test('demo seeder creates a playable local PowerX workspace idempotently', funct
     $this->seed(PowerXDemoSeeder::class);
 
     $team = Team::query()->where('slug', 'powerx-training-center')->firstOrFail();
+    $testUser = User::query()->where('email', 'test@example.com')->firstOrFail();
     $student = User::query()->where('email', 'student@powerx.test')->firstOrFail();
     $instructor = User::query()->where('email', 'instructor@powerx.test')->firstOrFail();
 
@@ -41,6 +42,8 @@ test('demo seeder creates a playable local PowerX workspace idempotently', funct
         ->and(Certificate::query()->whereBelongsTo($team)->count())->toBe(3)
         ->and(Communication::query()->whereBelongsTo($team)->count())->toBe(2)
         ->and(AuditEvent::query()->whereBelongsTo($team)->count())->toBe(2)
+        ->and($testUser->currentTeam->is($team))->toBeTrue()
+        ->and($testUser->hasRole(PowerXRole::Management->value))->toBeTrue()
         ->and($student->hasRole(PowerXRole::Student->value))->toBeTrue()
         ->and($instructor->hasRole(PowerXRole::Instructor->value))->toBeTrue();
 
@@ -52,6 +55,10 @@ test('demo seeder creates a playable local PowerX workspace idempotently', funct
         ->and($dashboard['summaryCards'][1]['value'])->toBe('QAR 7,950')
         ->and($dashboard['finance']['pending_payments'])->toBe(1)
         ->and($dashboard['growth']['renewal_opportunities'])->toBe(2)
+        ->and($dashboard['growth']['campaigns_tracked'])->toBe(2)
+        ->and($dashboard['growth']['campaign_revenue_label'])->toBe('QAR 6,600.00')
+        ->and($dashboard['growth']['campaign_cost_label'])->toBe('QAR 1,350.00')
+        ->and($dashboard['growth']['campaign_roi_label'])->toBe('633.3%')
         ->and($studentPortal['profile']['fullName'])->toBe('Fatima Ali')
         ->and($studentPortal['summary']['enrolledCourses'])->toBe(2)
         ->and($studentPortal['summary']['pendingPayments'])->toBe(1)

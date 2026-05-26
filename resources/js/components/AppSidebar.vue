@@ -2,9 +2,12 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import {
     BookOpen,
+    BriefcaseBusiness,
     FolderGit2,
     GraduationCap,
     LayoutGrid,
+    Settings,
+    ShieldCheck,
     UsersRound,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -23,8 +26,10 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { portal as corporatePortal } from '@/routes/corporate';
 import { portal as instructorPortal } from '@/routes/instructor';
 import { portal as studentPortal } from '@/routes/student';
+import { index as teamsIndex } from '@/routes/teams';
 import type { NavItem } from '@/types';
 
 const page = usePage();
@@ -45,25 +50,98 @@ const studentPortalUrl = computed(() =>
         : '/',
 );
 
+const corporatePortalUrl = computed(() =>
+    page.props.currentTeam
+        ? corporatePortal(page.props.currentTeam.slug).url
+        : '/',
+);
+
+const defaultWorkspaceUrl = computed(() => {
+    if (page.props.can.viewOperationsDashboard) {
+        return dashboardUrl.value;
+    }
+
+    if (page.props.can.viewInstructorPortal) {
+        return instructorPortalUrl.value;
+    }
+
+    if (page.props.can.viewStudentPortal) {
+        return studentPortalUrl.value;
+    }
+
+    if (page.props.can.viewCorporatePortal) {
+        return corporatePortalUrl.value;
+    }
+
+    if (page.props.can.viewAdminPanel) {
+        return '/admin';
+    }
+
+    return '/';
+});
+
+const defaultWorkspaceReloadsPage = computed(
+    () =>
+        !page.props.can.viewOperationsDashboard &&
+        !page.props.can.viewInstructorPortal &&
+        !page.props.can.viewStudentPortal &&
+        !page.props.can.viewCorporatePortal &&
+        page.props.can.viewAdminPanel,
+);
+
+function visitDefaultWorkspaceWithPageReload(): void {
+    window.location.assign(defaultWorkspaceUrl.value);
+}
+
 const mainNavItems = computed<NavItem[]>(() => {
-    const items: NavItem[] = [
-        {
+    const items: NavItem[] = [];
+
+    if (page.props.can.viewOperationsDashboard) {
+        items.push({
             title: 'Dashboard',
             href: dashboardUrl.value,
             icon: LayoutGrid,
-        },
-        {
+        });
+    }
+
+    if (page.props.can.viewStudentPortal) {
+        items.push({
             title: 'Student portal',
             href: studentPortalUrl.value,
             icon: GraduationCap,
-        },
-    ];
+        });
+    }
 
     if (page.props.can.viewInstructorPortal) {
         items.push({
             title: 'Instructor portal',
             href: instructorPortalUrl.value,
             icon: UsersRound,
+        });
+    }
+
+    if (page.props.can.viewCorporatePortal) {
+        items.push({
+            title: 'Corporate portal',
+            href: corporatePortalUrl.value,
+            icon: BriefcaseBusiness,
+        });
+    }
+
+    if (page.props.can.viewAdminPanel) {
+        items.push({
+            title: 'Admin panel',
+            href: '/admin',
+            icon: ShieldCheck,
+            fullPageReload: true,
+        });
+    }
+
+    if (page.props.can.manageTeams) {
+        items.push({
+            title: 'Team settings',
+            href: teamsIndex().url,
+            icon: Settings,
         });
     }
 
@@ -90,13 +168,22 @@ const footerNavItems: NavItem[] = [
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="dashboardUrl">
+                        <a
+                            v-if="defaultWorkspaceReloadsPage"
+                            :href="defaultWorkspaceUrl"
+                            @click.prevent.stop="
+                                visitDefaultWorkspaceWithPageReload()
+                            "
+                        >
+                            <AppLogo />
+                        </a>
+                        <Link v-else :href="defaultWorkspaceUrl">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
             </SidebarMenu>
-            <SidebarMenu>
+            <SidebarMenu v-if="page.props.can.manageTeams">
                 <SidebarMenuItem>
                     <TeamSwitcher />
                 </SidebarMenuItem>

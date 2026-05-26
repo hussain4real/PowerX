@@ -7,7 +7,9 @@ use App\Models\Communication;
 use App\Models\Company;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\Invoice;
 use App\Models\Lead;
+use App\Models\PaymentTransaction;
 use App\Models\StudentProfile;
 use App\Models\Team;
 use Carbon\CarbonImmutable;
@@ -34,10 +36,14 @@ test('renewal growth opportunities include expiring certificates recommendations
         ->and($opportunities['campaigns'][0])->toMatchArray([
             'source' => 'referral',
             'campaign' => 'contractor-alumni',
-            'leadCount' => '2',
-            'qualifiedCount' => '1',
-            'convertedCount' => '1',
+            'leadCount' => 2,
+            'qualifiedCount' => 1,
+            'convertedCount' => 1,
             'conversionRate' => '50.0%',
+            'costLabel' => 'QAR 300.00',
+            'revenueLabel' => 'QAR 1,200.00',
+            'roiLabel' => '300.0%',
+            'attributionStatus' => 'Blocked - internal CRM/finance attribution only',
         ]);
 });
 
@@ -134,16 +140,40 @@ function powerxRenewalFixtures(CarbonImmutable $now): array
         'status' => 'issued',
         'expires_at' => $now->addDays(10),
     ]);
-    Lead::factory()->for($team)->create([
-        'source' => 'referral',
-        'campaign' => 'contractor-alumni',
-        'status' => 'qualified',
-    ]);
-    Lead::factory()->for($team)->create([
-        'source' => 'referral',
-        'campaign' => 'contractor-alumni',
-        'status' => 'converted',
-    ]);
+    Lead::factory()
+        ->for($team)
+        ->for($company)
+        ->for($currentCourse)
+        ->create([
+            'source' => 'referral',
+            'campaign' => 'contractor-alumni',
+            'status' => 'qualified',
+            'metadata' => ['campaign_cost' => 300, 'campaign_cost_currency' => 'QAR'],
+        ]);
+    Lead::factory()
+        ->for($team)
+        ->for($company)
+        ->for($currentCourse)
+        ->create([
+            'email' => $profile->email,
+            'phone' => $profile->mobile,
+            'source' => 'referral',
+            'campaign' => 'contractor-alumni',
+            'status' => 'converted',
+        ]);
+    $invoice = Invoice::factory()
+        ->for($team)
+        ->for($company)
+        ->for($profile, 'studentProfile')
+        ->for($enrollment)
+        ->create(['status' => 'paid', 'currency' => 'QAR', 'total' => 1200]);
+    PaymentTransaction::factory()
+        ->for($team)
+        ->for($company)
+        ->for($profile, 'studentProfile')
+        ->for($enrollment)
+        ->for($invoice)
+        ->create(['status' => 'approved', 'currency' => 'QAR', 'amount' => 1200]);
 
     return [$team, $certificate];
 }

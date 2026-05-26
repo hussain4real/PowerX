@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PowerXRole;
 use App\Models\AttendanceRecord;
 use App\Models\Certificate;
 use App\Models\Course;
@@ -16,7 +17,12 @@ use App\Models\StudentProfile;
 use App\Models\TrainingBatch;
 use App\Models\TrainingSession;
 use App\Models\User;
+use Database\Seeders\PowerXAccessSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
+
+beforeEach(function () {
+    $this->seed(PowerXAccessSeeder::class);
+});
 
 test('students see their course access progress schedule exams finance and certificates', function () {
     $this->withoutVite();
@@ -51,7 +57,13 @@ test('students see their course access progress schedule exams finance and certi
         ->create(['title' => 'Permit and safety rules', 'sort_order' => 1]);
     $completedLesson = Lesson::factory()
         ->for($module, 'courseModule')
-        ->create(['title' => 'Kahramaa permit overview', 'is_preview' => true, 'sort_order' => 1]);
+        ->create([
+            'title' => 'Kahramaa permit overview',
+            'is_preview' => true,
+            'sort_order' => 1,
+            'content_revision' => 2,
+            'content_retired_at' => now()->subDay(),
+        ]);
     $lockedLesson = Lesson::factory()
         ->for($module, 'courseModule')
         ->create(['title' => 'Paid mock exam walkthrough', 'is_preview' => false, 'sort_order' => 2]);
@@ -71,6 +83,7 @@ test('students see their course access progress schedule exams finance and certi
         ->for($openEnrollment)
         ->for($completedLesson, 'lesson')
         ->create([
+            'lesson_content_revision' => 2,
             'progress_percentage' => 100,
             'completed_at' => now(),
         ]);
@@ -176,6 +189,7 @@ test('students see their course access progress schedule exams finance and certi
             ->where('enrollments.3.package.name', 'Exam Ready')
             ->where('enrollments.3.progress.completedLessons', 1)
             ->where('enrollments.3.progress.totalLessons', 2)
+            ->where('enrollments.3.modules.0.lessons.0.title', 'Kahramaa permit overview')
             ->where('enrollments.3.modules.0.lessons.0.isCompleted', true)
             ->where('enrollments.3.modules.0.lessons.1.isLocked', false)
             ->where('enrollments.3.schedule.0.batch.name', 'PX-WKND-01')
@@ -190,6 +204,7 @@ test('student portal renders an onboarding state when no profile is linked', fun
     $this->withoutVite();
 
     $user = User::factory()->create();
+    $user->assignRole(PowerXRole::Student->value);
 
     $this->actingAs($user)
         ->get(route('student.portal', ['current_team' => $user->currentTeam]))

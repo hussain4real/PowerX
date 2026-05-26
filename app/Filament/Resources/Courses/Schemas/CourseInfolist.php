@@ -36,6 +36,17 @@ class CourseInfolist
                     ->columnSpanFull(),
                 IconEntry::make('is_featured')
                     ->boolean(),
+                TextEntry::make('content_revision')
+                    ->numeric(),
+                TextEntry::make('content_retired_at')
+                    ->dateTime()
+                    ->placeholder('-'),
+                TextEntry::make('replacementCourse.title')
+                    ->label('Replacement course')
+                    ->placeholder('-'),
+                TextEntry::make('content_retirement_note')
+                    ->placeholder('-')
+                    ->columnSpanFull(),
                 TextEntry::make('metadata')
                     ->placeholder('-')
                     ->columnSpanFull(),

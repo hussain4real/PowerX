@@ -16,6 +16,7 @@ import type { Team } from '@/types';
 
 type Props = {
     teams: Team[];
+    canCreateTeams: boolean;
 };
 
 defineProps<Props>();
@@ -45,7 +46,7 @@ defineOptions({
                 description="Manage your teams and team memberships"
             />
 
-            <CreateTeamModal>
+            <CreateTeamModal v-if="canCreateTeams">
                 <Button data-test="teams-new-team-button">
                     <Plus /> New team
                 </Button>

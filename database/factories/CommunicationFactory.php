@@ -40,10 +40,23 @@ class CommunicationFactory extends Factory
             'status' => fake()->randomElement([
                 Communication::STATUS_DRAFT,
                 Communication::STATUS_SCHEDULED,
+                Communication::STATUS_QUEUED,
                 Communication::STATUS_SENT,
+                Communication::STATUS_DELIVERED,
+                Communication::STATUS_FAILED,
+                Communication::STATUS_RETRY,
+                Communication::STATUS_OPTED_OUT,
             ]),
             'scheduled_at' => fake()->optional()->dateTimeBetween('now', '+1 week'),
+            'queued_at' => null,
             'sent_at' => null,
+            'delivered_at' => null,
+            'failed_at' => null,
+            'retry_at' => null,
+            'retry_count' => 0,
+            'failure_reason' => null,
+            'opted_out_at' => null,
+            'opt_out_reason' => null,
             'metadata' => ['source' => 'system'],
         ];
     }

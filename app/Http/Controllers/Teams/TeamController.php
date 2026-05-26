@@ -25,8 +25,11 @@ class TeamController extends Controller
     {
         $user = $request->user();
 
+        Gate::authorize('viewAny', Team::class);
+
         return Inertia::render('teams/Index', [
             'teams' => $user->toUserTeams(includeCurrent: true),
+            'canCreateTeams' => Gate::allows('create', Team::class),
         ]);
     }
 
@@ -48,6 +51,8 @@ class TeamController extends Controller
     public function edit(Request $request, Team $team): Response
     {
         $user = $request->user();
+
+        Gate::authorize('view', $team);
 
         return Inertia::render('teams/Edit', [
             'team' => [
@@ -104,7 +109,7 @@ class TeamController extends Controller
      */
     public function switch(Request $request, Team $team): RedirectResponse
     {
-        abort_unless($request->user()->belongsToTeam($team), 403);
+        Gate::authorize('view', $team);
 
         $request->user()->switchTeam($team);
 

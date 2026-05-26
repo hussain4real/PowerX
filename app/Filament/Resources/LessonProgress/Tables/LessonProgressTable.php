@@ -22,6 +22,9 @@ class LessonProgressTable
                     ->searchable(),
                 TextColumn::make('lesson.title')
                     ->searchable(),
+                TextColumn::make('lesson_content_revision')
+                    ->numeric()
+                    ->sortable(),
                 TextColumn::make('progress_percentage')
                     ->numeric()
                     ->sortable(),

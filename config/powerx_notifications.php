@@ -17,6 +17,26 @@ return [
             'message' => 'Hello {{ student_name }}, your PowerX session {{ session_title }} is scheduled for {{ session_time }} at {{ venue }}.',
             'whatsapp' => 'Reminder from PowerX: {{ session_title }} is on {{ session_time }} at {{ venue }}.',
         ],
+        'class_schedule_changed' => [
+            'subject' => 'PowerX class schedule update: {{ session_title }}',
+            'message' => 'Hello {{ student_name }}, your PowerX session {{ session_title }} has moved from {{ previous_session_time }} to {{ new_session_time }} at {{ venue }}. Reason: {{ reason }}.',
+            'whatsapp' => 'PowerX schedule update: {{ session_title }} is now on {{ new_session_time }} at {{ venue }}. Reason: {{ reason }}.',
+        ],
+        'class_cancelled' => [
+            'subject' => 'PowerX class cancelled: {{ session_title }}',
+            'message' => 'Hello {{ student_name }}, your PowerX session {{ session_title }} planned for {{ session_time }} has been cancelled. Reason: {{ reason }}. Our team will confirm the next step.',
+            'whatsapp' => 'PowerX update: {{ session_title }} planned for {{ session_time }} has been cancelled. Reason: {{ reason }}.',
+        ],
+        'batch_transfer' => [
+            'subject' => 'PowerX batch transfer for {{ course_title }}',
+            'message' => 'Hello {{ student_name }}, your {{ course_title }} enrollment has been moved to batch {{ batch_name }}. First session: {{ first_session_time }} at {{ venue }}. Reason: {{ reason }}.',
+            'whatsapp' => 'PowerX batch update: {{ course_title }} is now assigned to {{ batch_name }}. First session: {{ first_session_time }} at {{ venue }}.',
+        ],
+        'make_up_class' => [
+            'subject' => 'PowerX make-up class assigned: {{ session_title }}',
+            'message' => 'Hello {{ student_name }}, a make-up class {{ session_title }} has been assigned for {{ session_time }} at {{ venue }}. Reason: {{ reason }}.',
+            'whatsapp' => 'PowerX make-up class: {{ session_title }} is scheduled for {{ session_time }} at {{ venue }}.',
+        ],
         'certificate_issued' => [
             'subject' => 'Your PowerX certificate is ready',
             'message' => 'Congratulations {{ student_name }}. Your certificate {{ certificate_number }} for {{ course_title }} has been issued and can be verified online.',

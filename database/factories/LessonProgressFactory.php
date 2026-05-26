@@ -24,6 +24,7 @@ class LessonProgressFactory extends Factory
         return [
             'enrollment_id' => Enrollment::factory(),
             'lesson_id' => Lesson::factory(),
+            'lesson_content_revision' => 1,
             'progress_percentage' => $progress,
             'last_position_seconds' => fake()->numberBetween(0, 3600),
             'started_at' => now()->subMinutes(fake()->numberBetween(5, 90)),

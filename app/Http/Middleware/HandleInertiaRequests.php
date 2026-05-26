@@ -3,7 +3,9 @@
 namespace App\Http\Middleware;
 
 use App\Enums\PowerXPermission;
+use App\Models\Team;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -37,6 +39,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $currentTeam = $user?->currentTeam;
 
         return [
             ...parent::share($request),
@@ -45,10 +48,17 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'currentTeam' => fn () => $user?->currentTeam ? $user->toUserTeam($user->currentTeam) : null,
-            'teams' => fn () => $user?->toUserTeams(includeCurrent: true) ?? [],
+            'currentTeam' => fn () => $currentTeam ? $user?->toUserTeam($currentTeam) : null,
+            'teams' => fn () => $user?->canManagePowerXTeams() ? $user->toUserTeams(includeCurrent: true) : [],
             'can' => [
-                'viewInstructorPortal' => $user?->can(PowerXPermission::ManageAttendance->value) ?? false,
+                'viewAdminPanel' => $user?->can(PowerXPermission::AdminAccess->value) ?? false,
+                'viewOperationsDashboard' => $user?->canViewOperationsDashboard() ?? false,
+                'viewStudentPortal' => $user?->canViewStudentPortal($currentTeam) ?? false,
+                'viewInstructorPortal' => $user?->canViewInstructorPortal() ?? false,
+                'viewCorporatePortal' => $user?->canViewCorporatePortal() ?? false,
+                'viewReports' => $user?->can(PowerXPermission::ViewReports->value) ?? false,
+                'manageTeams' => $user ? Gate::forUser($user)->allows('viewAny', Team::class) : false,
+                'createTeams' => $user ? Gate::forUser($user)->allows('create', Team::class) : false,
             ],
         ];
     }

@@ -30,6 +30,17 @@ class LessonInfolist
                     ->boolean(),
                 IconEntry::make('is_active')
                     ->boolean(),
+                TextEntry::make('content_revision')
+                    ->numeric(),
+                TextEntry::make('content_retired_at')
+                    ->dateTime()
+                    ->placeholder('-'),
+                TextEntry::make('replacementLesson.title')
+                    ->label('Replacement lesson')
+                    ->placeholder('-'),
+                TextEntry::make('content_retirement_note')
+                    ->placeholder('-')
+                    ->columnSpanFull(),
                 TextEntry::make('metadata')
                     ->placeholder('-')
                     ->columnSpanFull(),

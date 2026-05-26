@@ -4,7 +4,6 @@ namespace App\Actions\PowerX;
 
 use App\Models\Certificate;
 use App\Models\Course;
-use App\Models\Lead;
 use App\Models\Team;
 use Illuminate\Support\Collection;
 
@@ -12,8 +11,10 @@ class BuildRenewalGrowthOpportunities
 {
     public const RENEWAL_WINDOW_DAYS = 60;
 
+    public function __construct(private BuildCampaignAttributionMetrics $buildCampaignAttributionMetrics) {}
+
     /**
-     * @return array{summary: array{renewal_count: int, overdue_count: int, campaign_count: int}, renewals: array<int, array<string, mixed>>, campaigns: array<int, array<string, string>>}
+     * @return array{summary: array<string, mixed>, renewals: array<int, array<string, mixed>>, campaigns: array<int, array<string, mixed>>}
      */
     public function handle(Team $team): array
     {
@@ -29,13 +30,15 @@ class BuildRenewalGrowthOpportunities
             ->get()
             ->map(fn (Certificate $certificate): array => $this->formatRenewal($certificate, $courseCatalog))
             ->values();
-        $campaigns = $this->campaignPerformance($team);
+        $campaigns = $this->buildCampaignAttributionMetrics->handle($team);
+        $campaignSummary = $this->buildCampaignAttributionMetrics->summarize($campaigns);
 
         return [
             'summary' => [
                 'renewal_count' => $renewals->count(),
                 'overdue_count' => $renewals->filter(fn (array $renewal): bool => $renewal['daysUntilExpiry'] < 0)->count(),
                 'campaign_count' => $campaigns->count(),
+                ...$campaignSummary,
             ],
             'renewals' => $renewals->all(),
             'campaigns' => $campaigns->all(),
@@ -110,35 +113,5 @@ class BuildRenewalGrowthOpportunities
             ])
             ->values()
             ->all();
-    }
-
-    /**
-     * @return Collection<int, array<string, string>>
-     */
-    private function campaignPerformance(Team $team): Collection
-    {
-        return Lead::query()
-            ->whereBelongsTo($team)
-            ->select('source', 'campaign')
-            ->selectRaw('COUNT(*) as lead_count')
-            ->selectRaw("SUM(CASE WHEN status = 'qualified' THEN 1 ELSE 0 END) as qualified_count")
-            ->selectRaw("SUM(CASE WHEN status = 'converted' THEN 1 ELSE 0 END) as converted_count")
-            ->groupBy('source', 'campaign')
-            ->orderByDesc('converted_count')
-            ->orderByDesc('qualified_count')
-            ->get()
-            ->map(fn (Lead $lead): array => [
-                'source' => $lead->source ?: 'Unattributed',
-                'campaign' => $lead->campaign ?: 'Not set',
-                'leadCount' => (string) (int) $lead->lead_count,
-                'qualifiedCount' => (string) (int) $lead->qualified_count,
-                'convertedCount' => (string) (int) $lead->converted_count,
-                'conversionRate' => $this->percentage((int) $lead->converted_count, (int) $lead->lead_count),
-            ]);
-    }
-
-    private function percentage(int $value, int $total): string
-    {
-        return $total > 0 ? number_format(($value / $total) * 100, 1).'%' : '0.0%';
     }
 }

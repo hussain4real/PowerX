@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Concerns\HasTeams;
 use App\Enums\PowerXPermission;
+use App\Enums\PowerXRole;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -39,6 +40,38 @@ class User extends Authenticatable implements FilamentUser, PasskeyUser
     {
         return $panel->getId() === 'admin'
             && $this->hasPermissionTo(PowerXPermission::AdminAccess->value);
+    }
+
+    public function canViewOperationsDashboard(): bool
+    {
+        return $this->can(PowerXPermission::ViewReports->value);
+    }
+
+    public function canViewInstructorPortal(): bool
+    {
+        return $this->hasRole(PowerXRole::Instructor->value);
+    }
+
+    public function canViewStudentPortal(?Team $team = null): bool
+    {
+        if ($this->hasRole(PowerXRole::Student->value)) {
+            return true;
+        }
+
+        return $this->studentProfile()
+            ->when($team, fn ($query) => $query->whereBelongsTo($team))
+            ->exists();
+    }
+
+    public function canViewCorporatePortal(): bool
+    {
+        return $this->hasRole(PowerXRole::Corporate->value);
+    }
+
+    public function canManagePowerXTeams(): bool
+    {
+        return $this->can(PowerXPermission::ManageSettings->value)
+            || $this->can(PowerXPermission::ManageUsers->value);
     }
 
     public function studentProfile(): HasOne

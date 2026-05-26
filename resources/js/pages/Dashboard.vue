@@ -53,12 +53,20 @@ defineProps<{
             exam_attempts: number;
             passed_attempts: number;
             exam_pass_rate: number;
+            average_exam_score: number;
+            top_weak_topic: string | null;
+            top_weak_topic_count: number;
             certificates_issued: number;
         };
         growth: {
             renewal_opportunities: number;
             overdue_renewals: number;
             campaigns_tracked: number;
+            campaign_revenue_label: string;
+            campaign_cost_label: string;
+            campaign_roi_label: string;
+            campaign_roi_leader: string | null;
+            tracking_status: string;
         };
     };
 }>();
@@ -294,6 +302,15 @@ const toneClasses: Record<SummaryCard['tone'], string> = {
                     {{ metrics.learning.passed_attempts }} passed from
                     {{ metrics.learning.exam_attempts }} submitted attempts.
                 </p>
+                <p class="mt-3 text-sm text-muted-foreground">
+                    Avg. score {{ metrics.learning.average_exam_score }}%.
+                    Weak topic:
+                    {{
+                        metrics.learning.top_weak_topic ??
+                        'No weak topics recorded'
+                    }}
+                    ({{ metrics.learning.top_weak_topic_count }}).
+                </p>
                 <p class="mt-5 text-4xl font-black">
                     {{ metrics.learning.exam_pass_rate }}%
                 </p>
@@ -337,7 +354,7 @@ const toneClasses: Record<SummaryCard['tone'], string> = {
                     >
                         Renewal growth
                     </p>
-                    <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                    <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                         <div class="rounded-xl border border-border p-4">
                             <p class="text-sm text-muted-foreground">
                                 Renewal opportunities
@@ -362,7 +379,40 @@ const toneClasses: Record<SummaryCard['tone'], string> = {
                                 {{ metrics.growth.campaigns_tracked }}
                             </p>
                         </div>
+                        <div class="rounded-xl border border-border p-4">
+                            <p class="text-sm text-muted-foreground">
+                                Attributed revenue
+                            </p>
+                            <p class="mt-2 text-2xl font-black">
+                                {{ metrics.growth.campaign_revenue_label }}
+                            </p>
+                        </div>
+                        <div class="rounded-xl border border-border p-4">
+                            <p class="text-sm text-muted-foreground">
+                                Internal spend
+                            </p>
+                            <p class="mt-2 text-2xl font-black">
+                                {{ metrics.growth.campaign_cost_label }}
+                            </p>
+                        </div>
+                        <div class="rounded-xl border border-border p-4">
+                            <p class="text-sm text-muted-foreground">
+                                Best ROI
+                            </p>
+                            <p class="mt-2 text-2xl font-black">
+                                {{ metrics.growth.campaign_roi_label }}
+                            </p>
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                {{
+                                    metrics.growth.campaign_roi_leader ??
+                                    'No internal cost set'
+                                }}
+                            </p>
+                        </div>
                     </div>
+                    <p class="mt-3 text-xs font-semibold text-muted-foreground">
+                        {{ metrics.growth.tracking_status }}
+                    </p>
                 </div>
             </div>
         </section>
