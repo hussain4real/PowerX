@@ -23,16 +23,17 @@ class UpdateLessonProgress
             ]);
         }
 
-        $progressPercentage = min(100, max(0, (int) ($data['progress_percentage'] ?? 0)));
+        $requestedProgressPercentage = min(100, max(0, (int) ($data['progress_percentage'] ?? 0)));
         $lastPositionSeconds = max(0, (int) ($data['last_position_seconds'] ?? 0));
 
-        return DB::transaction(function () use ($enrollment, $lesson, $data, $progressPercentage, $lastPositionSeconds) {
+        return DB::transaction(function () use ($enrollment, $lesson, $data, $requestedProgressPercentage, $lastPositionSeconds) {
             $progress = LessonProgress::query()
                 ->where('enrollment_id', $enrollment->id)
                 ->where('lesson_id', $lesson->id)
                 ->lockForUpdate()
                 ->first();
 
+            $progressPercentage = max((int) ($progress?->progress_percentage ?? 0), $requestedProgressPercentage);
             $completedAt = $progress?->completed_at
                 ?? ($progressPercentage >= 100 ? ($data['completed_at'] ?? now()) : null);
             $lessonContentRevision = $progress?->lesson_content_revision

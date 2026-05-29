@@ -30,9 +30,14 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { portal as corporatePortal } from '@/routes/corporate';
-import { index as coursesIndex } from '@/routes/courses';
 import { portal as instructorPortal } from '@/routes/instructor';
 import { portal as studentPortal } from '@/routes/student';
+import { index as studentCatalogIndex } from '@/routes/student/catalog';
+import { index as studentCertificatesIndex } from '@/routes/student/certificates';
+import { index as studentCoursesIndex } from '@/routes/student/courses';
+import { index as studentExamsIndex } from '@/routes/student/exams';
+import { index as studentPaymentsIndex } from '@/routes/student/payments';
+import { index as studentScheduleIndex } from '@/routes/student/schedule';
 import { index as teamsIndex } from '@/routes/teams';
 import type { NavItem } from '@/types';
 
@@ -54,14 +59,47 @@ const studentPortalUrl = computed(() =>
         : '/',
 );
 
+const studentCoursesUrl = computed(() =>
+    page.props.currentTeam
+        ? studentCoursesIndex(page.props.currentTeam.slug).url
+        : '/',
+);
+
+const studentScheduleUrl = computed(() =>
+    page.props.currentTeam
+        ? studentScheduleIndex(page.props.currentTeam.slug).url
+        : '/',
+);
+
+const studentExamsUrl = computed(() =>
+    page.props.currentTeam
+        ? studentExamsIndex(page.props.currentTeam.slug).url
+        : '/',
+);
+
+const studentCertificatesUrl = computed(() =>
+    page.props.currentTeam
+        ? studentCertificatesIndex(page.props.currentTeam.slug).url
+        : '/',
+);
+
+const studentPaymentsUrl = computed(() =>
+    page.props.currentTeam
+        ? studentPaymentsIndex(page.props.currentTeam.slug).url
+        : '/',
+);
+
+const studentCatalogUrl = computed(() =>
+    page.props.currentTeam
+        ? studentCatalogIndex(page.props.currentTeam.slug).url
+        : '/',
+);
+
 const corporatePortalUrl = computed(() =>
     page.props.currentTeam
         ? corporatePortal(page.props.currentTeam.slug).url
         : '/',
 );
-
-const studentPortalSectionUrl = (section: string): string =>
-    `${studentPortalUrl.value}${section}`;
 
 const defaultWorkspaceUrl = computed(() => {
     if (page.props.can.viewOperationsDashboard) {
@@ -119,32 +157,32 @@ const mainNavItems = computed<NavItem[]>(() => {
         });
         items.push({
             title: 'My courses',
-            href: studentPortalSectionUrl('#student-enrollments'),
+            href: studentCoursesUrl.value,
             icon: BookOpen,
         });
         items.push({
             title: 'Schedule',
-            href: studentPortalSectionUrl('#student-schedule'),
+            href: studentScheduleUrl.value,
             icon: CalendarClock,
         });
         items.push({
             title: 'Exams',
-            href: studentPortalSectionUrl('#student-exams'),
+            href: studentExamsUrl.value,
             icon: GraduationCap,
         });
         items.push({
             title: 'Certificates',
-            href: studentPortalSectionUrl('#student-certificates'),
+            href: studentCertificatesUrl.value,
             icon: Award,
         });
         items.push({
             title: 'Payments',
-            href: studentPortalSectionUrl('#student-payments'),
+            href: studentPaymentsUrl.value,
             icon: Banknote,
         });
         items.push({
             title: 'Browse courses',
-            href: coursesIndex().url,
+            href: studentCatalogUrl.value,
             icon: BookOpen,
         });
     }

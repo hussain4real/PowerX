@@ -59,6 +59,7 @@ test('students see their course access progress schedule exams finance and certi
         ->for($module, 'courseModule')
         ->create([
             'title' => 'Kahramaa permit overview',
+            'content' => 'Kahramaa permit dashboard notes',
             'is_preview' => true,
             'sort_order' => 1,
             'content_revision' => 2,
@@ -85,6 +86,7 @@ test('students see their course access progress schedule exams finance and certi
         ->create([
             'lesson_content_revision' => 2,
             'progress_percentage' => 100,
+            'last_position_seconds' => 900,
             'completed_at' => now(),
         ]);
     LessonProgress::factory()
@@ -180,6 +182,7 @@ test('students see their course access progress schedule exams finance and certi
             ->where('summary.averageProgress', 13)
             ->where('summary.nextSessionLabel', 'Weekend practical lab')
             ->has('enrollments', 4)
+            ->has('courseCatalog', 0)
             ->where('enrollments.0.accessStatus', 'expired')
             ->where('enrollments.1.accessStatus', 'enrollment_pending')
             ->where('enrollments.2.accessStatus', 'payment_pending')
@@ -190,6 +193,10 @@ test('students see their course access progress schedule exams finance and certi
             ->where('enrollments.3.progress.completedLessons', 1)
             ->where('enrollments.3.progress.totalLessons', 2)
             ->where('enrollments.3.modules.0.lessons.0.title', 'Kahramaa permit overview')
+            ->where('enrollments.3.modules.0.lessons.0.content', 'Kahramaa permit dashboard notes')
+            ->where('enrollments.3.modules.0.lessons.0.contentRevision', 2)
+            ->where('enrollments.3.modules.0.lessons.0.canUpdateProgress', true)
+            ->where('enrollments.3.modules.0.lessons.0.lastPositionSeconds', 900)
             ->where('enrollments.3.modules.0.lessons.0.isCompleted', true)
             ->where('enrollments.3.modules.0.lessons.1.isLocked', false)
             ->where('enrollments.3.schedule.0.batch.name', 'PX-WKND-01')
@@ -198,6 +205,90 @@ test('students see their course access progress schedule exams finance and certi
             ->where('enrollments.3.finance.invoices.0.number', 'PX-INV-STU-001')
             ->where('enrollments.3.finance.payments.0.method', 'bank_transfer')
             ->where('enrollments.3.certificates.0.certificateNumber', 'PX-CERT-STU-001'));
+
+    $studentSectionPages = [
+        'student.schedule.index' => ['Student/Schedule', 'enrollments.3.schedule.0.title', 'Weekend practical lab', 0],
+        'student.exams.index' => ['Student/Exams', 'enrollments.3.exams.0.title', 'Permit mock exam', 0],
+        'student.certificates.index' => ['Student/Certificates', 'enrollments.3.certificates.0.certificateNumber', 'PX-CERT-STU-001', 0],
+        'student.payments.index' => ['Student/Payments', 'enrollments.3.finance.invoices.0.number', 'PX-INV-STU-001', 0],
+        'student.catalog.index' => ['Student/Catalog', 'enrollments.3.course.title', 'Kahramaa Electrical Exam Prep', 4],
+    ];
+
+    foreach ($studentSectionPages as $routeName => [$component, $assertPath, $expectedValue, $catalogCount]) {
+        $this->actingAs($user)
+            ->get(route($routeName, ['current_team' => $team]))
+            ->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component($component)
+                ->where('profile.fullName', 'Fatima Ali')
+                ->where($assertPath, $expectedValue)
+                ->has('courseCatalog', $catalogCount));
+    }
+});
+
+test('students can open a dedicated my courses page without reordering enrollments', function () {
+    $this->withoutVite();
+
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $profile = StudentProfile::factory()
+        ->for($team)
+        ->for($user)
+        ->create(['full_name' => 'Fatima Ali']);
+
+    $openCourse = Course::factory()
+        ->for($team)
+        ->create(['title' => 'Kahramaa Exam Preparation']);
+    $openModule = CourseModule::factory()
+        ->for($openCourse)
+        ->create(['sort_order' => 1]);
+    $openLesson = Lesson::factory()
+        ->for($openModule, 'courseModule')
+        ->create([
+            'title' => 'Kahramaa approval flow overview',
+            'content' => 'Start here with the approval flow.',
+            'sort_order' => 1,
+        ]);
+    $openEnrollment = Enrollment::factory()
+        ->for($team)
+        ->for($profile, 'studentProfile')
+        ->for($openCourse)
+        ->create([
+            'status' => 'active',
+            'payment_status' => 'paid',
+            'access_starts_at' => now()->subDay(),
+            'access_expires_at' => now()->addDays(30),
+        ]);
+    LessonProgress::factory()
+        ->for($openEnrollment)
+        ->for($openLesson, 'lesson')
+        ->create(['progress_percentage' => 40]);
+
+    $pendingCourse = Course::factory()
+        ->for($team)
+        ->create(['title' => 'Power Distribution Design']);
+    Enrollment::factory()
+        ->for($team)
+        ->for($profile, 'studentProfile')
+        ->for($pendingCourse)
+        ->create(['status' => 'pending', 'payment_status' => 'pending']);
+
+    $this->actingAs($user)
+        ->get(route('student.courses.index', ['current_team' => $team]))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Student/MyCourses')
+            ->where('profile.fullName', 'Fatima Ali')
+            ->has('enrollments', 2)
+            ->has('courseCatalog', 0)
+            ->where('enrollments.0.course.title', 'Power Distribution Design')
+            ->where('enrollments.0.accessStatus', 'payment_pending')
+            ->where('enrollments.1.course.title', 'Kahramaa Exam Preparation')
+            ->where('enrollments.1.accessStatus', 'open')
+            ->where('enrollments.1.hasPaidAccess', true)
+            ->where('enrollments.1.modules.0.lessons.0.title', 'Kahramaa approval flow overview')
+            ->where('enrollments.1.modules.0.lessons.0.content', 'Start here with the approval flow.')
+            ->where('enrollments.1.modules.0.lessons.0.canUpdateProgress', true));
 });
 
 test('student portal renders an onboarding state when no profile is linked', function () {
@@ -214,5 +305,6 @@ test('student portal renders an onboarding state when no profile is linked', fun
             ->where('profile', null)
             ->where('summary.enrolledCourses', 0)
             ->where('summary.nextSessionLabel', 'Create a student profile to begin.')
-            ->has('enrollments', 0));
+            ->has('enrollments', 0)
+            ->has('courseCatalog', 0));
 });

@@ -2,6 +2,8 @@
 
 namespace App\Actions\PowerX;
 
+use App\Models\Course;
+use App\Models\CoursePackage;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\StudentProfile;
@@ -22,7 +24,7 @@ class BuildStudentPortal
     /**
      * @return array<string, mixed>
      */
-    public function handle(User $user, Team $team): array
+    public function handle(User $user, Team $team, bool $includeCourseCatalog = false): array
     {
         $profile = StudentProfile::query()
             ->whereBelongsTo($user)
@@ -44,7 +46,7 @@ class BuildStudentPortal
             ->first();
 
         if (! $profile) {
-            return $this->emptyPayload();
+            return $this->emptyPayload($team, $includeCourseCatalog);
         }
 
         $enrollments = $profile->enrollments;
@@ -75,13 +77,14 @@ class BuildStudentPortal
                 'nextSessionLabel' => $nextSession['title'] ?? 'No upcoming assigned session',
             ],
             'enrollments' => $portalEnrollments->values()->all(),
+            'courseCatalog' => $includeCourseCatalog ? $this->courseCatalogPayload($team) : [],
         ];
     }
 
     /**
-     * @return array{profile: null, summary: array<string, int|string>, enrollments: array<int, mixed>}
+     * @return array{profile: null, summary: array<string, int|string>, enrollments: array<int, mixed>, courseCatalog: array<int, mixed>}
      */
-    private function emptyPayload(): array
+    private function emptyPayload(Team $team, bool $includeCourseCatalog): array
     {
         return [
             'profile' => null,
@@ -94,7 +97,53 @@ class BuildStudentPortal
                 'nextSessionLabel' => 'Create a student profile to begin.',
             ],
             'enrollments' => [],
+            'courseCatalog' => $includeCourseCatalog ? $this->courseCatalogPayload($team) : [],
         ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function courseCatalogPayload(Team $team): array
+    {
+        return Course::query()
+            ->whereBelongsTo($team)
+            ->published()
+            ->with(['packages' => fn ($query) => $query->active()->orderBy('price')])
+            ->withCount(['modules', 'enrollments'])
+            ->latest('published_at')
+            ->latest()
+            ->limit(6)
+            ->get()
+            ->map(fn (Course $course): array => [
+                'id' => $course->id,
+                'title' => $course->title,
+                'slug' => $course->slug,
+                'category' => $course->category,
+                'summary' => $course->summary,
+                'deliveryMode' => $course->delivery_mode,
+                'currency' => $course->currency,
+                'basePrice' => (float) $course->base_price,
+                'validityDays' => $course->validity_days,
+                'isFeatured' => $course->is_featured,
+                'modulesCount' => $course->modules_count,
+                'enrollmentsCount' => $course->enrollments_count,
+                'lowestPackagePrice' => (float) ($course->packages->min('price') ?? $course->base_price),
+                'url' => route('courses.show', ['course' => $course]),
+                'packages' => $course->packages
+                    ->map(fn (CoursePackage $package): array => [
+                        'id' => $package->id,
+                        'name' => $package->name,
+                        'packageType' => $package->package_type,
+                        'currency' => $package->currency,
+                        'price' => (float) $package->price,
+                        'discountPrice' => $package->discount_price ? (float) $package->discount_price : null,
+                    ])
+                    ->values()
+                    ->all(),
+            ])
+            ->values()
+            ->all();
     }
 
     /**
@@ -219,7 +268,11 @@ class BuildStudentPortal
                             'durationMinutes' => $lesson->duration_minutes,
                             'isPreview' => $lesson->is_preview,
                             'isLocked' => $isLocked,
+                            'canUpdateProgress' => $hasPaidAccess && ! $isLocked,
+                            'content' => $isLocked ? null : $lesson->content,
+                            'contentRevision' => $lesson->content_revision,
                             'progressPercentage' => (int) ($progress?->progress_percentage ?? 0),
+                            'lastPositionSeconds' => (int) ($progress?->last_position_seconds ?? 0),
                             'isCompleted' => $progress?->completed_at !== null,
                             'media' => $this->lessonMediaPayload($enrollment, $lesson, $hasPaidAccess),
                         ];
