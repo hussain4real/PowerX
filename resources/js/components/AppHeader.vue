@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import {
+    Award,
+    Banknote,
     BookOpen,
     BriefcaseBusiness,
+    CalendarClock,
     Folder,
     GraduationCap,
     LayoutGrid,
@@ -49,6 +52,7 @@ import { getInitials } from '@/composables/useInitials';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { portal as corporatePortal } from '@/routes/corporate';
+import { index as coursesIndex } from '@/routes/courses';
 import { portal as instructorPortal } from '@/routes/instructor';
 import { portal as studentPortal } from '@/routes/student';
 import { index as teamsIndex } from '@/routes/teams';
@@ -87,6 +91,9 @@ const corporatePortalUrl = computed(() =>
         ? corporatePortal(page.props.currentTeam.slug).url
         : '/',
 );
+
+const studentPortalSectionUrl = (section: string): string =>
+    `${studentPortalUrl.value}${section}`;
 
 const defaultWorkspaceUrl = computed(() => {
     if (page.props.can.viewOperationsDashboard) {
@@ -136,7 +143,7 @@ function visitDefaultWorkspaceWithPageReload(): void {
 }
 
 const activeItemStyles =
-    'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100';
+    'bg-sidebar-accent font-semibold text-sidebar-accent-foreground dark:bg-neutral-800 dark:text-neutral-100';
 
 const mainNavItems = computed<NavItem[]>(() => {
     const items: NavItem[] = [];
@@ -151,9 +158,39 @@ const mainNavItems = computed<NavItem[]>(() => {
 
     if (page.props.can.viewStudentPortal) {
         items.push({
-            title: 'Student portal',
+            title: 'Student overview',
             href: studentPortalUrl.value,
             icon: GraduationCap,
+        });
+        items.push({
+            title: 'My courses',
+            href: studentPortalSectionUrl('#student-enrollments'),
+            icon: BookOpen,
+        });
+        items.push({
+            title: 'Schedule',
+            href: studentPortalSectionUrl('#student-schedule'),
+            icon: CalendarClock,
+        });
+        items.push({
+            title: 'Exams',
+            href: studentPortalSectionUrl('#student-exams'),
+            icon: GraduationCap,
+        });
+        items.push({
+            title: 'Certificates',
+            href: studentPortalSectionUrl('#student-certificates'),
+            icon: Award,
+        });
+        items.push({
+            title: 'Payments',
+            href: studentPortalSectionUrl('#student-payments'),
+            icon: Banknote,
+        });
+        items.push({
+            title: 'Browse courses',
+            href: coursesIndex().url,
+            icon: BookOpen,
         });
     }
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
 import type { FormDataKeys } from '@inertiajs/core';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import {
     ArrowLeft,
     Building2,
@@ -13,8 +13,8 @@ import { computed, watch } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { Button } from '@/components/ui/button';
 import { home } from '@/routes';
-import { index as coursesIndex } from '@/routes/courses';
 import { store as storeQuotation } from '@/routes/corporate/quotations';
+import { index as coursesIndex } from '@/routes/courses';
 
 interface PackageOption {
     id: number;

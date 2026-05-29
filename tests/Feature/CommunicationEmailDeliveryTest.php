@@ -83,6 +83,9 @@ it('sends email communications and records delivery metadata', function (): void
         ->for($studentProfile, 'studentProfile')
         ->create([
             'channel' => Communication::CHANNEL_EMAIL,
+            'lead_id' => null,
+            'company_id' => null,
+            'user_id' => null,
             'status' => Communication::STATUS_QUEUED,
             'subject' => 'PowerX class reminder',
             'message' => 'Your practical session starts at 7 PM.',

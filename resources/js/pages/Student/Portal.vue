@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import {
+    ArrowRight,
     Award,
     Banknote,
     BookOpenCheck,
@@ -15,6 +16,7 @@ import {
     ShieldCheck,
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
+import { computed } from 'vue';
 import { index as coursesIndex } from '@/routes/courses';
 import type { Team } from '@/types';
 
@@ -161,7 +163,7 @@ interface StudentEnrollment {
     };
 }
 
-defineProps<{
+const props = defineProps<{
     profile: StudentProfile | null;
     summary: StudentSummary;
     enrollments: StudentEnrollment[];
@@ -216,6 +218,56 @@ const money = (amount: number | undefined, currency: string): string =>
 
 const lessonIcon = (lessonType: string): Component =>
     lessonIcons[lessonType] ?? Clock3;
+
+const firstOpenEnrollmentId = computed(
+    () => props.enrollments.find((enrollment) => enrollment.hasPaidAccess)?.id,
+);
+
+const firstPaymentPendingEnrollmentId = computed(
+    () =>
+        props.enrollments.find(
+            (enrollment) => enrollment.paymentStatus !== 'paid',
+        )?.id,
+);
+
+const firstFinanceEnrollmentId = computed(
+    () =>
+        props.enrollments.find(
+            (enrollment) =>
+                enrollment.paymentStatus !== 'paid' ||
+                enrollment.finance.invoices.length > 0 ||
+                enrollment.finance.payments.length > 0,
+        )?.id,
+);
+
+const firstScheduledEnrollmentId = computed(
+    () =>
+        props.enrollments.find((enrollment) => enrollment.schedule.length > 0)
+            ?.id,
+);
+
+const firstExamEnrollmentId = computed(
+    () =>
+        props.enrollments.find((enrollment) => enrollment.exams.length > 0)?.id,
+);
+
+const firstCertificateEnrollmentId = computed(
+    () =>
+        props.enrollments.find(
+            (enrollment) => enrollment.certificates.length > 0,
+        )?.id,
+);
+
+const sectionHref = (
+    enrollmentId: number | undefined,
+    section: string,
+): string =>
+    enrollmentId
+        ? `#enrollment-${enrollmentId}-${section}`
+        : '#student-actions';
+
+const learningActionLabel = (enrollment: StudentEnrollment): string =>
+    enrollment.progress.percentage > 0 ? 'Continue learning' : 'Start learning';
 </script>
 
 <template>
@@ -333,10 +385,131 @@ const lessonIcon = (lessonType: string): Component =>
                 </article>
             </section>
 
-            <section class="grid gap-6">
+            <section
+                id="student-actions"
+                class="rounded-2xl border border-sidebar-border/70 bg-card p-5 shadow-sm dark:border-sidebar-border"
+            >
+                <div class="flex flex-col justify-between gap-4 lg:flex-row">
+                    <div>
+                        <p
+                            class="text-sm font-black tracking-[0.22em] text-powerx-yellow uppercase"
+                        >
+                            Student actions
+                        </p>
+                        <h2 class="mt-2 text-2xl font-black">
+                            Access your learning workspace
+                        </h2>
+                        <p class="mt-2 max-w-3xl text-sm text-muted-foreground">
+                            Use these shortcuts to jump into lessons, resolve
+                            pending payments, review assigned sessions, check
+                            exams, or verify certificates.
+                        </p>
+                    </div>
+                    <Link
+                        :href="coursesIndex()"
+                        class="inline-flex items-center justify-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-black transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                    >
+                        Browse courses
+                        <ArrowRight class="size-4" />
+                    </Link>
+                </div>
+
+                <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                    <a
+                        v-if="firstOpenEnrollmentId"
+                        :href="sectionHref(firstOpenEnrollmentId, 'learning')"
+                        class="rounded-2xl border border-powerx-yellow/40 bg-powerx-yellow/10 p-4 text-sm transition hover:border-powerx-yellow hover:bg-powerx-yellow/15"
+                    >
+                        <p class="font-black text-powerx-yellow">
+                            Continue course
+                        </p>
+                        <p class="mt-1 text-muted-foreground">
+                            Open paid lessons and downloads.
+                        </p>
+                    </a>
+                    <a
+                        v-if="firstPaymentPendingEnrollmentId"
+                        :href="
+                            sectionHref(
+                                firstPaymentPendingEnrollmentId,
+                                'finance',
+                            )
+                        "
+                        class="rounded-2xl border border-powerx-yellow/40 bg-powerx-yellow/10 p-4 text-sm transition hover:border-powerx-yellow hover:bg-powerx-yellow/15"
+                    >
+                        <p class="font-black text-powerx-yellow">
+                            Resolve payment
+                        </p>
+                        <p class="mt-1 text-muted-foreground">
+                            Check pending invoice and payment status.
+                        </p>
+                    </a>
+                    <a
+                        v-if="firstScheduledEnrollmentId"
+                        :href="
+                            sectionHref(firstScheduledEnrollmentId, 'schedule')
+                        "
+                        class="rounded-2xl border border-border p-4 text-sm transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                    >
+                        <p class="font-black">View schedule</p>
+                        <p class="mt-1 text-muted-foreground">
+                            See assigned classroom or practical sessions.
+                        </p>
+                    </a>
+                    <a
+                        v-if="firstExamEnrollmentId"
+                        :href="sectionHref(firstExamEnrollmentId, 'exams')"
+                        class="rounded-2xl border border-border p-4 text-sm transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                    >
+                        <p class="font-black">Review exams</p>
+                        <p class="mt-1 text-muted-foreground">
+                            Check attempts and readiness.
+                        </p>
+                    </a>
+                    <a
+                        v-if="firstCertificateEnrollmentId"
+                        :href="
+                            sectionHref(
+                                firstCertificateEnrollmentId,
+                                'certificates',
+                            )
+                        "
+                        class="rounded-2xl border border-border p-4 text-sm transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                    >
+                        <p class="font-black">Certificates</p>
+                        <p class="mt-1 text-muted-foreground">
+                            Verify issued completion records.
+                        </p>
+                    </a>
+                </div>
+            </section>
+
+            <span
+                v-if="!firstScheduledEnrollmentId"
+                id="student-schedule"
+                class="scroll-mt-6"
+            />
+            <span
+                v-if="!firstExamEnrollmentId"
+                id="student-exams"
+                class="scroll-mt-6"
+            />
+            <span
+                v-if="!firstCertificateEnrollmentId"
+                id="student-certificates"
+                class="scroll-mt-6"
+            />
+            <span
+                v-if="!firstFinanceEnrollmentId"
+                id="student-payments"
+                class="scroll-mt-6"
+            />
+
+            <section id="student-enrollments" class="grid scroll-mt-6 gap-6">
                 <article
                     v-for="enrollment in enrollments"
                     :key="enrollment.id"
+                    :id="`enrollment-${enrollment.id}`"
                     class="overflow-hidden rounded-2xl border border-sidebar-border/70 bg-card shadow-sm dark:border-sidebar-border"
                 >
                     <div
@@ -369,6 +542,61 @@ const lessonIcon = (lessonType: string): Component =>
                                 delivery ·
                                 {{ enrollment.package.name ?? 'Standard plan' }}
                             </p>
+                            <div class="mt-5 flex flex-wrap gap-3">
+                                <a
+                                    v-if="enrollment.hasPaidAccess"
+                                    :href="`#enrollment-${enrollment.id}-learning`"
+                                    class="inline-flex items-center gap-2 rounded-full bg-powerx-yellow px-4 py-2 text-sm font-black text-powerx-navy transition hover:bg-powerx-yellow/90"
+                                >
+                                    {{ learningActionLabel(enrollment) }}
+                                    <ArrowRight class="size-4" />
+                                </a>
+                                <a
+                                    v-else-if="
+                                        enrollment.paymentStatus !== 'paid'
+                                    "
+                                    :href="`#enrollment-${enrollment.id}-finance`"
+                                    class="inline-flex items-center gap-2 rounded-full border border-powerx-yellow/50 bg-powerx-yellow/10 px-4 py-2 text-sm font-black text-powerx-yellow transition hover:border-powerx-yellow"
+                                >
+                                    Payment details
+                                    <ArrowRight class="size-4" />
+                                </a>
+                                <a
+                                    v-else
+                                    :href="`#enrollment-${enrollment.id}-finance`"
+                                    class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-black text-white transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                                >
+                                    Review access status
+                                    <ArrowRight class="size-4" />
+                                </a>
+                                <a
+                                    v-if="enrollment.schedule.length > 0"
+                                    :href="`#enrollment-${enrollment.id}-schedule`"
+                                    class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-black text-white transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                                >
+                                    Schedule
+                                </a>
+                                <a
+                                    v-if="enrollment.exams.length > 0"
+                                    :href="`#enrollment-${enrollment.id}-exams`"
+                                    class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-black text-white transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                                >
+                                    Exams
+                                </a>
+                                <a
+                                    v-if="enrollment.certificates.length > 0"
+                                    :href="`#enrollment-${enrollment.id}-certificates`"
+                                    class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-black text-white transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                                >
+                                    Certificates
+                                </a>
+                                <Link
+                                    :href="enrollment.course.url"
+                                    class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-black text-white transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                                >
+                                    Course info
+                                </Link>
+                            </div>
                         </div>
                         <div class="min-w-64 rounded-2xl bg-white/10 p-4">
                             <div
@@ -400,7 +628,10 @@ const lessonIcon = (lessonType: string): Component =>
                     </div>
 
                     <div class="grid gap-6 p-6 xl:grid-cols-[1.1fr_0.9fr]">
-                        <section>
+                        <section
+                            :id="`enrollment-${enrollment.id}-learning`"
+                            class="scroll-mt-6"
+                        >
                             <div
                                 class="flex items-center justify-between gap-4"
                             >
@@ -477,7 +708,9 @@ const lessonIcon = (lessonType: string): Component =>
                                                     class="flex items-center gap-2 text-xs font-black"
                                                 >
                                                     <CheckCircle2
-                                                        v-if="lesson.isCompleted"
+                                                        v-if="
+                                                            lesson.isCompleted
+                                                        "
                                                         class="size-4 text-powerx-success"
                                                     />
                                                     <LockKeyhole
@@ -507,12 +740,25 @@ const lessonIcon = (lessonType: string): Component =>
                                                     :href="media.url"
                                                     class="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-black text-foreground transition hover:border-powerx-yellow hover:text-powerx-yellow"
                                                 >
-                                                    <Download class="size-3.5" />
-                                                    {{ media.collectionLabel }} ·
-                                                    {{ media.fileName }} ·
-                                                    {{ media.humanReadableSize }}
+                                                    <Download
+                                                        class="size-3.5"
+                                                    />
+                                                    {{
+                                                        media.collectionLabel
+                                                    }}
+                                                    · {{ media.fileName }} ·
+                                                    {{
+                                                        media.humanReadableSize
+                                                    }}
                                                 </a>
                                             </div>
+                                            <p
+                                                v-else-if="lesson.isLocked"
+                                                class="mt-3 ps-8 text-xs font-bold text-muted-foreground"
+                                            >
+                                                Complete payment/admissions
+                                                approval to unlock this lesson.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -520,7 +766,15 @@ const lessonIcon = (lessonType: string): Component =>
                         </section>
 
                         <aside class="grid content-start gap-6">
+                            <span
+                                v-if="
+                                    enrollment.id === firstScheduledEnrollmentId
+                                "
+                                id="student-schedule"
+                                class="scroll-mt-6"
+                            />
                             <section
+                                :id="`enrollment-${enrollment.id}-schedule`"
                                 class="rounded-2xl border border-border p-5"
                             >
                                 <div class="flex items-center gap-3">
@@ -566,7 +820,13 @@ const lessonIcon = (lessonType: string): Component =>
                                 </div>
                             </section>
 
+                            <span
+                                v-if="enrollment.id === firstExamEnrollmentId"
+                                id="student-exams"
+                                class="scroll-mt-6"
+                            />
                             <section
+                                :id="`enrollment-${enrollment.id}-exams`"
                                 class="rounded-2xl border border-border p-5"
                             >
                                 <div class="flex items-center gap-3">
@@ -615,7 +875,16 @@ const lessonIcon = (lessonType: string): Component =>
                                 </div>
                             </section>
 
+                            <span
+                                v-if="
+                                    enrollment.id ===
+                                    firstCertificateEnrollmentId
+                                "
+                                id="student-certificates"
+                                class="scroll-mt-6"
+                            />
                             <section
+                                :id="`enrollment-${enrollment.id}-certificates`"
                                 class="rounded-2xl border border-border p-5"
                             >
                                 <div class="flex items-center gap-3">
@@ -661,7 +930,15 @@ const lessonIcon = (lessonType: string): Component =>
                                 </div>
                             </section>
 
+                            <span
+                                v-if="
+                                    enrollment.id === firstFinanceEnrollmentId
+                                "
+                                id="student-payments"
+                                class="scroll-mt-6"
+                            />
                             <section
+                                :id="`enrollment-${enrollment.id}-finance`"
                                 class="rounded-2xl border border-border p-5"
                             >
                                 <div class="flex items-center gap-3">
@@ -715,6 +992,19 @@ const lessonIcon = (lessonType: string): Component =>
                                             }}
                                         </p>
                                     </div>
+                                    <p
+                                        v-if="
+                                            enrollment.finance.invoices
+                                                .length === 0 &&
+                                            enrollment.finance.payments
+                                                .length === 0
+                                        "
+                                        class="text-sm text-muted-foreground"
+                                    >
+                                        No invoice or payment record is linked
+                                        yet. PowerX admissions will update this
+                                        section after review.
+                                    </p>
                                 </div>
                             </section>
                         </aside>

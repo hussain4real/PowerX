@@ -44,7 +44,7 @@ test('browser personas land on role safe workspaces', function (string $email, s
     'corporate' => [
         'corporate@powerx.test',
         '/powerx-training-center/corporate-portal',
-        ['Corporate workspace', 'Company training coordination'],
+        ['Corporate workspace', 'Read-only company coordination'],
         ['/powerx-training-center/student-portal', '/powerx-training-center/instructor-portal', '/admin', '/settings/teams'],
     ],
 ]);
@@ -69,6 +69,28 @@ test('staff browser personas without operations dashboard access go to admin', f
     'finance' => ['finance@powerx.test', 'Hassan Finance'],
     'support' => ['support@powerx.test', 'Sara Support'],
 ]);
+
+test('student menu anchors update the active navigation state', function (): void {
+    $studentPortal = '/powerx-training-center/student-portal';
+    $paymentsSection = "{$studentPortal}#student-payments";
+
+    $page = $this
+        ->visit('/login')
+        ->fill('Email address', 'student@powerx.test')
+        ->fill('Password', 'password')
+        ->pressAndWaitFor('Log in', 2)
+        ->assertPathIs($studentPortal)
+        ->assertDataAttribute("[data-sidebar=\"menu-button\"][data-size=\"default\"][href=\"{$studentPortal}\"]", 'active', 'true')
+        ->assertDataAttribute("[data-sidebar=\"menu-button\"][data-size=\"default\"][href=\"{$paymentsSection}\"]", 'active', 'false');
+
+    $page
+        ->click('Payments')
+        ->wait(1)
+        ->assertFragmentIs('student-payments')
+        ->assertDataAttribute("[data-sidebar=\"menu-button\"][data-size=\"default\"][href=\"{$studentPortal}\"]", 'active', 'false')
+        ->assertDataAttribute("[data-sidebar=\"menu-button\"][data-size=\"default\"][href=\"{$paymentsSection}\"]", 'active', 'true')
+        ->assertNoJavaScriptErrors();
+});
 
 test('admin panel menu leaves the Inertia shell for Filament', function (): void {
     $page = $this
