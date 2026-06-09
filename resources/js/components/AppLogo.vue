@@ -4,9 +4,9 @@ import AppLogoIcon from '@/components/AppLogoIcon.vue';
 
 <template>
     <div
-        class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_0_24px_rgba(255,193,7,0.35)]"
+        class="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-lg bg-white p-0.5 shadow-[0_0_24px_rgba(255,193,7,0.35)]"
     >
-        <AppLogoIcon class="size-6 text-current" />
+        <AppLogoIcon class="size-full" />
     </div>
     <div class="ml-1 grid flex-1 text-left text-sm">
         <span class="truncate leading-tight font-bold tracking-wide"

@@ -70,6 +70,8 @@
     --color-powerx-cyan: var(--powerx-cyan);
     --color-powerx-steel: var(--powerx-steel);
     --color-powerx-surface: var(--powerx-surface);
+    --color-powerx-line: var(--powerx-line);
+    --color-powerx-soft: var(--powerx-soft);
 }
 
 /*
@@ -101,6 +103,8 @@
 }
 
 :root {
+    color-scheme: light;
+
     --powerx-ink: #020101;
     --powerx-navy: #071523;
     --powerx-panel: #0b2034;
@@ -111,8 +115,10 @@
     --powerx-cyan: #0dcaf0;
     --powerx-steel: #505e5e;
     --powerx-surface: #f4f6f8;
+    --powerx-line: #d8e0e8;
+    --powerx-soft: #edf3f8;
 
-    --background: #f4f6f8;
+    --background: #f8fafc;
     --foreground: #071523;
     --card: #ffffff;
     --card-foreground: #071523;
@@ -122,8 +128,8 @@
     --primary-foreground: #071523;
     --secondary: #071523;
     --secondary-foreground: #ffffff;
-    --muted: #e7edf3;
-    --muted-foreground: #505e5e;
+    --muted: #edf3f8;
+    --muted-foreground: #4f5f63;
     --accent: #fff4cc;
     --accent-foreground: #071523;
     --destructive: #dc2626;
@@ -149,6 +155,8 @@
 }
 
 .dark {
+    color-scheme: dark;
+
     --background: #020101;
     --foreground: #f8fafc;
     --card: #071523;
@@ -163,6 +171,8 @@
     --muted-foreground: #c2cbcb;
     --accent: #132b45;
     --accent-foreground: #ffffff;
+    --powerx-line: #17324d;
+    --powerx-soft: #0b2034;
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
     --border: #17324d;

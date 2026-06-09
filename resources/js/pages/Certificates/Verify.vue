@@ -46,9 +46,9 @@ defineProps<{
             >
                 <Link :href="home()" class="flex items-center gap-3">
                     <span
-                        class="flex size-12 items-center justify-center rounded-2xl bg-powerx-yellow text-powerx-navy shadow-[0_0_34px_rgba(255,193,7,0.45)]"
+                        class="flex size-12 items-center justify-center overflow-hidden rounded-2xl bg-white p-1 shadow-[0_0_34px_rgba(255,193,7,0.45)]"
                     >
-                        <AppLogoIcon class="size-8 text-current" />
+                        <AppLogoIcon class="size-full" />
                     </span>
                     <span class="grid leading-none">
                         <span class="text-xl font-black tracking-wide">

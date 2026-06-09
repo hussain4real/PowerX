@@ -73,19 +73,52 @@ test('demo seeder creates a playable local PowerX workspace idempotently', funct
 test('homepage presents enriched public safe PowerX marketing copy', function (): void {
     $this->withoutVite();
 
+    $featuredCourse = Course::factory()->create([
+        'title' => 'Kahramaa Exam Preparation',
+        'slug' => 'kahramaa-exam-preparation',
+        'status' => 'published',
+        'is_featured' => true,
+        'published_at' => now(),
+    ]);
+    CoursePackage::factory()->for($featuredCourse)->create([
+        'price' => 1200,
+        'is_active' => true,
+    ]);
+    CourseModule::factory()->for($featuredCourse)->create(['is_active' => true]);
+
+    $safetyCourse = Course::factory()->create([
+        'title' => 'Electrical Safety and Compliance',
+        'slug' => 'electrical-safety-and-compliance',
+        'status' => 'published',
+        'published_at' => now()->subDay(),
+    ]);
+    CoursePackage::factory()->for($safetyCourse)->create([
+        'price' => 900,
+        'is_active' => true,
+    ]);
+    Course::factory()->create(['status' => 'draft']);
+
     $this->get(route('home'))
         ->assertSuccessful()
-        ->assertInertia(fn (Assert $page) => $page->component('Welcome'));
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Welcome')
+            ->has('featuredCourses', 2)
+            ->where('featuredCourses.0.slug', $featuredCourse->slug)
+            ->where('featuredCourses.0.lowestPackagePrice', '1200.00')
+            ->has('leadCourseOptions', 2)
+            ->where('leadCourseOptions.0.title', 'Electrical Safety and Compliance'));
 
     $source = file_get_contents(resource_path('js/pages/Welcome.vue'));
 
     expect($source)
-        ->toContain('Prepare for Kahramaa exams with practical PowerX training.')
-        ->toContain('What students get')
-        ->toContain('Corporate team training')
-        ->toContain('Audience-safe promise')
+        ->toContain('Practical electrical training for Qatar\'s site-ready')
+        ->toContain('professionals.')
+        ->toContain('Corporate workforce training')
+        ->toContain('source')
+        ->toContain('value="homepage"')
         ->toContain('PowerX completion records')
         ->not->toContain('99% success')
+        ->not->toContain('99% Exam Success')
         ->not->toContain('Pass in 7 days')
         ->not->toContain('100% complete')
         ->not->toContain('government-issued certificate');

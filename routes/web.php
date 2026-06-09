@@ -23,10 +23,11 @@ use App\Http\Controllers\StudentPaymentsController;
 use App\Http\Controllers\StudentPortalController;
 use App\Http\Controllers\StudentScheduleController;
 use App\Http\Controllers\Teams\TeamInvitationController;
+use App\Http\Controllers\WelcomeController;
 use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'Welcome')->name('home');
+Route::get('/', WelcomeController::class)->name('home');
 Route::inertia('style-guide', 'StyleGuide')->name('style-guide');
 Route::get('courses', [CourseCatalogController::class, 'index'])->name('courses.index');
 Route::get('courses/{course:slug}', [CourseCatalogController::class, 'show'])->name('courses.show');
