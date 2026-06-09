@@ -205,11 +205,8 @@ Current implementation note: PowerX only includes the internal `PaymentGateway` 
 | Laravel starter kits and teams | Vue/Inertia starter kit and team support.                                      | <https://laravel.com/docs/13.x/starter-kits>                        |
 | Laravel Fortify and passkeys   | Fortify auth backend, passkey routes, and authentication features.             | <https://laravel.com/docs/13.x/fortify#passkeys>                    |
 | FilamentPHP 5.x                | Laravel admin panels, forms, tables, schemas, and dashboards.                  | <https://filamentphp.com/docs/5.x>                                  |
-| Spatie Permission v7           | Role and permission package for Laravel.                                       | <https://spatie.be/docs/laravel-permission/v7>                      |
+| Spatie Permission v8           | Role and permission package for Laravel.                                       | <https://spatie.be/docs/laravel-permission/v8/introduction>         |
 | Spatie Media Library v11       | Eloquent-linked file/media management.                                         | <https://spatie.be/docs/laravel-medialibrary/v11/introduction>      |
-| Spatie Activitylog v4          | Activity logging for user and model changes.                                   | <https://spatie.be/docs/laravel-activitylog/v4/introduction>        |
-| Spatie Laravel Data v4         | DTOs, typed data objects, validation, and TypeScript-friendly data structures. | <https://spatie.be/docs/laravel-data/v4>                            |
-| Laravel Horizon                | Dashboard and configuration for Redis queues.                                  | <https://laravel.com/docs/13.x/horizon>                             |
 | Laravel Reverb                 | Laravel WebSocket server for broadcasting when realtime is needed.             | <https://laravel.com/docs/reverb>                                   |
 | Pest v4                        | PHP testing framework with Laravel and browser testing support.                | <https://pestphp.com/docs/pest-v4-is-here-now-with-browser-testing> |
 | Laravel Pint                   | Laravel code style fixer.                                                      | <https://laravel.com/docs/13.x/pint>                                |

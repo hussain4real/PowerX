@@ -1,10 +1,10 @@
 {
     "agents": [
         "codex",
-        "gemini",
-        "copilot"
+        "copilot",
+        "antigravity"
     ],
-    "cloud": false,
+    "cloud": true,
     "guidelines": true,
     "mcp": true,
     "nightwatch": false,
@@ -24,6 +24,7 @@
         "tailwindcss-development",
         "medialibrary-development",
         "laravel-pdf",
-        "laravel-permission-development"
+        "laravel-permission-development",
+        "deploying-laravel-cloud"
     ]
 }
