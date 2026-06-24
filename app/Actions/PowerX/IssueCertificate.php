@@ -9,6 +9,7 @@ use App\Models\ExamAttempt;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -58,6 +59,8 @@ class IssueCertificate
                 ],
             ]);
 
+            $certificateMetadata = is_array($certificate->metadata) ? $certificate->metadata : [];
+
             $this->recordAuditEvent->handle(
                 action: 'certificate.issued',
                 subject: $certificate,
@@ -67,7 +70,7 @@ class IssueCertificate
                     'enrollment_id' => $lockedEnrollment->id,
                     'student_profile_id' => $lockedEnrollment->student_profile_id,
                     'course_id' => $lockedEnrollment->course_id,
-                    'eligibility' => $certificate->metadata['eligibility'] ?? [],
+                    'eligibility' => $certificateMetadata['eligibility'] ?? [],
                 ],
                 summary: __('Certificate issued.'),
             );
@@ -90,27 +93,41 @@ class IssueCertificate
             ]);
         }
 
-        if ($enrollment->access_starts_at && $enrollment->access_starts_at->isFuture()) {
+        if ($this->dateTimeIsFuture($enrollment->access_starts_at)) {
             throw ValidationException::withMessages([
                 'enrollment_id' => __('Course access has not started yet.'),
             ]);
         }
 
-        if ($enrollment->access_expires_at && $enrollment->access_expires_at->isPast()) {
+        if ($this->dateTimeIsPast($enrollment->access_expires_at)) {
             throw ValidationException::withMessages([
                 'enrollment_id' => __('Course access has expired.'),
             ]);
         }
 
-        if ($this->activeLessonCount($enrollment) > $this->completedLessonCount($enrollment)) {
+        $requirements = $this->certificateRequirements($enrollment);
+
+        if ($requirements['requires_lesson_completion'] && $this->activeLessonCount($enrollment) > $this->completedLessonCount($enrollment)) {
             throw ValidationException::withMessages([
                 'lessons' => __('All active lessons must be completed before issuing a certificate.'),
             ]);
         }
 
-        if (! $this->hasPassedExam($enrollment)) {
+        if ($requirements['requires_exam_pass'] && ! $this->hasPassedExam($enrollment)) {
             throw ValidationException::withMessages([
                 'exam_attempts' => __('At least one exam attempt must be passed before issuing a certificate.'),
+            ]);
+        }
+
+        if ($requirements['requires_attendance'] && ! $this->hasAttendance($enrollment)) {
+            throw ValidationException::withMessages([
+                'attendance_records' => __('At least one attended training session is required before issuing a certificate.'),
+            ]);
+        }
+
+        if ($requirements['requires_practical_pass'] && ! $this->hasPassedPracticalAssessment($enrollment)) {
+            throw ValidationException::withMessages([
+                'attendance_records' => __('A passed practical assessment is required before issuing a certificate.'),
             ]);
         }
 
@@ -127,10 +144,28 @@ class IssueCertificate
     private function eligibilitySnapshot(Enrollment $enrollment): array
     {
         return [
+            'requirements' => $this->certificateRequirements($enrollment),
             'active_lessons' => $this->activeLessonCount($enrollment),
             'completed_lessons' => $this->completedLessonCount($enrollment),
             'passed_exam' => $this->hasPassedExam($enrollment),
+            'has_attendance' => $this->hasAttendance($enrollment),
+            'passed_practical' => $this->hasPassedPracticalAssessment($enrollment),
             'failed_practical' => $this->hasFailedPracticalAssessment($enrollment),
+        ];
+    }
+
+    /**
+     * @return array{requires_lesson_completion: bool, requires_exam_pass: bool, requires_attendance: bool, requires_practical_pass: bool}
+     */
+    private function certificateRequirements(Enrollment $enrollment): array
+    {
+        $source = $enrollment->coursePackage ?: $enrollment->course;
+
+        return [
+            'requires_lesson_completion' => (bool) $source->requires_lesson_completion_for_certificate,
+            'requires_exam_pass' => (bool) $source->requires_exam_pass_for_certificate,
+            'requires_attendance' => (bool) $source->requires_attendance_for_certificate,
+            'requires_practical_pass' => (bool) $source->requires_practical_pass_for_certificate,
         ];
     }
 
@@ -139,7 +174,7 @@ class IssueCertificate
         return Lesson::query()
             ->active()
             ->whereHas('courseModule', fn ($query) => $query
-                ->active()
+                ->where('is_active', true)
                 ->where('course_id', $enrollment->course_id))
             ->count();
     }
@@ -150,9 +185,9 @@ class IssueCertificate
             ->completed()
             ->where('enrollment_id', $enrollment->id)
             ->whereHas('lesson', fn ($query) => $query
-                ->active()
+                ->where('is_active', true)
                 ->whereHas('courseModule', fn ($query) => $query
-                    ->active()
+                    ->where('is_active', true)
                     ->where('course_id', $enrollment->course_id)))
             ->distinct('lesson_id')
             ->count('lesson_id');
@@ -164,8 +199,24 @@ class IssueCertificate
             ->where('enrollment_id', $enrollment->id)
             ->where('result', 'passed')
             ->whereHas('exam', fn ($query) => $query
-                ->active()
+                ->where('is_active', true)
                 ->where('course_id', $enrollment->course_id))
+            ->exists();
+    }
+
+    private function hasAttendance(Enrollment $enrollment): bool
+    {
+        return AttendanceRecord::query()
+            ->where('enrollment_id', $enrollment->id)
+            ->whereIn('status', ['present', 'late'])
+            ->exists();
+    }
+
+    private function hasPassedPracticalAssessment(Enrollment $enrollment): bool
+    {
+        return AttendanceRecord::query()
+            ->where('enrollment_id', $enrollment->id)
+            ->where('practical_outcome', 'passed')
             ->exists();
     }
 
@@ -205,8 +256,23 @@ class IssueCertificate
             'certificate_number' => $certificate->certificate_number,
             'verification_token' => $certificate->verification_token,
             'approved_by_id' => $certificate->approved_by_id,
-            'issued_at' => $certificate->issued_at?->toISOString(),
-            'expires_at' => $certificate->expires_at?->toISOString(),
+            'issued_at' => $this->dateTimeToIsoString($certificate->issued_at),
+            'expires_at' => $this->dateTimeToIsoString($certificate->expires_at),
         ];
+    }
+
+    private function dateTimeToIsoString(mixed $value): ?string
+    {
+        return $value instanceof CarbonInterface ? $value->toISOString() : null;
+    }
+
+    private function dateTimeIsFuture(mixed $value): bool
+    {
+        return $value instanceof CarbonInterface && $value->isFuture();
+    }
+
+    private function dateTimeIsPast(mixed $value): bool
+    {
+        return $value instanceof CarbonInterface && $value->isPast();
     }
 }

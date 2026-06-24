@@ -19,31 +19,50 @@ class Invoice extends Model implements HasMedia
     /** @use HasFactory<InvoiceFactory> */
     use HasFactory, InteractsWithMedia, SoftDeletes;
 
+    /**
+     * @return BelongsTo<Team, $this>
+     */
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
     }
 
+    /**
+     * @return BelongsTo<Enrollment, $this>
+     */
     public function enrollment(): BelongsTo
     {
         return $this->belongsTo(Enrollment::class);
     }
 
+    /**
+     * @return BelongsTo<Company, $this>
+     */
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
+    /**
+     * @return BelongsTo<StudentProfile, $this>
+     */
     public function studentProfile(): BelongsTo
     {
         return $this->belongsTo(StudentProfile::class);
     }
 
+    /**
+     * @return HasMany<PaymentTransaction, $this>
+     */
     public function paymentTransactions(): HasMany
     {
         return $this->hasMany(PaymentTransaction::class);
     }
 
+    /**
+     * @param  Builder<Invoice>  $query
+     * @return Builder<Invoice>
+     */
     public function scopeIssued(Builder $query): Builder
     {
         return $query->whereIn('status', ['issued', 'partial', 'paid']);

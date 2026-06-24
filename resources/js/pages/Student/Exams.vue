@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import {
+    ArrowRight,
     BookOpenCheck,
     CheckCircle2,
     Clock3,
     GraduationCap,
+    PlayCircle,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { portal as studentPortal } from '@/routes/student';
@@ -217,6 +219,34 @@ const label = (value: string | null | undefined): string =>
                     <p class="mt-1 text-muted-foreground">
                         {{ label(exam.lastResult) }}
                     </p>
+                </div>
+
+                <div class="mt-5 flex flex-wrap gap-2">
+                    <Link
+                        v-if="exam.activeAttemptUrl"
+                        :href="exam.activeAttemptUrl"
+                        class="inline-flex items-center gap-2 rounded-full bg-powerx-yellow px-4 py-2 text-sm font-black text-powerx-navy transition hover:bg-powerx-yellow/90"
+                    >
+                        Resume attempt
+                        <ArrowRight class="size-4" />
+                    </Link>
+                    <Link
+                        v-else-if="exam.canStart"
+                        :href="exam.startUrl"
+                        method="post"
+                        as="button"
+                        class="inline-flex items-center gap-2 rounded-full bg-powerx-yellow px-4 py-2 text-sm font-black text-powerx-navy transition hover:bg-powerx-yellow/90"
+                    >
+                        <PlayCircle class="size-4" />
+                        Start exam
+                    </Link>
+                    <Link
+                        v-if="exam.lastAttemptUrl"
+                        :href="exam.lastAttemptUrl"
+                        class="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-black transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                    >
+                        Review result
+                    </Link>
                 </div>
             </article>
         </section>

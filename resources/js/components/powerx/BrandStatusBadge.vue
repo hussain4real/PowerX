@@ -20,7 +20,8 @@ const toneClasses: Record<Tone, string> = {
     warning:
         'border-powerx-yellow bg-powerx-yellow text-powerx-navy shadow-[0_0_24px_rgba(255,193,7,0.24)]',
     info: 'border-powerx-cyan/55 bg-powerx-blue/20 text-powerx-cyan shadow-[0_0_22px_rgba(13,202,240,0.14)]',
-    neutral: 'border-white/25 bg-white/10 text-white shadow-[0_0_18px_rgba(255,255,255,0.08)]',
+    neutral:
+        'border-white/25 bg-white/10 text-white shadow-[0_0_18px_rgba(255,255,255,0.08)]',
 };
 
 const icon = computed(() => {

@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import {
     ArrowRight,
     Banknote,
     BookOpenCheck,
     CheckCircle2,
     Clock3,
-    Download,
     FileText,
     GraduationCap,
     LockKeyhole,
@@ -14,23 +13,16 @@ import {
     ShieldCheck,
 } from 'lucide-vue-next';
 import type { Component } from 'vue';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { portal as studentPortal } from '@/routes/student';
 import { index as studentCatalogIndex } from '@/routes/student/catalog';
 import { index as studentCoursesIndex } from '@/routes/student/courses';
-import { update as updateLessonProgressRoute } from '@/routes/student/lesson-progress';
 import { index as studentPaymentsIndex } from '@/routes/student/payments';
-import type {
-    Lesson,
-    StudentEnrollment,
-    StudentPortalProps,
-    Team,
-} from '@/types';
+import type { StudentEnrollment, StudentPortalProps, Team } from '@/types';
 
 const props = defineProps<StudentPortalProps>();
 
 const page = usePage();
-const progressRequests = ref<Record<string, boolean>>({});
 
 defineOptions({
     layout: (props: { currentTeam?: Team | null }) => ({
@@ -106,77 +98,6 @@ const courseLearningHref = (enrollment: StudentEnrollment): string =>
 
 const studentPaymentHref = (enrollment: StudentEnrollment): string =>
     `${studentPaymentsUrl.value}#enrollment-${enrollment.id}-finance`;
-
-const lessonProgressKey = (
-    enrollment: StudentEnrollment,
-    lesson: Lesson,
-): string => `${enrollment.id}-${lesson.id}`;
-
-const isUpdatingLessonProgress = (
-    enrollment: StudentEnrollment,
-    lesson: Lesson,
-): boolean =>
-    progressRequests.value[lessonProgressKey(enrollment, lesson)] === true;
-
-const updateLessonProgress = (
-    enrollment: StudentEnrollment,
-    lesson: Lesson,
-    progressPercentage: number,
-    event: string,
-): void => {
-    if (!lesson.canUpdateProgress || !currentTeamSlug.value) {
-        return;
-    }
-
-    const key = lessonProgressKey(enrollment, lesson);
-
-    progressRequests.value = {
-        ...progressRequests.value,
-        [key]: true,
-    };
-
-    router.patch(
-        updateLessonProgressRoute.url({
-            current_team: currentTeamSlug.value,
-            enrollment: enrollment.id,
-            lesson: lesson.id,
-        }),
-        {
-            progress_percentage: progressPercentage,
-            last_position_seconds: lesson.lastPositionSeconds,
-            event,
-        },
-        {
-            only: ['summary', 'enrollments'],
-            preserveScroll: true,
-            onFinish: () => {
-                progressRequests.value = {
-                    ...progressRequests.value,
-                    [key]: false,
-                };
-            },
-        },
-    );
-};
-
-const markLessonStarted = (
-    enrollment: StudentEnrollment,
-    lesson: Lesson,
-): void => {
-    updateLessonProgress(
-        enrollment,
-        lesson,
-        Math.max(lesson.progressPercentage, 1),
-        'lesson_started',
-    );
-};
-
-const markLessonCompleted = (
-    enrollment: StudentEnrollment,
-    lesson: Lesson,
-): void => {
-    updateLessonProgress(enrollment, lesson, 100, 'lesson_completed');
-};
 </script>
 
 <template>
@@ -348,7 +269,7 @@ const markLessonCompleted = (
                 <h2 class="mt-2 text-2xl font-black">Current course order</h2>
                 <p class="mt-2 max-w-3xl text-sm text-muted-foreground">
                     Courses stay in the same order as the student dashboard, but
-                    unlocked courses include direct learning actions.
+                    unlocked courses include direct lesson viewer actions.
                 </p>
 
                 <div class="mt-5 grid gap-4 lg:grid-cols-2">
@@ -546,12 +467,6 @@ const markLessonCompleted = (
                                     v-if="!lesson.isLocked"
                                     class="mt-3 grid gap-3 ps-8"
                                 >
-                                    <p
-                                        v-if="lesson.content"
-                                        class="text-sm leading-6 whitespace-pre-line text-muted-foreground"
-                                    >
-                                        {{ lesson.content }}
-                                    </p>
                                     <div
                                         class="h-2 overflow-hidden rounded-full bg-background"
                                     >
@@ -562,68 +477,14 @@ const markLessonCompleted = (
                                             }"
                                         />
                                     </div>
-                                    <div
-                                        v-if="lesson.canUpdateProgress"
-                                        class="flex flex-wrap gap-2"
+                                    <Link
+                                        v-if="lesson.viewerUrl"
+                                        :href="lesson.viewerUrl"
+                                        class="inline-flex w-fit items-center gap-2 rounded-full bg-powerx-yellow px-3 py-1.5 text-xs font-black text-powerx-navy transition hover:bg-powerx-yellow/90"
                                     >
-                                        <button
-                                            type="button"
-                                            class="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-black transition hover:border-powerx-yellow hover:text-powerx-yellow disabled:pointer-events-none disabled:opacity-60"
-                                            :disabled="
-                                                isUpdatingLessonProgress(
-                                                    enrollment,
-                                                    lesson,
-                                                )
-                                            "
-                                            @click="
-                                                markLessonStarted(
-                                                    enrollment,
-                                                    lesson,
-                                                )
-                                            "
-                                        >
-                                            Save progress
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="inline-flex items-center justify-center rounded-full bg-powerx-yellow px-3 py-1.5 text-xs font-black text-powerx-navy transition hover:bg-powerx-yellow/90 disabled:pointer-events-none disabled:opacity-60"
-                                            :disabled="
-                                                lesson.isCompleted ||
-                                                isUpdatingLessonProgress(
-                                                    enrollment,
-                                                    lesson,
-                                                )
-                                            "
-                                            @click="
-                                                markLessonCompleted(
-                                                    enrollment,
-                                                    lesson,
-                                                )
-                                            "
-                                        >
-                                            {{
-                                                lesson.isCompleted
-                                                    ? 'Completed'
-                                                    : 'Mark complete'
-                                            }}
-                                        </button>
-                                    </div>
-                                    <div
-                                        v-if="lesson.media.length > 0"
-                                        class="flex flex-wrap gap-2"
-                                    >
-                                        <a
-                                            v-for="media in lesson.media"
-                                            :key="media.id"
-                                            :href="media.url"
-                                            class="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-black text-foreground transition hover:border-powerx-yellow hover:text-powerx-yellow"
-                                        >
-                                            <Download class="size-3.5" />
-                                            {{ media.collectionLabel }}
-                                            · {{ media.fileName }} ·
-                                            {{ media.humanReadableSize }}
-                                        </a>
-                                    </div>
+                                        Open lesson
+                                        <ArrowRight class="size-3.5" />
+                                    </Link>
                                 </div>
                             </div>
                         </div>

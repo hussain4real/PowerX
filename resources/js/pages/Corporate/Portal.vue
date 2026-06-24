@@ -468,9 +468,7 @@ const statusClass = (status: string | null | undefined): string =>
                                     {{ label(quotation.status) }}
                                 </span>
                             </div>
-                            <div
-                                class="mt-4 grid gap-3 text-sm sm:grid-cols-2"
-                            >
+                            <div class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                                 <div>
                                     <p class="text-muted-foreground">Total</p>
                                     <p class="font-black">
@@ -542,13 +540,9 @@ const statusClass = (status: string | null | undefined): string =>
                                     {{ label(enrollment.status) }}
                                 </span>
                             </div>
-                            <div
-                                class="mt-4 grid gap-3 text-sm sm:grid-cols-3"
-                            >
+                            <div class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
                                 <div>
-                                    <p class="text-muted-foreground">
-                                        Payment
-                                    </p>
+                                    <p class="text-muted-foreground">Payment</p>
                                     <p class="font-black">
                                         {{ label(enrollment.paymentStatus) }}
                                     </p>
@@ -617,14 +611,15 @@ const statusClass = (status: string | null | undefined): string =>
                                     {{ label(invoice.status) }}
                                 </span>
                             </div>
-                            <div
-                                class="mt-4 grid gap-3 text-sm sm:grid-cols-3"
-                            >
+                            <div class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
                                 <div>
                                     <p class="text-muted-foreground">Total</p>
                                     <p class="font-black">
                                         {{
-                                            money(invoice.total, invoice.currency)
+                                            money(
+                                                invoice.total,
+                                                invoice.currency,
+                                            )
                                         }}
                                     </p>
                                 </div>
@@ -732,9 +727,7 @@ const statusClass = (status: string | null | undefined): string =>
                                     {{ label(record.status) }}
                                 </span>
                             </div>
-                            <div
-                                class="mt-4 grid gap-3 text-sm sm:grid-cols-3"
-                            >
+                            <div class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
                                 <div>
                                     <p class="text-muted-foreground">
                                         Attendance
@@ -803,9 +796,7 @@ const statusClass = (status: string | null | undefined): string =>
                                     {{ label(certificate.status) }}
                                 </span>
                             </div>
-                            <div
-                                class="mt-4 grid gap-3 text-sm sm:grid-cols-3"
-                            >
+                            <div class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
                                 <div>
                                     <p class="text-muted-foreground">Result</p>
                                     <p class="font-black">
@@ -834,7 +825,7 @@ const statusClass = (status: string | null | undefined): string =>
             </section>
 
             <section
-                class="grid gap-4 rounded-2xl border border-sidebar-border/70 bg-card p-5 shadow-sm dark:border-sidebar-border md:grid-cols-[auto_1fr]"
+                class="grid gap-4 rounded-2xl border border-sidebar-border/70 bg-card p-5 shadow-sm md:grid-cols-[auto_1fr] dark:border-sidebar-border"
             >
                 <ClipboardList class="size-8 text-powerx-cyan" />
                 <div>

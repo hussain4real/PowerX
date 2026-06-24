@@ -13,6 +13,7 @@ use App\Filament\Resources\Courses\CourseResource;
 use App\Filament\Resources\Enrollments\EnrollmentResource;
 use App\Filament\Resources\ExamAttempts\ExamAttemptResource;
 use App\Filament\Resources\Exams\ExamResource;
+use App\Filament\Resources\Exams\Pages\EditExam;
 use App\Filament\Resources\Invoices\InvoiceResource;
 use App\Filament\Resources\Leads\LeadResource;
 use App\Filament\Resources\LessonProgress\LessonProgressResource;
@@ -267,6 +268,65 @@ test('finance can approve pending payment transactions from filament', function 
         ->and($auditEvent->actor_id)->toBe($financeUser->id)
         ->and($auditEvent->before['status'])->toBe('pending')
         ->and($auditEvent->after['status'])->toBe('approved');
+});
+
+test('management exam rule edits are recorded as assessment configuration audit events', function () {
+    $manager = User::factory()->create();
+    grantPowerXRole($manager, PowerXRole::Management);
+    $this->actingAs($manager);
+
+    $course = Course::factory()
+        ->for($manager->currentTeam)
+        ->create();
+    $exam = Exam::factory()
+        ->for($manager->currentTeam)
+        ->for($course)
+        ->create([
+            'duration_minutes' => 60,
+            'pass_mark' => 70,
+            'max_attempts' => 3,
+            'question_count' => 25,
+            'randomize_questions' => true,
+            'is_active' => true,
+            'metadata' => ['show_results_immediately' => true],
+        ]);
+
+    Livewire::test(EditExam::class, ['record' => $exam->id])
+        ->fillForm([
+            'team_id' => $manager->current_team_id,
+            'course_id' => $course->id,
+            'exam_type' => $exam->exam_type,
+            'title' => $exam->title,
+            'duration_minutes' => 45,
+            'pass_mark' => 80,
+            'max_attempts' => 2,
+            'question_count' => 10,
+            'randomize_questions' => false,
+            'is_active' => true,
+            'metadata' => ['show_results_immediately' => 'false'],
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $auditEvent = AuditEvent::query()
+        ->where('action', 'assessment.configuration_changed')
+        ->whereMorphedTo('subject', $exam)
+        ->firstOrFail();
+
+    expect($auditEvent->actor_id)->toBe($manager->id)
+        ->and($auditEvent->metadata['configuration_scope'])->toBe('exam_attempt_rules')
+        ->and($auditEvent->metadata['changed_fields'])->toContain(
+            'duration_minutes',
+            'pass_mark',
+            'max_attempts',
+            'question_count',
+            'randomize_questions',
+            'metadata',
+        )
+        ->and($auditEvent->before['duration_minutes'])->toBe(60)
+        ->and($auditEvent->after['duration_minutes'])->toBe(45)
+        ->and($auditEvent->before['pass_mark'])->toBe(70)
+        ->and($auditEvent->after['pass_mark'])->toBe(80);
 });
 
 function actingAsPowerXRole(PowerXRole $role): void

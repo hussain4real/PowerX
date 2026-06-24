@@ -80,7 +80,7 @@ Close the remaining sales and admissions gaps around lead sources, follow-up his
 
 ### Status
 
-Partially implemented foundation; pending completion.
+Completed and verified on June 24, 2026, with student lesson viewer, exam-taking flow, configurable certificate rules, scoped Larastan level 7 analysis, and 100% test coverage.
 
 ### Goal
 
@@ -98,23 +98,23 @@ Turn the current signed lesson media download flow into a full student lesson-vi
 
 ### Checklist
 
-- [ ] Add a dedicated lesson viewer route/page instead of rendering all lesson content inline in the course overview.
-- [ ] Render uploaded lesson videos in an authenticated player for paid students, with provider/storage behavior signed off before production.
-- [ ] Render uploaded PDFs in an authenticated in-browser PDF viewer for paid students, while preserving secure download behavior where allowed.
-- [ ] Decide whether preview lessons may expose video/PDF media before payment; if approved, add source-aware preview media access rules and tracking.
-- [ ] Replace manual-only lesson progress buttons with media-aware progress updates for video watch progress, PDF open/download events, and completion.
-- [ ] Add tests proving video/PDF links cannot be accessed outside paid or approved preview access, and that expired signed links fail.
-- [ ] Add authenticated student routes for exam start, active attempt view, answer autosave if needed, and final submission.
-- [ ] Build an Inertia/Vue exam-taking page with timer, question navigation, answer selection, confirmation, and locked submitted state.
-- [ ] Use existing `StartExamAttempt` and `SubmitExamAttempt` actions as the business-rule boundary.
-- [ ] Implement question selection from `question_count`, active questions, randomization settings, and course/topic filters.
-- [ ] Store the selected question set on the attempt so a randomized exam remains stable during the attempt.
-- [ ] Ensure time limit, access window, payment status, enrollment status, max attempts, and course ownership are rechecked server-side.
-- [ ] Add clear result views for pass/fail, score, duration, attempts used, and next allowed action.
-- [ ] Add instructor/admin review views for answer history where staff permissions allow it.
-- [ ] Add practical-course certificate rules so courses/packages can require a passed practical assessment, not only block failed practical outcomes.
-- [ ] Add a course/package setting for whether attendance, exam pass, lesson completion, and practical pass are required for certificate eligibility.
-- [ ] Add audit logging for exam configuration changes that affect attempts or certificate eligibility.
+- [x] Add a dedicated lesson viewer route/page instead of rendering all lesson content inline in the course overview.
+- [x] Render uploaded lesson videos in an authenticated player for paid students, with provider/storage behavior signed off before production.
+- [x] Render uploaded PDFs in an authenticated in-browser PDF viewer for paid students, while preserving secure download behavior where allowed.
+- [x] Decide whether preview lessons may expose video/PDF media before payment; if approved, add source-aware preview media access rules and tracking.
+- [x] Replace manual-only lesson progress buttons with media-aware progress updates for video watch progress, PDF open/download events, and completion.
+- [x] Add tests proving video/PDF links cannot be accessed outside paid or approved preview access, and that expired signed links fail.
+- [x] Add authenticated student routes for exam start, active attempt view, answer autosave if needed, and final submission.
+- [x] Build an Inertia/Vue exam-taking page with timer, question navigation, answer selection, confirmation, and locked submitted state.
+- [x] Use existing `StartExamAttempt` and `SubmitExamAttempt` actions as the business-rule boundary.
+- [x] Implement question selection from `question_count`, active questions, randomization settings, and course/topic filters.
+- [x] Store the selected question set on the attempt so a randomized exam remains stable during the attempt.
+- [x] Ensure time limit, access window, payment status, enrollment status, max attempts, and course ownership are rechecked server-side.
+- [x] Add clear result views for pass/fail, score, duration, attempts used, and next allowed action.
+- [x] Add instructor/admin review views for answer history where staff permissions allow it.
+- [x] Add practical-course certificate rules so courses/packages can require a passed practical assessment, not only block failed practical outcomes.
+- [x] Add a course/package setting for whether attendance, exam pass, lesson completion, and practical pass are required for certificate eligibility.
+- [x] Add audit logging for exam configuration changes that affect attempts or certificate eligibility.
 
 ### Deliverables
 

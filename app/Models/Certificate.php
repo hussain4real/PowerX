@@ -8,35 +8,57 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
+/**
+ * @property Carbon|null $issued_at
+ * @property Carbon|null $expires_at
+ * @property Carbon|null $pdf_generated_at
+ * @property array<string, mixed>|null $metadata
+ */
 #[Fillable(['team_id', 'enrollment_id', 'student_profile_id', 'course_id', 'approved_by_id', 'certificate_number', 'verification_token', 'status', 'result', 'issued_at', 'expires_at', 'pdf_generated_at', 'metadata'])]
 class Certificate extends Model implements HasMedia
 {
     /** @use HasFactory<CertificateFactory> */
     use HasFactory, InteractsWithMedia, SoftDeletes;
 
+    /**
+     * @return BelongsTo<Team, $this>
+     */
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
     }
 
+    /**
+     * @return BelongsTo<Enrollment, $this>
+     */
     public function enrollment(): BelongsTo
     {
         return $this->belongsTo(Enrollment::class);
     }
 
+    /**
+     * @return BelongsTo<StudentProfile, $this>
+     */
     public function studentProfile(): BelongsTo
     {
         return $this->belongsTo(StudentProfile::class);
     }
 
+    /**
+     * @return BelongsTo<Course, $this>
+     */
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by_id');

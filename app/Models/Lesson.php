@@ -10,9 +10,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
+/**
+ * @property Carbon|null $content_retired_at
+ * @property array<string, mixed>|null $metadata
+ */
 #[Fillable(['course_module_id', 'title', 'slug', 'lesson_type', 'sort_order', 'duration_minutes', 'content', 'is_preview', 'is_active', 'metadata', 'content_revision', 'content_retired_at', 'replacement_lesson_id', 'content_retirement_note'])]
 class Lesson extends Model implements HasMedia
 {
@@ -23,31 +28,51 @@ class Lesson extends Model implements HasMedia
         'content_revision' => 1,
     ];
 
+    /**
+     * @return BelongsTo<CourseModule, $this>
+     */
     public function courseModule(): BelongsTo
     {
         return $this->belongsTo(CourseModule::class);
     }
 
+    /**
+     * @return BelongsTo<Lesson, $this>
+     */
     public function replacementLesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class, 'replacement_lesson_id');
     }
 
+    /**
+     * @return HasMany<Lesson, $this>
+     */
     public function replacedLessons(): HasMany
     {
         return $this->hasMany(Lesson::class, 'replacement_lesson_id');
     }
 
+    /**
+     * @param  Builder<Lesson>  $query
+     * @return Builder<Lesson>
+     */
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
+    /**
+     * @return HasMany<LessonProgress, $this>
+     */
     public function progressRecords(): HasMany
     {
         return $this->hasMany(LessonProgress::class);
     }
 
+    /**
+     * @param  Builder<Lesson>  $query
+     * @return Builder<Lesson>
+     */
     public function scopeContentRetired(Builder $query): Builder
     {
         return $query->whereNotNull('content_retired_at');

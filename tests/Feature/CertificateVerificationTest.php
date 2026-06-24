@@ -76,6 +76,54 @@ it('blocks certificates when practical assessment failed', function () {
     app(IssueCertificate::class)->handle($enrollment, $approver);
 })->throws(ValidationException::class);
 
+it('requires passed practical assessment when package configuration demands it', function () {
+    [$enrollment, $approver, $session] = eligibleCertificateEnrollment();
+    $enrollment->coursePackage->update(['requires_practical_pass_for_certificate' => true]);
+
+    expect(fn () => app(IssueCertificate::class)->handle($enrollment->fresh(), $approver))
+        ->toThrow(ValidationException::class);
+
+    AttendanceRecord::factory()
+        ->for($session, 'trainingSession')
+        ->for($enrollment)
+        ->for($approver, 'markedBy')
+        ->create(['status' => 'present', 'practical_outcome' => 'passed']);
+
+    $certificate = app(IssueCertificate::class)->handle($enrollment->fresh(), $approver);
+
+    expect($certificate->status)->toBe('issued')
+        ->and($certificate->metadata['eligibility']['requirements']['requires_practical_pass'])->toBeTrue()
+        ->and($certificate->metadata['eligibility']['passed_practical'])->toBeTrue();
+});
+
+it('applies configurable lesson exam and attendance certificate requirements', function () {
+    [$enrollment, $approver, $session] = eligibleCertificateEnrollment(includeLessonProgress: false);
+
+    $enrollment->coursePackage->update([
+        'requires_lesson_completion_for_certificate' => false,
+        'requires_exam_pass_for_certificate' => false,
+        'requires_attendance_for_certificate' => true,
+    ]);
+    $enrollment->examAttempts()->delete();
+
+    expect(fn () => app(IssueCertificate::class)->handle($enrollment->fresh(), $approver))
+        ->toThrow(ValidationException::class);
+
+    AttendanceRecord::factory()
+        ->for($session, 'trainingSession')
+        ->for($enrollment)
+        ->for($approver, 'markedBy')
+        ->create(['status' => 'present', 'practical_outcome' => null]);
+
+    $certificate = app(IssueCertificate::class)->handle($enrollment->fresh(), $approver);
+
+    expect($certificate->status)->toBe('issued')
+        ->and($certificate->metadata['eligibility']['requirements']['requires_lesson_completion'])->toBeFalse()
+        ->and($certificate->metadata['eligibility']['requirements']['requires_exam_pass'])->toBeFalse()
+        ->and($certificate->metadata['eligibility']['requirements']['requires_attendance'])->toBeTrue()
+        ->and($certificate->metadata['eligibility']['has_attendance'])->toBeTrue();
+});
+
 it('does not verify draft certificates publicly', function () {
     $certificate = Certificate::factory()->create(['status' => 'draft', 'issued_at' => null]);
 

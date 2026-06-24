@@ -55,6 +55,18 @@ class CoursePackageForm
                     ->schema([
                         Toggle::make('includes_certificate')
                             ->required(),
+                        Toggle::make('requires_lesson_completion_for_certificate')
+                            ->label('Require lesson completion')
+                            ->required(),
+                        Toggle::make('requires_exam_pass_for_certificate')
+                            ->label('Require exam pass')
+                            ->required(),
+                        Toggle::make('requires_attendance_for_certificate')
+                            ->label('Require attendance')
+                            ->required(),
+                        Toggle::make('requires_practical_pass_for_certificate')
+                            ->label('Require practical pass')
+                            ->required(),
                         Toggle::make('allows_free_preview')
                             ->required(),
                         Toggle::make('is_active')

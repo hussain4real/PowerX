@@ -1,0 +1,44 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 7
+    paths:
+        - app/Actions/PowerX/BuildStudentPortal.php
+        - app/Actions/PowerX/BuildStudentLessonViewer.php
+        - app/Actions/PowerX/BuildStudentExamAttempt.php
+        - app/Actions/PowerX/ResolveStudentLessonAccess.php
+        - app/Actions/PowerX/StartExamAttempt.php
+        - app/Actions/PowerX/SubmitExamAttempt.php
+        - app/Actions/PowerX/IssueCertificate.php
+        - app/Actions/PowerX/RecordAssessmentConfigurationChange.php
+        - app/Actions/PowerX/UpdateLessonProgress.php
+        - app/Filament/Resources/Courses/Pages/EditCourse.php
+        - app/Filament/Resources/Courses/Schemas/CourseForm.php
+        - app/Filament/Resources/CoursePackages/Pages/EditCoursePackage.php
+        - app/Filament/Resources/CoursePackages/Schemas/CoursePackageForm.php
+        - app/Filament/Resources/Exams/Pages/EditExam.php
+        - app/Http/Controllers/StudentLessonViewerController.php
+        - app/Http/Controllers/StudentLessonMediaController.php
+        - app/Http/Controllers/StudentLessonProgressController.php
+        - app/Http/Controllers/StudentExamAttemptController.php
+        - app/Http/Requests/StoreStudentExamAttemptRequest.php
+        - app/Http/Requests/UpdateStudentExamAttemptRequest.php
+        - app/Http/Requests/SubmitStudentExamAttemptRequest.php
+        - app/Http/Requests/UpdateStudentLessonProgressRequest.php
+        - app/Models/Course.php
+        - app/Models/CoursePackage.php
+        - app/Models/Enrollment.php
+        - app/Models/Exam.php
+        - app/Models/ExamAttempt.php
+        - app/Models/StudentProfile.php
+        - app/Models/CourseModule.php
+        - app/Models/Lesson.php
+        - app/Models/LessonProgress.php
+        - app/Models/Invoice.php
+        - app/Models/PaymentTransaction.php
+        - app/Models/Certificate.php
+        - app/Models/AttendanceRecord.php
+        - app/Models/TrainingSession.php
+        - app/Models/TrainingBatch.php
+    tmpDir: storage/framework/cache/phpstan

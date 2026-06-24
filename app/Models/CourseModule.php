@@ -17,16 +17,26 @@ class CourseModule extends Model
     /** @use HasFactory<CourseModuleFactory> */
     use HasFactory, SoftDeletes;
 
+    /**
+     * @return BelongsTo<Course, $this>
+     */
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
     }
 
+    /**
+     * @return HasMany<Lesson, $this>
+     */
     public function lessons(): HasMany
     {
         return $this->hasMany(Lesson::class);
     }
 
+    /**
+     * @param  Builder<CourseModule>  $query
+     * @return Builder<CourseModule>
+     */
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

@@ -66,6 +66,22 @@ class CourseForm
                                         PowerXForm::integerInput('validity_days')
                                             ->helperText('Leave empty for no default access duration.'),
                                     ]),
+                                Section::make('Certificate requirements')
+                                    ->columns(2)
+                                    ->schema([
+                                        Toggle::make('requires_lesson_completion_for_certificate')
+                                            ->label('Require lesson completion')
+                                            ->required(),
+                                        Toggle::make('requires_exam_pass_for_certificate')
+                                            ->label('Require exam pass')
+                                            ->required(),
+                                        Toggle::make('requires_attendance_for_certificate')
+                                            ->label('Require attendance')
+                                            ->required(),
+                                        Toggle::make('requires_practical_pass_for_certificate')
+                                            ->label('Require practical pass')
+                                            ->required(),
+                                    ]),
                             ]),
                         Tab::make('Media')
                             ->schema([

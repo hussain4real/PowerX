@@ -17,9 +17,11 @@ use App\Http\Controllers\ReportExportController;
 use App\Http\Controllers\StudentCertificatesController;
 use App\Http\Controllers\StudentCourseCatalogController;
 use App\Http\Controllers\StudentCoursesController;
+use App\Http\Controllers\StudentExamAttemptController;
 use App\Http\Controllers\StudentExamsController;
 use App\Http\Controllers\StudentLessonMediaController;
 use App\Http\Controllers\StudentLessonProgressController;
+use App\Http\Controllers\StudentLessonViewerController;
 use App\Http\Controllers\StudentPaymentsController;
 use App\Http\Controllers\StudentPortalController;
 use App\Http\Controllers\StudentScheduleController;
@@ -47,13 +49,26 @@ Route::prefix('{current_team}')
         Route::get('student-portal/courses', StudentCoursesController::class)->name('student.courses.index');
         Route::get('student-portal/schedule', StudentScheduleController::class)->name('student.schedule.index');
         Route::get('student-portal/exams', StudentExamsController::class)->name('student.exams.index');
+        Route::post('student-portal/enrollments/{enrollment}/exams/{exam}/attempts', [StudentExamAttemptController::class, 'store'])
+            ->middleware('throttle:30,1')
+            ->name('student.exam-attempts.store');
+        Route::get('student-portal/exam-attempts/{examAttempt}', [StudentExamAttemptController::class, 'show'])
+            ->name('student.exam-attempts.show');
+        Route::patch('student-portal/exam-attempts/{examAttempt}', [StudentExamAttemptController::class, 'update'])
+            ->middleware('throttle:120,1')
+            ->name('student.exam-attempts.update');
+        Route::post('student-portal/exam-attempts/{examAttempt}/submit', [StudentExamAttemptController::class, 'submit'])
+            ->middleware('throttle:60,1')
+            ->name('student.exam-attempts.submit');
         Route::get('student-portal/certificates', StudentCertificatesController::class)->name('student.certificates.index');
         Route::get('student-portal/payments', StudentPaymentsController::class)->name('student.payments.index');
         Route::get('student-portal/catalog', StudentCourseCatalogController::class)->name('student.catalog.index');
+        Route::get('student-portal/enrollments/{enrollment}/lessons/{lesson}', StudentLessonViewerController::class)
+            ->name('student.lessons.show');
         Route::patch('student-portal/enrollments/{enrollment}/lessons/{lesson}/progress', StudentLessonProgressController::class)
             ->middleware('throttle:120,1')
             ->name('student.lesson-progress.update');
-        Route::get('student-portal/lessons/{lesson}/media/{media}', StudentLessonMediaController::class)
+        Route::get('student-portal/enrollments/{enrollment}/lessons/{lesson}/media/{media}', StudentLessonMediaController::class)
             ->middleware(['signed', 'throttle:60,1'])
             ->name('student.lesson-media.show');
         Route::get('instructor-portal', InstructorPortalController::class)

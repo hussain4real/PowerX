@@ -339,8 +339,8 @@ const toneClasses: Record<SummaryCard['tone'], string> = {
                     {{ metrics.learning.exam_attempts }} submitted attempts.
                 </p>
                 <p class="mt-3 text-sm text-muted-foreground">
-                    Avg. score {{ metrics.learning.average_exam_score }}%.
-                    Weak topic:
+                    Avg. score {{ metrics.learning.average_exam_score }}%. Weak
+                    topic:
                     {{
                         metrics.learning.top_weak_topic ??
                         'No weak topics recorded'

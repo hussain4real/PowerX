@@ -18,46 +18,73 @@ class StudentProfile extends Model implements HasMedia
     /** @use HasFactory<StudentProfileFactory> */
     use HasFactory, InteractsWithMedia, SoftDeletes;
 
+    /**
+     * @return BelongsTo<Team, $this>
+     */
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsTo<Company, $this>
+     */
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
+    /**
+     * @return HasMany<Enrollment, $this>
+     */
     public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class);
     }
 
+    /**
+     * @return HasMany<Invoice, $this>
+     */
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
     }
 
+    /**
+     * @return HasMany<PaymentTransaction, $this>
+     */
     public function paymentTransactions(): HasMany
     {
         return $this->hasMany(PaymentTransaction::class);
     }
 
+    /**
+     * @return HasMany<ExamAttempt, $this>
+     */
     public function examAttempts(): HasMany
     {
         return $this->hasMany(ExamAttempt::class);
     }
 
+    /**
+     * @return HasMany<Certificate, $this>
+     */
     public function certificates(): HasMany
     {
         return $this->hasMany(Certificate::class);
     }
 
+    /**
+     * @return HasMany<Communication, $this>
+     */
     public function communications(): HasMany
     {
         return $this->hasMany(Communication::class);

@@ -3,13 +3,19 @@
 namespace App\Actions\PowerX;
 
 use App\Models\Course;
+use App\Models\CourseModule;
 use App\Models\CoursePackage;
 use App\Models\Enrollment;
+use App\Models\Invoice;
 use App\Models\Lesson;
+use App\Models\LessonProgress;
+use App\Models\PaymentTransaction;
 use App\Models\StudentProfile;
 use App\Models\Team;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class BuildStudentPortal
@@ -20,6 +26,8 @@ class BuildStudentPortal
     private const LESSON_MEDIA_COLLECTIONS = ['video', 'learning-materials'];
 
     private const LESSON_MEDIA_LINK_EXPIRY_MINUTES = 30;
+
+    public function __construct(private ResolveStudentLessonAccess $resolveStudentLessonAccess) {}
 
     /**
      * @return array<string, mixed>
@@ -72,7 +80,10 @@ class BuildStudentPortal
                 'enrolledCourses' => $enrollments->count(),
                 'activeEnrollments' => $enrollments->whereIn('status', ['active', 'completed'])->count(),
                 'pendingPayments' => $enrollments->where('payment_status', '!=', 'paid')->count(),
-                'issuedCertificates' => $enrollments->flatMap->certificates->where('status', 'issued')->count(),
+                'issuedCertificates' => $enrollments
+                    ->flatMap(fn (Enrollment $enrollment) => $enrollment->certificates)
+                    ->where('status', 'issued')
+                    ->count(),
                 'averageProgress' => (int) round($portalEnrollments->avg('progress.percentage') ?? 0),
                 'nextSessionLabel' => $nextSession['title'] ?? 'No upcoming assigned session',
             ],
@@ -160,8 +171,8 @@ class BuildStudentPortal
             'paymentStatus' => $enrollment->payment_status,
             'accessStatus' => $accessStatus,
             'hasPaidAccess' => $accessStatus === 'open',
-            'accessStartsAt' => $enrollment->access_starts_at?->toISOString(),
-            'accessExpiresAt' => $enrollment->access_expires_at?->toISOString(),
+            'accessStartsAt' => $this->dateTimeToIsoString($enrollment->access_starts_at),
+            'accessExpiresAt' => $this->dateTimeToIsoString($enrollment->access_expires_at),
             'course' => [
                 'id' => $enrollment->course->id,
                 'title' => $enrollment->course->title,
@@ -184,27 +195,27 @@ class BuildStudentPortal
             'finance' => [
                 'invoices' => $enrollment->invoices
                     ->sortByDesc('issued_at')
-                    ->map(fn ($invoice): array => [
+                    ->map(fn (Invoice $invoice): array => [
                         'id' => $invoice->id,
                         'number' => $invoice->number,
                         'type' => $invoice->type,
                         'status' => $invoice->status,
                         'currency' => $invoice->currency,
                         'total' => (float) $invoice->total,
-                        'dueAt' => $invoice->due_at?->toISOString(),
+                        'dueAt' => $this->dateTimeToIsoString($invoice->due_at),
                     ])
                     ->values()
                     ->all(),
                 'payments' => $enrollment->paymentTransactions
                     ->sortByDesc('paid_at')
-                    ->map(fn ($payment): array => [
+                    ->map(fn (PaymentTransaction $payment): array => [
                         'id' => $payment->id,
                         'method' => $payment->method,
                         'reference' => $payment->reference,
                         'status' => $payment->status,
                         'currency' => $payment->currency,
                         'amount' => (float) $payment->amount,
-                        'paidAt' => $payment->paid_at?->toISOString(),
+                        'paidAt' => $this->dateTimeToIsoString($payment->paid_at),
                     ])
                     ->values()
                     ->all(),
@@ -230,11 +241,11 @@ class BuildStudentPortal
             return 'payment_pending';
         }
 
-        if (! in_array($enrollment->status, [Enrollment::STATUS_ACTIVE, Enrollment::STATUS_COMPLETED], true) || $enrollment->access_starts_at?->isFuture()) {
+        if (! in_array($enrollment->status, [Enrollment::STATUS_ACTIVE, Enrollment::STATUS_COMPLETED], true) || $this->dateTimeIsFuture($enrollment->access_starts_at)) {
             return 'enrollment_pending';
         }
 
-        if ($enrollment->access_expires_at?->isPast()) {
+        if ($this->dateTimeIsPast($enrollment->access_expires_at)) {
             return 'expired';
         }
 
@@ -264,14 +275,19 @@ class BuildStudentPortal
         $progressByLesson = $enrollment->lessonProgress->keyBy('lesson_id');
 
         return $enrollment->course->modules
-            ->map(fn ($module): array => [
+            ->map(fn (CourseModule $module): array => [
                 'id' => $module->id,
                 'title' => $module->title,
                 'summary' => $module->summary,
                 'lessons' => $module->lessons
-                    ->map(function ($lesson) use ($enrollment, $progressByLesson, $hasPaidAccess): array {
+                    ->map(function (Lesson $lesson) use ($enrollment, $progressByLesson, $hasPaidAccess): array {
                         $progress = $progressByLesson->get($lesson->id);
-                        $isLocked = ! $hasPaidAccess && ! $lesson->is_preview;
+                        $progressPercentage = $progress instanceof LessonProgress ? (int) $progress->progress_percentage : 0;
+                        $lastPositionSeconds = $progress instanceof LessonProgress ? (int) $progress->last_position_seconds : 0;
+                        $isCompleted = $progress instanceof LessonProgress && $progress->completed_at !== null;
+                        $hasPreviewAccess = $this->resolveStudentLessonAccess->hasPreviewAccess($enrollment, $lesson);
+                        $canViewLesson = $hasPaidAccess || $hasPreviewAccess;
+                        $isLocked = ! $canViewLesson;
 
                         return [
                             'id' => $lesson->id,
@@ -280,13 +296,19 @@ class BuildStudentPortal
                             'durationMinutes' => $lesson->duration_minutes,
                             'isPreview' => $lesson->is_preview,
                             'isLocked' => $isLocked,
+                            'canViewLesson' => $canViewLesson,
                             'canUpdateProgress' => $hasPaidAccess && ! $isLocked,
+                            'viewerUrl' => $canViewLesson ? route('student.lessons.show', [
+                                'current_team' => $enrollment->team,
+                                'enrollment' => $enrollment,
+                                'lesson' => $lesson,
+                            ]) : null,
                             'content' => $isLocked ? null : $lesson->content,
                             'contentRevision' => $lesson->content_revision,
-                            'progressPercentage' => (int) ($progress?->progress_percentage ?? 0),
-                            'lastPositionSeconds' => (int) ($progress?->last_position_seconds ?? 0),
-                            'isCompleted' => $progress?->completed_at !== null,
-                            'media' => $this->lessonMediaPayload($enrollment, $lesson, $hasPaidAccess),
+                            'progressPercentage' => $progressPercentage,
+                            'lastPositionSeconds' => $lastPositionSeconds,
+                            'isCompleted' => $isCompleted,
+                            'media' => $this->lessonMediaPayload($enrollment, $lesson, $hasPaidAccess, $hasPreviewAccess),
                         ];
                     })
                     ->values()
@@ -299,35 +321,84 @@ class BuildStudentPortal
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function lessonMediaPayload(Enrollment $enrollment, Lesson $lesson, bool $hasPaidAccess): array
+    private function lessonMediaPayload(Enrollment $enrollment, Lesson $lesson, bool $hasPaidAccess, bool $hasPreviewAccess): array
     {
-        if (! $hasPaidAccess) {
+        if (! $hasPaidAccess && ! $hasPreviewAccess) {
             return [];
         }
 
         $expiresAt = now()->addMinutes(self::LESSON_MEDIA_LINK_EXPIRY_MINUTES);
+        $source = $hasPaidAccess ? 'paid_lesson_media' : 'student_preview_media';
 
         return $lesson->media
             ->whereIn('collection_name', self::LESSON_MEDIA_COLLECTIONS)
             ->sortBy('order_column')
-            ->map(fn (Media $media): array => [
-                'id' => $media->id,
-                'name' => $media->name,
-                'fileName' => $media->file_name,
-                'collectionName' => $media->collection_name,
-                'collectionLabel' => $media->collection_name === 'video' ? 'Video' : 'Learning material',
-                'mimeType' => $media->mime_type,
-                'size' => $media->size,
-                'humanReadableSize' => $media->human_readable_size,
-                'url' => URL::temporarySignedRoute('student.lesson-media.show', $expiresAt, [
+            ->map(function (Media $media) use ($enrollment, $lesson, $expiresAt, $source): array {
+                $mediaType = $this->mediaType($media);
+                $signedParameters = [
                     'current_team' => $enrollment->team,
+                    'enrollment' => $enrollment,
                     'lesson' => $lesson,
                     'media' => $media,
-                ]),
-                'expiresAt' => $expiresAt->toISOString(),
-            ])
+                    'source' => $source,
+                ];
+
+                $inlineUrl = URL::temporarySignedRoute('student.lesson-media.show', $expiresAt, [
+                    ...$signedParameters,
+                    'disposition' => 'inline',
+                ]);
+                $downloadUrl = URL::temporarySignedRoute('student.lesson-media.show', $expiresAt, [
+                    ...$signedParameters,
+                    'disposition' => 'download',
+                ]);
+
+                return [
+                    'id' => $media->id,
+                    'name' => $media->name,
+                    'fileName' => $media->file_name,
+                    'collectionName' => $media->collection_name,
+                    'collectionLabel' => $media->collection_name === 'video' ? 'Video' : 'Learning material',
+                    'mimeType' => $media->mime_type,
+                    'size' => $media->size,
+                    'humanReadableSize' => $media->human_readable_size,
+                    'url' => $downloadUrl,
+                    'inlineUrl' => $inlineUrl,
+                    'downloadUrl' => $downloadUrl,
+                    'expiresAt' => $expiresAt->toISOString(),
+                    'canPreviewInline' => in_array($mediaType, ['video', 'pdf'], true),
+                    'mediaType' => $mediaType,
+                ];
+            })
             ->values()
             ->all();
+    }
+
+    private function mediaType(Media $media): string
+    {
+        if ($media->collection_name === 'video' || str_starts_with($media->mime_type, 'video/')) {
+            return 'video';
+        }
+
+        if ($media->mime_type === 'application/pdf' || Str::of($media->file_name)->lower()->endsWith('.pdf')) {
+            return 'pdf';
+        }
+
+        return 'download';
+    }
+
+    private function dateTimeToIsoString(mixed $value): ?string
+    {
+        return $value instanceof CarbonInterface ? $value->toISOString() : null;
+    }
+
+    private function dateTimeIsFuture(mixed $value): bool
+    {
+        return $value instanceof CarbonInterface && $value->isFuture();
+    }
+
+    private function dateTimeIsPast(mixed $value): bool
+    {
+        return $value instanceof CarbonInterface && $value->isPast();
     }
 
     /**
@@ -336,7 +407,7 @@ class BuildStudentPortal
     private function schedulePayload(Enrollment $enrollment): array
     {
         return $enrollment->attendanceRecords
-            ->sortBy(fn ($attendance): ?string => $attendance->trainingSession?->starts_at?->toISOString())
+            ->sortBy(fn ($attendance): ?string => $this->dateTimeToIsoString($attendance->trainingSession?->starts_at))
             ->map(fn ($attendance): array => [
                 'id' => $attendance->trainingSession->id,
                 'title' => $attendance->trainingSession->title,
@@ -345,8 +416,8 @@ class BuildStudentPortal
                 'status' => $attendance->status,
                 'practicalOutcome' => $attendance->practical_outcome,
                 'practicalComments' => $attendance->practical_comments,
-                'startsAt' => $attendance->trainingSession->starts_at?->toISOString(),
-                'endsAt' => $attendance->trainingSession->ends_at?->toISOString(),
+                'startsAt' => $this->dateTimeToIsoString($attendance->trainingSession->starts_at),
+                'endsAt' => $this->dateTimeToIsoString($attendance->trainingSession->ends_at),
                 'batch' => [
                     'name' => $attendance->trainingSession->trainingBatch->name,
                     'deliveryMode' => $attendance->trainingSession->trainingBatch->delivery_mode,
@@ -366,6 +437,14 @@ class BuildStudentPortal
             ->map(function ($exam) use ($enrollment, $hasPaidAccess): array {
                 $attempts = $enrollment->examAttempts->where('exam_id', $exam->id);
                 $lastAttempt = $attempts->sortByDesc('submitted_at')->first();
+                $activeAttempt = $attempts
+                    ->whereNull('submitted_at')
+                    ->sortByDesc('started_at')
+                    ->first();
+                $coursePackage = $this->coursePackage($enrollment);
+                $maxAttempts = $coursePackage === null
+                    ? $exam->max_attempts
+                    : ($coursePackage->max_exam_attempts ?? $exam->max_attempts);
 
                 return [
                     'id' => $exam->id,
@@ -373,11 +452,24 @@ class BuildStudentPortal
                     'examType' => $exam->exam_type,
                     'durationMinutes' => $exam->duration_minutes,
                     'passMark' => $exam->pass_mark,
-                    'maxAttempts' => $exam->max_attempts,
+                    'maxAttempts' => $maxAttempts,
                     'attemptsUsed' => $attempts->count(),
                     'bestScore' => $attempts->max('score'),
                     'lastResult' => $lastAttempt?->result,
-                    'canStart' => $hasPaidAccess && $attempts->count() < $exam->max_attempts,
+                    'lastAttemptUrl' => $lastAttempt ? route('student.exam-attempts.show', [
+                        'current_team' => $enrollment->team,
+                        'examAttempt' => $lastAttempt,
+                    ]) : null,
+                    'activeAttemptUrl' => $activeAttempt ? route('student.exam-attempts.show', [
+                        'current_team' => $enrollment->team,
+                        'examAttempt' => $activeAttempt,
+                    ]) : null,
+                    'startUrl' => route('student.exam-attempts.store', [
+                        'current_team' => $enrollment->team,
+                        'enrollment' => $enrollment,
+                        'exam' => $exam,
+                    ]),
+                    'canStart' => $hasPaidAccess && $activeAttempt === null && $attempts->count() < $maxAttempts,
                 ];
             })
             ->values()
@@ -396,11 +488,20 @@ class BuildStudentPortal
                 'certificateNumber' => $certificate->certificate_number,
                 'status' => $certificate->status,
                 'result' => $certificate->result,
-                'issuedAt' => $certificate->issued_at?->toISOString(),
-                'expiresAt' => $certificate->expires_at?->toISOString(),
+                'issuedAt' => $this->dateTimeToIsoString($certificate->issued_at),
+                'expiresAt' => $this->dateTimeToIsoString($certificate->expires_at),
                 'verifyUrl' => route('certificates.verify', ['token' => $certificate->verification_token]),
             ])
             ->values()
             ->all();
+    }
+
+    private function coursePackage(Enrollment $enrollment): ?CoursePackage
+    {
+        if ($enrollment->course_package_id === null) {
+            return null;
+        }
+
+        return $enrollment->coursePackage;
     }
 }

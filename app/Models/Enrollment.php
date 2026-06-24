@@ -9,7 +9,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property Carbon|null $access_starts_at
+ * @property Carbon|null $access_expires_at
+ * @property Carbon|null $approved_at
+ * @property array<string, mixed>|null $metadata
+ * @property-read CoursePackage|null $coursePackage
+ */
 #[Fillable(['team_id', 'student_profile_id', 'company_id', 'course_id', 'course_package_id', 'approved_by_id', 'status', 'payment_status', 'access_starts_at', 'access_expires_at', 'approved_at', 'notes', 'metadata'])]
 class Enrollment extends Model
 {
@@ -59,61 +67,97 @@ class Enrollment extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Team, $this>
+     */
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
     }
 
+    /**
+     * @return BelongsTo<StudentProfile, $this>
+     */
     public function studentProfile(): BelongsTo
     {
         return $this->belongsTo(StudentProfile::class);
     }
 
+    /**
+     * @return BelongsTo<Company, $this>
+     */
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
+    /**
+     * @return BelongsTo<Course, $this>
+     */
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
     }
 
+    /**
+     * @return BelongsTo<CoursePackage, $this>
+     */
     public function coursePackage(): BelongsTo
     {
         return $this->belongsTo(CoursePackage::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by_id');
     }
 
+    /**
+     * @return HasMany<Invoice, $this>
+     */
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
     }
 
+    /**
+     * @return HasMany<PaymentTransaction, $this>
+     */
     public function paymentTransactions(): HasMany
     {
         return $this->hasMany(PaymentTransaction::class);
     }
 
+    /**
+     * @return HasMany<ExamAttempt, $this>
+     */
     public function examAttempts(): HasMany
     {
         return $this->hasMany(ExamAttempt::class);
     }
 
+    /**
+     * @return HasMany<Certificate, $this>
+     */
     public function certificates(): HasMany
     {
         return $this->hasMany(Certificate::class);
     }
 
+    /**
+     * @return HasMany<AttendanceRecord, $this>
+     */
     public function attendanceRecords(): HasMany
     {
         return $this->hasMany(AttendanceRecord::class);
     }
 
+    /**
+     * @return HasMany<LessonProgress, $this>
+     */
     public function lessonProgress(): HasMany
     {
         return $this->hasMany(LessonProgress::class);

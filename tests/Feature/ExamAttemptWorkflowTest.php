@@ -31,6 +31,7 @@ it('starts gated exam attempts for paid active enrollments', function () {
             'access_expires_at' => now()->addMonth(),
         ]);
     $exam = Exam::factory()->for($team)->for($course)->create(['max_attempts' => 3, 'is_active' => true]);
+    Question::factory()->for($team)->for($course)->count(3)->create(['is_active' => true]);
 
     $firstAttempt = app(StartExamAttempt::class)->handle($exam, $enrollment);
     $secondAttempt = app(StartExamAttempt::class)->handle($exam, $enrollment);
@@ -48,6 +49,7 @@ it('rejects exam attempts until enrollment is active and paid', function () {
         ->for($course)
         ->create(['status' => 'pending', 'payment_status' => 'pending']);
     $exam = Exam::factory()->for($course)->create(['is_active' => true]);
+    Question::factory()->for($course)->create(['is_active' => true]);
 
     app(StartExamAttempt::class)->handle($exam, $enrollment);
 })->throws(ValidationException::class);

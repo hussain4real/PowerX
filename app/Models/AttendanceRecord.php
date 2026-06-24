@@ -20,31 +20,50 @@ class AttendanceRecord extends Model
         'status' => 'pending',
     ];
 
+    /**
+     * @return BelongsTo<Team, $this>
+     */
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
     }
 
+    /**
+     * @return BelongsTo<TrainingSession, $this>
+     */
     public function trainingSession(): BelongsTo
     {
         return $this->belongsTo(TrainingSession::class);
     }
 
+    /**
+     * @return BelongsTo<Enrollment, $this>
+     */
     public function enrollment(): BelongsTo
     {
         return $this->belongsTo(Enrollment::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function markedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'marked_by_id');
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function assessedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assessed_by_id');
     }
 
+    /**
+     * @param  Builder<AttendanceRecord>  $query
+     * @return Builder<AttendanceRecord>
+     */
     public function scopePresent(Builder $query): Builder
     {
         return $query->whereIn('status', ['present', 'late']);

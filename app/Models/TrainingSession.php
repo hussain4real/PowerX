@@ -16,11 +16,17 @@ class TrainingSession extends Model
     /** @use HasFactory<TrainingSessionFactory> */
     use HasFactory, SoftDeletes;
 
+    /**
+     * @return BelongsTo<TrainingBatch, $this>
+     */
     public function trainingBatch(): BelongsTo
     {
         return $this->belongsTo(TrainingBatch::class);
     }
 
+    /**
+     * @return HasMany<AttendanceRecord, $this>
+     */
     public function attendanceRecords(): HasMany
     {
         return $this->hasMany(AttendanceRecord::class);

@@ -81,7 +81,8 @@ test('students can update lesson progress from the portal', function (): void {
         ]), [
             'progress_percentage' => 45,
             'last_position_seconds' => 420,
-            'event' => 'lesson_started',
+            'event' => 'video_progress',
+            'media_id' => 123,
         ])
         ->assertRedirect(route('student.portal', ['current_team' => $team]))
         ->assertSessionHasNoErrors();
@@ -92,10 +93,17 @@ test('students can update lesson progress from the portal', function (): void {
         ->and($progress->lesson_id)->toBe($lesson->id)
         ->and($progress->progress_percentage)->toBe(45)
         ->and($progress->last_position_seconds)->toBe(420)
+        ->and($progress->metadata['event'])->toBe('video_progress')
+        ->and($progress->metadata['events'][0]['media_id'])->toBe(123)
         ->and($progress->completed_at)->toBeNull();
 
     $this
         ->actingAs($user)
+        ->from(route('student.lessons.show', [
+            'current_team' => $team,
+            'enrollment' => $enrollment,
+            'lesson' => $lesson,
+        ]))
         ->patch(route('student.lesson-progress.update', [
             'current_team' => $team,
             'enrollment' => $enrollment,
@@ -105,7 +113,11 @@ test('students can update lesson progress from the portal', function (): void {
             'last_position_seconds' => 900,
             'event' => 'lesson_completed',
         ])
-        ->assertRedirect(route('student.portal', ['current_team' => $team]))
+        ->assertRedirect(route('student.lessons.show', [
+            'current_team' => $team,
+            'enrollment' => $enrollment,
+            'lesson' => $lesson,
+        ]))
         ->assertSessionHasNoErrors();
 
     $progress->refresh();
@@ -128,6 +140,11 @@ test('student lesson progress updates do not regress existing progress', functio
 
     $this
         ->actingAs($user)
+        ->from(route('student.lessons.show', [
+            'current_team' => $team,
+            'enrollment' => $enrollment,
+            'lesson' => $lesson,
+        ]))
         ->patch(route('student.lesson-progress.update', [
             'current_team' => $team,
             'enrollment' => $enrollment,
@@ -137,7 +154,11 @@ test('student lesson progress updates do not regress existing progress', functio
             'last_position_seconds' => 120,
             'event' => 'lesson_started',
         ])
-        ->assertRedirect(route('student.portal', ['current_team' => $team]))
+        ->assertRedirect(route('student.lessons.show', [
+            'current_team' => $team,
+            'enrollment' => $enrollment,
+            'lesson' => $lesson,
+        ]))
         ->assertSessionHasNoErrors();
 
     $progress->refresh();

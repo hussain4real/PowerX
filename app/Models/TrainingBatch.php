@@ -16,21 +16,33 @@ class TrainingBatch extends Model
     /** @use HasFactory<TrainingBatchFactory> */
     use HasFactory, SoftDeletes;
 
+    /**
+     * @return BelongsTo<Team, $this>
+     */
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
     }
 
+    /**
+     * @return BelongsTo<Course, $this>
+     */
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function instructor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'instructor_id');
     }
 
+    /**
+     * @return HasMany<TrainingSession, $this>
+     */
     public function sessions(): HasMany
     {
         return $this->hasMany(TrainingSession::class);

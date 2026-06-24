@@ -19,6 +19,6 @@ class StudentLessonProgressController extends Controller
     ): RedirectResponse {
         $updateLessonProgress->handle($enrollment, $lesson, $request->validated());
 
-        return to_route('student.portal', ['current_team' => $currentTeam]);
+        return back();
     }
 }
