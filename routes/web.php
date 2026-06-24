@@ -8,6 +8,7 @@ use App\Http\Controllers\CorporateQuotationController;
 use App\Http\Controllers\CourseCatalogController;
 use App\Http\Controllers\CourseRegistrationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FreePreviewEventController;
 use App\Http\Controllers\InstructorPortalController;
 use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\LeadInquiryController;
@@ -35,6 +36,7 @@ Route::get('corporate/quotation', [CorporateQuotationController::class, 'create'
 Route::post('corporate/quotation', [CorporateQuotationController::class, 'store'])->middleware('throttle:10,1')->name('corporate.quotations.store');
 Route::post('leads', [LeadInquiryController::class, 'store'])->middleware('throttle:10,1')->name('leads.store');
 Route::post('courses/{course:slug}/registrations', [CourseRegistrationController::class, 'store'])->middleware('throttle:10,1')->name('courses.registrations.store');
+Route::post('courses/{course:slug}/preview-events', [FreePreviewEventController::class, 'store'])->middleware('throttle:30,1')->name('courses.preview-events.store');
 Route::get('certificates/verify/{token}', [CertificateVerificationController::class, 'show'])->name('certificates.verify');
 
 Route::prefix('{current_team}')

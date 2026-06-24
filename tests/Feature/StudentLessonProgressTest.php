@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\PowerXRole;
 use App\Enums\TeamRole;
+use App\Http\Requests\UpdateStudentLessonProgressRequest;
 use App\Models\Course;
 use App\Models\CourseModule;
 use App\Models\Enrollment;
@@ -10,9 +12,60 @@ use App\Models\StudentProfile;
 use App\Models\Team;
 use App\Models\User;
 use Database\Seeders\PowerXAccessSeeder;
+use Illuminate\Routing\Route as RoutingRoute;
 
 beforeEach(function (): void {
     $this->seed(PowerXAccessSeeder::class);
+});
+
+test('lesson progress request denies malformed route context', function (): void {
+    $request = UpdateStudentLessonProgressRequest::create('/student-portal/progress', 'PATCH');
+    $route = new RoutingRoute('PATCH', '/student-portal/progress', []);
+
+    $route->bind($request);
+
+    $request->setUserResolver(fn (): null => null);
+    $request->setRouteResolver(fn (): RoutingRoute => $route);
+
+    expect($request->authorize())->toBeFalse();
+});
+
+test('users without student portal access cannot update lesson progress', function (): void {
+    $manager = grantPowerXRole(User::factory()->create(), PowerXRole::Management);
+    $team = $manager->currentTeam;
+    $student = grantPowerXRole(User::factory()->create(), PowerXRole::Student);
+
+    $team->members()->attach($student, ['role' => TeamRole::Member->value]);
+    $student->switchTeam($team);
+
+    $profile = StudentProfile::factory()
+        ->for($team)
+        ->for($student)
+        ->create();
+    $course = Course::factory()->for($team)->create();
+    $module = CourseModule::factory()->for($course)->create(['is_active' => true]);
+    $lesson = Lesson::factory()->for($module, 'courseModule')->create(['is_active' => true]);
+    $enrollment = Enrollment::factory()
+        ->for($team)
+        ->for($profile, 'studentProfile')
+        ->for($course)
+        ->create([
+            'status' => 'active',
+            'payment_status' => 'paid',
+        ]);
+
+    $this
+        ->actingAs($manager)
+        ->patch(route('student.lesson-progress.update', [
+            'current_team' => $team,
+            'enrollment' => $enrollment,
+            'lesson' => $lesson,
+        ]), [
+            'progress_percentage' => 50,
+        ])
+        ->assertForbidden();
+
+    expect(LessonProgress::query()->count())->toBe(0);
 });
 
 test('students can update lesson progress from the portal', function (): void {

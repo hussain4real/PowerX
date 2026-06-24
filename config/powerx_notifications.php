@@ -22,6 +22,21 @@ return [
             'message' => 'Hello {{ student_name }}, PowerX received your registration for {{ course_title }}. Our admissions team will confirm documents, payment, and schedule details.',
             'whatsapp' => 'Hello {{ student_name }}, PowerX received your registration for {{ course_title }}. We will confirm payment and schedule details shortly.',
         ],
+        'enrollment_approved' => [
+            'subject' => 'PowerX enrollment approved for {{ course_title }}',
+            'message' => 'Hello {{ student_name }}, your PowerX enrollment for {{ course_title }} has been approved. Our team will confirm payment and access details.',
+            'whatsapp' => 'Hello {{ student_name }}, your PowerX enrollment for {{ course_title }} has been approved. We will confirm payment and access details shortly.',
+        ],
+        'enrollment_rejected' => [
+            'subject' => 'PowerX enrollment update for {{ course_title }}',
+            'message' => 'Hello {{ student_name }}, PowerX reviewed your enrollment request for {{ course_title }} and cannot approve it right now. Note: {{ admission_note }}',
+            'whatsapp' => 'PowerX enrollment update for {{ course_title }}: we cannot approve the request right now. Note: {{ admission_note }}',
+        ],
+        'enrollment_request_information' => [
+            'subject' => 'More information needed for {{ course_title }}',
+            'message' => 'Hello {{ student_name }}, PowerX needs more information before approving your enrollment for {{ course_title }}. Note: {{ admission_note }}',
+            'whatsapp' => 'PowerX needs more information for {{ course_title }} before approval. Note: {{ admission_note }}',
+        ],
         'payment_reminder' => [
             'subject' => 'Payment reminder for {{ course_title }}',
             'message' => 'Hello {{ student_name }}, your PowerX enrollment for {{ course_title }} is waiting for payment confirmation. Amount due: {{ amount_due }}.',

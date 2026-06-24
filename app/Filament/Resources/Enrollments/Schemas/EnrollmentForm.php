@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Enrollments\Schemas;
 
 use App\Filament\Support\PowerXForm;
+use App\Models\Enrollment;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -51,23 +52,12 @@ class EnrollmentForm
                         ->columns(2)
                         ->schema([
                             Select::make('status')
-                                ->options([
-                                    'pending' => 'Pending',
-                                    'approved' => 'Approved',
-                                    'active' => 'Active',
-                                    'completed' => 'Completed',
-                                    'cancelled' => 'Cancelled',
-                                ])
+                                ->options(Enrollment::statusOptions())
                                 ->required()
                                 ->default('pending')
                                 ->native(false),
                             Select::make('payment_status')
-                                ->options([
-                                    'pending' => 'Pending',
-                                    'partial' => 'Partial',
-                                    'paid' => 'Paid',
-                                    'refunded' => 'Refunded',
-                                ])
+                                ->options(Enrollment::paymentStatusOptions())
                                 ->required()
                                 ->default('pending')
                                 ->native(false),

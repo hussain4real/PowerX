@@ -90,7 +90,9 @@ class BuildCampaignAttributionMetrics
                     'campaign' => $this->campaignLabel($firstLead->campaign),
                     'leadCount' => $leads->count(),
                     'qualifiedCount' => $leads->where('status', 'qualified')->count(),
-                    'convertedCount' => $leads->where('status', 'converted')->count(),
+                    'convertedCount' => $leads
+                        ->whereIn('status', [Lead::STATUS_CONVERTED_LEGACY, Lead::STATUS_ENROLLED, Lead::STATUS_WON])
+                        ->count(),
                     'costByCurrency' => $this->leadCostByCurrency($leads),
                     'revenueByCurrency' => [],
                 ];
@@ -104,7 +106,7 @@ class BuildCampaignAttributionMetrics
     {
         return Lead::query()
             ->whereBelongsTo($team)
-            ->where('status', 'converted')
+            ->whereIn('status', [Lead::STATUS_CONVERTED_LEGACY, Lead::STATUS_ENROLLED, Lead::STATUS_WON])
             ->select(['id', 'company_id', 'course_id', 'source', 'campaign', 'email', 'phone', 'converted_at'])
             ->orderByDesc('converted_at')
             ->orderByDesc('id')

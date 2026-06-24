@@ -36,6 +36,12 @@ class StoreLeadInquiryRequest extends FormRequest
             'course_interest' => ['nullable', 'string', 'max:160'],
             'message' => ['nullable', 'string', 'max:1000'],
             'source' => ['nullable', 'string', 'max:80'],
+            'campaign' => ['nullable', 'string', 'max:160'],
+            'utm_source' => ['nullable', 'string', 'max:160'],
+            'utm_medium' => ['nullable', 'string', 'max:160'],
+            'utm_campaign' => ['nullable', 'string', 'max:160'],
+            'utm_content' => ['nullable', 'string', 'max:160'],
+            'utm_term' => ['nullable', 'string', 'max:160'],
         ];
     }
 }

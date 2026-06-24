@@ -11,7 +11,9 @@ class LeadInquiryController extends Controller
 {
     public function store(StoreLeadInquiryRequest $request, CreateLeadInquiry $createLeadInquiry): RedirectResponse
     {
-        $createLeadInquiry->handle($request->validated());
+        $lead = $createLeadInquiry->handle($request->validated());
+
+        $request->session()->put('powerx.lead_id', $lead->id);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Thanks. PowerX will contact you shortly.')]);
 

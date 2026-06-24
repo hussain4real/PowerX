@@ -16,6 +16,79 @@ class Lead extends Model
     /** @use HasFactory<LeadFactory> */
     use HasFactory, SoftDeletes;
 
+    public const STATUS_NEW = 'new';
+
+    public const STATUS_CONTACTED = 'contacted';
+
+    public const STATUS_QUALIFIED = 'qualified';
+
+    public const STATUS_QUOTATION_SENT = 'quotation_sent';
+
+    public const STATUS_PAYMENT_PENDING = 'payment_pending';
+
+    public const STATUS_ENROLLED = 'enrolled';
+
+    public const STATUS_WON = 'won';
+
+    public const STATUS_LOST = 'lost';
+
+    public const STATUS_NOT_RESPONSIVE = 'not_responsive';
+
+    public const STATUS_CONVERTED_LEGACY = 'converted';
+
+    /**
+     * @return array<string, string>
+     */
+    public static function statusOptions(): array
+    {
+        return [
+            self::STATUS_NEW => 'New',
+            self::STATUS_CONTACTED => 'Contacted',
+            self::STATUS_QUALIFIED => 'Qualified',
+            self::STATUS_QUOTATION_SENT => 'Quotation Sent',
+            self::STATUS_PAYMENT_PENDING => 'Payment Pending',
+            self::STATUS_ENROLLED => 'Enrolled',
+            self::STATUS_WON => 'Won',
+            self::STATUS_LOST => 'Lost',
+            self::STATUS_NOT_RESPONSIVE => 'Not Responsive',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function sourceOptions(): array
+    {
+        return [
+            'website' => 'Website',
+            'catalog' => 'Catalog',
+            'course_detail' => 'Course detail',
+            'whatsapp' => 'WhatsApp',
+            'phone' => 'Phone',
+            'referral' => 'Referral',
+            'walk-in' => 'Walk-in',
+            'campaign' => 'Campaign',
+            'corporate' => 'Corporate inquiry',
+            'public_registration' => 'Public registration',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function outcomeOptions(): array
+    {
+        return [
+            'interested' => 'Interested',
+            'registered' => 'Registered',
+            'not_ready' => 'Not ready',
+            'no_response' => 'No response',
+            'disqualified' => 'Disqualified',
+            'won' => 'Won',
+            'lost' => 'Lost',
+        ];
+    }
+
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
@@ -39,6 +112,16 @@ class Lead extends Model
     public function communications(): HasMany
     {
         return $this->hasMany(Communication::class);
+    }
+
+    public function activities(): HasMany
+    {
+        return $this->hasMany(LeadActivity::class)->latest();
+    }
+
+    public function freePreviewEvents(): HasMany
+    {
+        return $this->hasMany(FreePreviewEvent::class);
     }
 
     /**

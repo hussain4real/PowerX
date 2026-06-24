@@ -34,10 +34,14 @@ defineProps<{
             new: number;
             qualified: number;
             converted: number;
+            follow_ups_due_today: number;
+            overdue_follow_ups: number;
         };
         enrollments: {
             total: number;
             pending: number;
+            approval_queue: number;
+            request_information_queue: number;
             active: number;
             completed: number;
             paid: number;
@@ -223,6 +227,22 @@ const toneClasses: Record<SummaryCard['tone'], string> = {
                             {{ metrics.leads.new }}
                         </p>
                     </div>
+                    <div class="rounded-xl border border-border p-4">
+                        <p class="text-sm text-muted-foreground">
+                            Follow-ups due today
+                        </p>
+                        <p class="mt-2 text-2xl font-black">
+                            {{ metrics.leads.follow_ups_due_today }}
+                        </p>
+                    </div>
+                    <div class="rounded-xl border border-border p-4">
+                        <p class="text-sm text-muted-foreground">
+                            Overdue follow-ups
+                        </p>
+                        <p class="mt-2 text-2xl font-black">
+                            {{ metrics.leads.overdue_follow_ups }}
+                        </p>
+                    </div>
                 </div>
             </article>
 
@@ -273,6 +293,22 @@ const toneClasses: Record<SummaryCard['tone'], string> = {
                         </p>
                         <p class="mt-2 text-2xl font-black">
                             {{ metrics.enrollments.pending }}
+                        </p>
+                    </div>
+                    <div class="rounded-xl border border-border p-4">
+                        <p class="text-sm text-muted-foreground">
+                            Approval queue
+                        </p>
+                        <p class="mt-2 text-2xl font-black">
+                            {{ metrics.enrollments.approval_queue }}
+                        </p>
+                    </div>
+                    <div class="rounded-xl border border-border p-4">
+                        <p class="text-sm text-muted-foreground">
+                            Request-info queue
+                        </p>
+                        <p class="mt-2 text-2xl font-black">
+                            {{ metrics.enrollments.request_information_queue }}
                         </p>
                     </div>
                 </div>

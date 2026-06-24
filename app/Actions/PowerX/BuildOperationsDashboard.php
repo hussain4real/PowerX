@@ -35,7 +35,7 @@ class BuildOperationsDashboard
                 [
                     'label' => 'New leads',
                     'value' => (string) $leads['new'],
-                    'detail' => "{$leads['converted']} converted from {$leads['total']} total",
+                    'detail' => "{$leads['converted']} converted from {$leads['total']} total; {$leads['overdue_follow_ups']} overdue",
                     'tone' => 'warning',
                 ],
                 [
@@ -47,7 +47,7 @@ class BuildOperationsDashboard
                 [
                     'label' => 'Active enrollments',
                     'value' => (string) $enrollments['active'],
-                    'detail' => "{$enrollments['pending']} pending admissions review",
+                    'detail' => "{$enrollments['approval_queue']} pending approval; {$enrollments['request_information_queue']} need info",
                     'tone' => 'info',
                 ],
                 [
@@ -75,7 +75,14 @@ class BuildOperationsDashboard
             ->selectRaw('COUNT(*) as total')
             ->selectRaw("SUM(CASE WHEN status = 'new' THEN 1 ELSE 0 END) as new_count")
             ->selectRaw("SUM(CASE WHEN status = 'qualified' THEN 1 ELSE 0 END) as qualified_count")
-            ->selectRaw("SUM(CASE WHEN status = 'converted' THEN 1 ELSE 0 END) as converted_count")
+            ->selectRaw("SUM(CASE WHEN status IN ('converted', 'enrolled', 'won') THEN 1 ELSE 0 END) as converted_count")
+            ->selectRaw("SUM(CASE WHEN follow_up_at BETWEEN ? AND ? AND status NOT IN ('converted', 'won', 'lost', 'enrolled', 'not_responsive') THEN 1 ELSE 0 END) as due_today_count", [
+                now()->startOfDay(),
+                now()->endOfDay(),
+            ])
+            ->selectRaw("SUM(CASE WHEN follow_up_at < ? AND status NOT IN ('converted', 'won', 'lost', 'enrolled', 'not_responsive') THEN 1 ELSE 0 END) as overdue_count", [
+                now()->startOfDay(),
+            ])
             ->first();
 
         return [
@@ -83,6 +90,8 @@ class BuildOperationsDashboard
             'new' => (int) ($metrics->new_count ?? 0),
             'qualified' => (int) ($metrics->qualified_count ?? 0),
             'converted' => (int) ($metrics->converted_count ?? 0),
+            'follow_ups_due_today' => (int) ($metrics->due_today_count ?? 0),
+            'overdue_follow_ups' => (int) ($metrics->overdue_count ?? 0),
         ];
     }
 
@@ -95,6 +104,8 @@ class BuildOperationsDashboard
             ->whereBelongsTo($team)
             ->selectRaw('COUNT(*) as total')
             ->selectRaw("SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count")
+            ->selectRaw("SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as approval_queue_count")
+            ->selectRaw("SUM(CASE WHEN status = 'request_more_information' THEN 1 ELSE 0 END) as request_information_count")
             ->selectRaw("SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_count")
             ->selectRaw("SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_count")
             ->selectRaw("SUM(CASE WHEN payment_status = 'paid' THEN 1 ELSE 0 END) as paid_count")
@@ -103,6 +114,8 @@ class BuildOperationsDashboard
         return [
             'total' => (int) ($metrics->total ?? 0),
             'pending' => (int) ($metrics->pending_count ?? 0),
+            'approval_queue' => (int) ($metrics->approval_queue_count ?? 0),
+            'request_information_queue' => (int) ($metrics->request_information_count ?? 0),
             'active' => (int) ($metrics->active_count ?? 0),
             'completed' => (int) ($metrics->completed_count ?? 0),
             'paid' => (int) ($metrics->paid_count ?? 0),

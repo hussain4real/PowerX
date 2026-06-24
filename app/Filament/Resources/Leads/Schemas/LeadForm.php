@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Leads\Schemas;
 
 use App\Filament\Support\PowerXForm;
+use App\Models\Lead;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -52,27 +53,13 @@ class LeadForm
                                             ->relationship('owner', 'name')
                                             ->searchable(),
                                         Select::make('source')
-                                            ->options([
-                                                'website' => 'Website',
-                                                'whatsapp' => 'WhatsApp',
-                                                'phone' => 'Phone',
-                                                'referral' => 'Referral',
-                                                'walk-in' => 'Walk-in',
-                                                'campaign' => 'Campaign',
-                                                'corporate' => 'Corporate inquiry',
-                                            ])
+                                            ->options(Lead::sourceOptions())
                                             ->searchable()
                                             ->native(false),
                                         TextInput::make('campaign')
                                             ->maxLength(255),
                                         Select::make('status')
-                                            ->options([
-                                                'new' => 'New',
-                                                'contacted' => 'Contacted',
-                                                'qualified' => 'Qualified',
-                                                'converted' => 'Converted',
-                                                'lost' => 'Lost',
-                                            ])
+                                            ->options(Lead::statusOptions())
                                             ->required()
                                             ->default('new')
                                             ->native(false),
@@ -90,13 +77,7 @@ class LeadForm
                                     ->schema([
                                         DateTimePicker::make('follow_up_at'),
                                         Select::make('outcome')
-                                            ->options([
-                                                'interested' => 'Interested',
-                                                'registered' => 'Registered',
-                                                'not_ready' => 'Not ready',
-                                                'no_response' => 'No response',
-                                                'disqualified' => 'Disqualified',
-                                            ])
+                                            ->options(Lead::outcomeOptions())
                                             ->native(false),
                                         DateTimePicker::make('converted_at')
                                             ->disabled()

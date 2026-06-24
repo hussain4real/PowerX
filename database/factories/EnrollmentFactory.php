@@ -30,7 +30,12 @@ class EnrollmentFactory extends Factory
             'course_id' => Course::factory(),
             'course_package_id' => CoursePackage::factory(),
             'approved_by_id' => fake()->optional()->randomElement([User::factory()]),
-            'status' => fake()->randomElement(['pending', 'approved', 'active', 'completed']),
+            'status' => fake()->randomElement([
+                Enrollment::STATUS_PENDING,
+                Enrollment::STATUS_APPROVED,
+                Enrollment::STATUS_ACTIVE,
+                Enrollment::STATUS_COMPLETED,
+            ]),
             'payment_status' => fake()->randomElement(['pending', 'partial', 'paid']),
             'access_starts_at' => now(),
             'access_expires_at' => now()->addMonths(6),

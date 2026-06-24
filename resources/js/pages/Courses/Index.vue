@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Form, Head, Link, usePage } from '@inertiajs/vue3';
 import {
     ArrowRight,
     BookOpenCheck,
@@ -12,6 +12,7 @@ import {
     ShieldCheck,
     Zap,
 } from 'lucide-vue-next';
+import { computed } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import BrandStatusBadge from '@/components/powerx/BrandStatusBadge.vue';
 import MetricCard from '@/components/powerx/MetricCard.vue';
@@ -55,6 +56,22 @@ defineProps<{
         title: string;
     }>;
 }>();
+
+const page = usePage();
+
+const trackingFields = computed(() => {
+    const params = new URLSearchParams(page.url.split('?')[1] ?? '');
+
+    return {
+        source: params.get('source') ?? 'catalog',
+        campaign: params.get('campaign') ?? params.get('utm_campaign') ?? '',
+        utm_source: params.get('utm_source') ?? '',
+        utm_medium: params.get('utm_medium') ?? '',
+        utm_campaign: params.get('utm_campaign') ?? '',
+        utm_content: params.get('utm_content') ?? '',
+        utm_term: params.get('utm_term') ?? '',
+    };
+});
 
 const money = (amount: string | number | null, currency: string): string =>
     new Intl.NumberFormat('en-QA', {
@@ -200,7 +217,37 @@ const money = (amount: string | number | null, currency: string): string =>
                             <input
                                 type="hidden"
                                 name="source"
-                                value="catalog"
+                                :value="trackingFields.source"
+                            />
+                            <input
+                                type="hidden"
+                                name="campaign"
+                                :value="trackingFields.campaign"
+                            />
+                            <input
+                                type="hidden"
+                                name="utm_source"
+                                :value="trackingFields.utm_source"
+                            />
+                            <input
+                                type="hidden"
+                                name="utm_medium"
+                                :value="trackingFields.utm_medium"
+                            />
+                            <input
+                                type="hidden"
+                                name="utm_campaign"
+                                :value="trackingFields.utm_campaign"
+                            />
+                            <input
+                                type="hidden"
+                                name="utm_content"
+                                :value="trackingFields.utm_content"
+                            />
+                            <input
+                                type="hidden"
+                                name="utm_term"
+                                :value="trackingFields.utm_term"
                             />
 
                             <label class="grid gap-2">

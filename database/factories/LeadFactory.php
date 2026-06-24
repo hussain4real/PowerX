@@ -31,7 +31,12 @@ class LeadFactory extends Factory
             'phone' => fake()->phoneNumber(),
             'source' => fake()->randomElement(['website', 'whatsapp', 'referral', 'walk-in']),
             'campaign' => fake()->optional()->word(),
-            'status' => fake()->randomElement(['new', 'contacted', 'qualified', 'converted']),
+            'status' => fake()->randomElement([
+                Lead::STATUS_NEW,
+                Lead::STATUS_CONTACTED,
+                Lead::STATUS_QUALIFIED,
+                Lead::STATUS_QUOTATION_SENT,
+            ]),
             'course_interest' => fake()->randomElement(['Kahramaa exam prep', 'Electrical safety', 'Corporate training']),
             'notes' => fake()->optional()->sentence(12),
             'follow_up_at' => now()->addDays(fake()->numberBetween(1, 14)),

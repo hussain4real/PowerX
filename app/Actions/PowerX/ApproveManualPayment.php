@@ -107,7 +107,10 @@ class ApproveManualPayment
                 ! $isPaid => 'partial',
                 default => 'paid',
             },
-            'status' => $isPaid && $enrollment->status === 'pending' ? 'active' : $enrollment->status,
+            'status' => $isPaid && in_array($enrollment->status, [
+                Enrollment::STATUS_PENDING,
+                Enrollment::STATUS_APPROVED,
+            ], true) ? Enrollment::STATUS_ACTIVE : $enrollment->status,
             'access_starts_at' => $isPaid ? ($enrollment->access_starts_at ?? now()) : $enrollment->access_starts_at,
             'access_expires_at' => $isPaid
                 ? ($enrollment->access_expires_at ?? $this->accessExpiry($enrollment))

@@ -31,7 +31,7 @@ The application already includes the core training-center foundation:
 
 ### Status
 
-Partially implemented foundation; pending completion.
+Completed and verified on June 24, 2026.
 
 ### Goal
 
@@ -47,16 +47,16 @@ Close the remaining sales and admissions gaps around lead sources, follow-up his
 
 ### Checklist
 
-- [ ] Add a lead activity/follow-up history model or structured timeline on `leads.metadata` if a separate table is not warranted.
-- [ ] Normalize lead statuses to cover New, Contacted, Qualified, Quotation Sent, Payment Pending, Enrolled, Won, Lost, and Not Responsive.
-- [ ] Add Filament lead actions for contact logged, qualify, send quotation, mark not responsive, mark lost, and convert to enrollment.
-- [ ] Preserve UTM/source/campaign fields from public lead, registration, and course pages.
-- [ ] Track free preview starts/completions after lead capture, including course, lesson, source, campaign, and user/lead when known.
-- [ ] Add enrollment approval actions for approve, reject, and request more information instead of relying only on direct status edits.
-- [ ] Record audited before/after snapshots for enrollment approval, rejection, and request-more-information actions.
-- [ ] Create communication drafts for request-more-information, approval, rejection, and registration confirmation outcomes.
-- [ ] Add dashboard metrics for follow-ups due today, overdue follow-ups, approval queue, and request-more-information queue.
-- [ ] Update public and student UX copy only where needed to show approval state clearly.
+- [x] Add a lead activity/follow-up history model or structured timeline on `leads.metadata` if a separate table is not warranted.
+- [x] Normalize lead statuses to cover New, Contacted, Qualified, Quotation Sent, Payment Pending, Enrolled, Won, Lost, and Not Responsive.
+- [x] Add Filament lead actions for contact logged, qualify, send quotation, mark not responsive, mark lost, and convert to enrollment.
+- [x] Preserve UTM/source/campaign fields from public lead, registration, and course pages.
+- [x] Track free preview starts/completions after lead capture, including course, lesson, source, campaign, and user/lead when known.
+- [x] Add enrollment approval actions for approve, reject, and request more information instead of relying only on direct status edits.
+- [x] Record audited before/after snapshots for enrollment approval, rejection, and request-more-information actions.
+- [x] Create communication drafts for request-more-information, approval, rejection, and registration confirmation outcomes.
+- [x] Add dashboard metrics for follow-ups due today, overdue follow-ups, approval queue, and request-more-information queue.
+- [x] Update public and student UX copy only where needed to show approval state clearly.
 
 ### Deliverables
 

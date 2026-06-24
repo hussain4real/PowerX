@@ -214,11 +214,23 @@ class BuildStudentPortal
 
     private function accessStatus(Enrollment $enrollment): string
     {
+        if ($enrollment->status === Enrollment::STATUS_REJECTED) {
+            return 'admission_rejected';
+        }
+
+        if ($enrollment->status === Enrollment::STATUS_REQUEST_MORE_INFORMATION) {
+            return 'information_requested';
+        }
+
+        if ($enrollment->status === Enrollment::STATUS_PENDING) {
+            return 'admission_pending';
+        }
+
         if ($enrollment->payment_status !== 'paid') {
             return 'payment_pending';
         }
 
-        if (! in_array($enrollment->status, ['active', 'completed'], true) || $enrollment->access_starts_at?->isFuture()) {
+        if (! in_array($enrollment->status, [Enrollment::STATUS_ACTIVE, Enrollment::STATUS_COMPLETED], true) || $enrollment->access_starts_at?->isFuture()) {
             return 'enrollment_pending';
         }
 

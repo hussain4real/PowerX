@@ -14,7 +14,9 @@ class CourseRegistrationController extends Controller
     {
         abort_unless($course->isPublished(), 404);
 
-        $registerCourseInterest->handle($course, $request->validated());
+        $enrollment = $registerCourseInterest->handle($course, $request->validated());
+
+        $request->session()->put('powerx.lead_id', $enrollment->metadata['lead_id'] ?? null);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Registration request received. Our admissions team will confirm payment and schedule details.')]);
 

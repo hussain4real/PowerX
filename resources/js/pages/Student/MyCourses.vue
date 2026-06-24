@@ -55,6 +55,11 @@ const accessClasses: Record<string, string> = {
     open: 'border-powerx-success/30 bg-powerx-success/10 text-powerx-success',
     payment_pending:
         'border-powerx-yellow/30 bg-powerx-yellow/10 text-powerx-yellow',
+    admission_pending:
+        'border-powerx-blue/30 bg-powerx-blue/10 text-powerx-cyan',
+    information_requested:
+        'border-powerx-yellow/30 bg-powerx-yellow/10 text-powerx-yellow',
+    admission_rejected: 'border-red-500/30 bg-red-500/10 text-red-300',
     enrollment_pending:
         'border-powerx-blue/30 bg-powerx-blue/10 text-powerx-cyan',
     expired: 'border-red-500/30 bg-red-500/10 text-red-300',

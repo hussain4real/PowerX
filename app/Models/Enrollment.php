@@ -16,6 +16,49 @@ class Enrollment extends Model
     /** @use HasFactory<EnrollmentFactory> */
     use HasFactory, SoftDeletes;
 
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_REQUEST_MORE_INFORMATION = 'request_more_information';
+
+    public const STATUS_APPROVED = 'approved';
+
+    public const STATUS_REJECTED = 'rejected';
+
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_COMPLETED = 'completed';
+
+    public const STATUS_CANCELLED = 'cancelled';
+
+    /**
+     * @return array<string, string>
+     */
+    public static function statusOptions(): array
+    {
+        return [
+            self::STATUS_PENDING => 'Pending',
+            self::STATUS_REQUEST_MORE_INFORMATION => 'Request More Information',
+            self::STATUS_APPROVED => 'Approved',
+            self::STATUS_REJECTED => 'Rejected',
+            self::STATUS_ACTIVE => 'Active',
+            self::STATUS_COMPLETED => 'Completed',
+            self::STATUS_CANCELLED => 'Cancelled',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function paymentStatusOptions(): array
+    {
+        return [
+            'pending' => 'Pending',
+            'partial' => 'Partial',
+            'paid' => 'Paid',
+            'refunded' => 'Refunded',
+        ];
+    }
+
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);

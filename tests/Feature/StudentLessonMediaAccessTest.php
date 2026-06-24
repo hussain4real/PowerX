@@ -34,7 +34,7 @@ test('student portal exposes signed lesson media links only for paid open enroll
             ->where('enrollments.0.modules.0.lessons.0.media.1.fileName', 'permit-guide.pdf')
             ->where('enrollments.0.modules.0.lessons.0.media.1.collectionName', 'learning-materials')
             ->where('enrollments.0.modules.0.lessons.0.media.1.humanReadableSize', '20 B')
-            ->where('enrollments.1.accessStatus', 'payment_pending')
+            ->where('enrollments.1.accessStatus', 'admission_pending')
             ->where('enrollments.1.modules.0.lessons.0.media', []));
 });
 

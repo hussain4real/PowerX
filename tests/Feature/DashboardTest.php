@@ -70,6 +70,7 @@ test('dashboard metrics are scoped to the current team', function () {
             'status' => 'new',
             'source' => 'website',
             'campaign' => 'kahramaa',
+            'follow_up_at' => now(),
             'metadata' => ['campaign_cost' => 300, 'campaign_cost_currency' => 'QAR'],
         ]);
     Lead::factory()
@@ -82,9 +83,21 @@ test('dashboard metrics are scoped to the current team', function () {
             'status' => 'converted',
             'source' => 'website',
             'campaign' => 'kahramaa',
+            'follow_up_at' => now()->subDay(),
+        ]);
+    Lead::factory()
+        ->for($team)
+        ->for($company)
+        ->for($course)
+        ->create([
+            'status' => 'contacted',
+            'source' => 'website',
+            'campaign' => 'kahramaa',
+            'follow_up_at' => now()->subDay(),
         ]);
     Lead::factory()->for($otherTeam)->create(['status' => 'new']);
     Enrollment::factory()->for($team)->create(['status' => 'pending', 'payment_status' => 'pending']);
+    Enrollment::factory()->for($team)->create(['status' => 'request_more_information', 'payment_status' => 'pending']);
     Enrollment::factory()->for($otherTeam)->create(['status' => 'active', 'payment_status' => 'paid']);
     PaymentTransaction::factory()
         ->for($team)
@@ -106,11 +119,15 @@ test('dashboard metrics are scoped to the current team', function () {
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
-            ->where('metrics.leads.total', 2)
+            ->where('metrics.leads.total', 3)
             ->where('metrics.leads.new', 1)
             ->where('metrics.leads.converted', 1)
+            ->where('metrics.leads.follow_ups_due_today', 1)
+            ->where('metrics.leads.overdue_follow_ups', 1)
             ->where('metrics.enrollments.active', 1)
             ->where('metrics.enrollments.pending', 1)
+            ->where('metrics.enrollments.approval_queue', 1)
+            ->where('metrics.enrollments.request_information_queue', 1)
             ->where('metrics.finance.pending_payments', 1)
             ->where('metrics.finance.approved_revenue_label', 'QAR 1,200')
             ->where('metrics.learning.attendance_rate', 50)

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Form, Head, Link, usePage } from '@inertiajs/vue3';
 import {
     ArrowLeft,
     BadgeCheck,
@@ -13,12 +13,14 @@ import {
     ShieldCheck,
     Wrench,
 } from 'lucide-vue-next';
+import { computed } from 'vue';
 import type { Component } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import BrandStatusBadge from '@/components/powerx/BrandStatusBadge.vue';
 import { Button } from '@/components/ui/button';
 import { home } from '@/routes';
 import { index as coursesIndex } from '@/routes/courses';
+import { store as storePreviewEvent } from '@/routes/courses/preview-events';
 import { store as storeRegistration } from '@/routes/courses/registrations';
 
 interface CoursePackage {
@@ -73,6 +75,29 @@ interface CourseDetail {
 defineProps<{
     course: CourseDetail;
 }>();
+
+const page = usePage();
+
+const trackingFields = computed(() => {
+    const params = new URLSearchParams(page.url.split('?')[1] ?? '');
+
+    return {
+        source: params.get('source') ?? 'course_detail',
+        campaign: params.get('campaign') ?? params.get('utm_campaign') ?? '',
+        utm_source: params.get('utm_source') ?? '',
+        utm_medium: params.get('utm_medium') ?? '',
+        utm_campaign: params.get('utm_campaign') ?? '',
+        utm_content: params.get('utm_content') ?? '',
+        utm_term: params.get('utm_term') ?? '',
+    };
+});
+
+const trackingEntries = computed(() =>
+    Object.entries(trackingFields.value).map(([name, value]) => ({
+        name,
+        value,
+    })),
+);
 
 const money = (amount: string | number | null, currency: string): string =>
     new Intl.NumberFormat('en-QA', {
@@ -233,6 +258,14 @@ const lessonIcon = (lessonType: string) => {
                             class="mt-6 grid gap-4"
                             #default="{ errors, processing, wasSuccessful }"
                         >
+                            <input
+                                v-for="field in trackingEntries"
+                                :key="field.name"
+                                type="hidden"
+                                :name="field.name"
+                                :value="field.value"
+                            />
+
                             <label class="grid gap-2">
                                 <span class="text-sm font-bold text-white/75">
                                     Full name
@@ -503,12 +536,77 @@ const lessonIcon = (lessonType: string) => {
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-3">
-                                        <span
+                                        <div
                                             v-if="lesson.isPreview"
-                                            class="rounded-full border border-powerx-success/30 bg-powerx-success/10 px-3 py-1 text-xs font-bold text-powerx-success"
+                                            class="flex flex-wrap justify-end gap-2"
                                         >
-                                            Preview
-                                        </span>
+                                            <Form
+                                                v-bind="
+                                                    storePreviewEvent.form(
+                                                        course.slug,
+                                                    )
+                                                "
+                                                #default="{ processing }"
+                                            >
+                                                <input
+                                                    type="hidden"
+                                                    name="event_type"
+                                                    value="started"
+                                                />
+                                                <input
+                                                    type="hidden"
+                                                    name="lesson_id"
+                                                    :value="lesson.id"
+                                                />
+                                                <input
+                                                    v-for="field in trackingEntries"
+                                                    :key="`start-${lesson.id}-${field.name}`"
+                                                    type="hidden"
+                                                    :name="field.name"
+                                                    :value="field.value"
+                                                />
+                                                <button
+                                                    type="submit"
+                                                    :disabled="processing"
+                                                    class="rounded-full border border-powerx-success/30 bg-powerx-success/10 px-3 py-1 text-xs font-bold text-powerx-success transition hover:border-powerx-success disabled:opacity-60"
+                                                >
+                                                    Start preview
+                                                </button>
+                                            </Form>
+                                            <Form
+                                                v-bind="
+                                                    storePreviewEvent.form(
+                                                        course.slug,
+                                                    )
+                                                "
+                                                #default="{ processing }"
+                                            >
+                                                <input
+                                                    type="hidden"
+                                                    name="event_type"
+                                                    value="completed"
+                                                />
+                                                <input
+                                                    type="hidden"
+                                                    name="lesson_id"
+                                                    :value="lesson.id"
+                                                />
+                                                <input
+                                                    v-for="field in trackingEntries"
+                                                    :key="`complete-${lesson.id}-${field.name}`"
+                                                    type="hidden"
+                                                    :name="field.name"
+                                                    :value="field.value"
+                                                />
+                                                <button
+                                                    type="submit"
+                                                    :disabled="processing"
+                                                    class="rounded-full border border-white/15 px-3 py-1 text-xs font-bold text-white/70 transition hover:border-powerx-yellow hover:text-powerx-yellow disabled:opacity-60"
+                                                >
+                                                    Complete preview
+                                                </button>
+                                            </Form>
+                                        </div>
                                         <span class="text-sm text-white/50">
                                             {{
                                                 lesson.durationMinutes ?? 'TBD'
