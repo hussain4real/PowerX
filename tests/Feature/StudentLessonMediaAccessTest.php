@@ -10,6 +10,7 @@ use App\Models\StudentProfile;
 use App\Models\Team;
 use App\Models\User;
 use Database\Seeders\PowerXAccessSeeder;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -42,6 +43,15 @@ test('student portal exposes signed lesson media links only for paid open enroll
             ->where('enrollments.0.modules.0.lessons.0.viewerUrl', fn (?string $url): bool => $url !== null && str_contains($url, '/student-portal/enrollments/'))
             ->where('enrollments.1.accessStatus', 'admission_pending')
             ->where('enrollments.1.modules.0.lessons.0.media', []));
+});
+
+test('student lesson media embeds stay signed without cache backed throttling', function (): void {
+    $middleware = Route::getRoutes()
+        ->getByName('student.lesson-media.show')
+        ?->gatherMiddleware() ?? [];
+
+    expect($middleware)->toContain('signed')
+        ->and($middleware)->not->toContain('throttle:60,1');
 });
 
 test('student can open a dedicated lesson viewer with embedded media urls', function (): void {

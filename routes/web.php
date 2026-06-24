@@ -69,7 +69,7 @@ Route::prefix('{current_team}')
             ->middleware('throttle:120,1')
             ->name('student.lesson-progress.update');
         Route::get('student-portal/enrollments/{enrollment}/lessons/{lesson}/media/{media}', StudentLessonMediaController::class)
-            ->middleware(['signed', 'throttle:60,1'])
+            ->middleware('signed')
             ->name('student.lesson-media.show');
         Route::get('instructor-portal', InstructorPortalController::class)
             ->middleware('can:attendance.manage')

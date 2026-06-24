@@ -9,6 +9,7 @@ import {
     PlayCircle,
 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import VideoJsLessonPlayer from '@/components/powerx/VideoJsLessonPlayer.vue';
 import { portal as studentPortal } from '@/routes/student';
 import { index as studentCoursesIndex } from '@/routes/student/courses';
 import { update as updateLessonProgressRoute } from '@/routes/student/lesson-progress';
@@ -24,6 +25,11 @@ const page = usePage();
 const progressRequests = ref<Record<string, boolean>>({});
 const sentMediaEvents = ref<Record<string, boolean>>({});
 const lastVideoProgressSent = ref<Record<number, number>>({});
+
+type VideoPlaybackProgress = {
+    currentTime: number;
+    duration: number;
+};
 
 defineOptions({
     layout: (props: { currentTeam?: Team | null }) => ({
@@ -136,17 +142,25 @@ const recordVideoStarted = (media: LessonMedia): void => {
     );
 };
 
-const recordVideoProgress = (media: LessonMedia, event: Event): void => {
-    const video = event.target as HTMLVideoElement | null;
-
-    if (!video || !Number.isFinite(video.duration) || video.duration <= 0) {
+const recordVideoProgress = (
+    media: LessonMedia,
+    playback: VideoPlaybackProgress,
+): void => {
+    if (
+        !Number.isFinite(playback.currentTime) ||
+        !Number.isFinite(playback.duration) ||
+        playback.duration <= 0
+    ) {
         return;
     }
 
-    const currentSecond = Math.floor(video.currentTime);
+    const currentSecond = Math.floor(playback.currentTime);
     const lastSent = lastVideoProgressSent.value[media.id] ?? 0;
 
-    if (currentSecond - lastSent < 15 && currentSecond < video.duration - 2) {
+    if (
+        currentSecond - lastSent < 15 &&
+        currentSecond < playback.duration - 2
+    ) {
         return;
     }
 
@@ -160,7 +174,7 @@ const recordVideoProgress = (media: LessonMedia, event: Event): void => {
             99,
             Math.max(
                 props.lesson.progressPercentage,
-                Math.round((video.currentTime / video.duration) * 100),
+                Math.round((playback.currentTime / playback.duration) * 100),
             ),
         ),
         'video_progress',
@@ -169,14 +183,17 @@ const recordVideoProgress = (media: LessonMedia, event: Event): void => {
     );
 };
 
-const recordVideoCompleted = (media: LessonMedia, event: Event): void => {
-    const video = event.target as HTMLVideoElement | null;
-
+const recordVideoCompleted = (
+    media: LessonMedia,
+    playback: VideoPlaybackProgress,
+): void => {
     recordProgress(
         100,
         'video_completed',
         media,
-        Math.floor(video?.currentTime ?? 0),
+        Math.floor(
+            Number.isFinite(playback.currentTime) ? playback.currentTime : 0,
+        ),
     );
 };
 
@@ -265,21 +282,14 @@ const lessonStatusLabel = (lesson: Lesson): string => {
             class="grid gap-6 rounded-2xl border border-sidebar-border/70 bg-card p-5 shadow-sm xl:grid-cols-[1fr_20rem] dark:border-sidebar-border"
         >
             <div class="space-y-5">
-                <div
-                    v-if="videoMedia.length > 0"
-                    class="overflow-hidden rounded-2xl border border-border bg-black"
-                >
-                    <video
+                <div v-if="videoMedia.length > 0" class="grid gap-4">
+                    <VideoJsLessonPlayer
                         v-for="media in videoMedia"
                         :key="media.id"
-                        class="aspect-video w-full"
-                        controls
-                        playsinline
-                        preload="metadata"
-                        :src="media.inlineUrl"
-                        @play="recordVideoStarted(media)"
-                        @timeupdate="recordVideoProgress(media, $event)"
-                        @ended="recordVideoCompleted(media, $event)"
+                        :media="media"
+                        @started="recordVideoStarted"
+                        @progress="recordVideoProgress"
+                        @completed="recordVideoCompleted"
                     />
                 </div>
 
