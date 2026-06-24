@@ -140,54 +140,54 @@ Turn the current signed lesson media download flow into a full student lesson-vi
 - Practical courses can require a passed practical assessment before certificate issuance.
 - Certificate issuance tests prove payment, lessons, exam, attendance, and practical rules are enforced according to course/package configuration.
 
-## Phase 3: Online Payment Gateway And Finance Completion
+## Phase 3: Offline Payment And Finance Completion
 
 ### Status
 
-Partially implemented foundation; pending provider sign-off and completion.
+Partially implemented foundation; pending offline payment proof intake, review, reconciliation, receipt, and finance reporting hardening.
 
 ### Goal
 
-Replace the null online payment seam with a signed-off QAR-capable provider while preserving manual payment workflows and auditability.
+Complete finance-grade offline payment workflows for bank transfer, cheque, cash, and approved manual adjustments before any online gateway dependency is introduced.
 
 ### BRS Coverage
 
 - BO-03
-- BR-PAY-01 through BR-PAY-05
-- Payment gateway integration
+- BR-PAY-02 through BR-PAY-05
+- Manual payment confirmation
 - Payment data requirements and finance reporting requirements
 
 ### Checklist
 
-- [ ] Confirm provider, currencies, refund/void policy, settlement process, tax/VAT wording, and legal receipt requirements with PowerX.
-- [ ] Add provider configuration, credentials, and feature flag handling without exposing secrets.
-- [ ] Implement a concrete `PaymentGateway` adapter for checkout preparation, webhook inspection, and reconciliation.
-- [ ] Add online checkout routes for student invoices and corporate invoices.
-- [ ] Add callback/success/cancel routes and signed webhook endpoint with idempotency.
-- [ ] Persist provider reference, checkout status, webhook event ID, signature status, reconciliation status, and sanitized metadata.
-- [ ] Update student payments page with online payment action where eligible.
-- [ ] Update corporate portal with invoice payment links where allowed.
-- [ ] Add refund/void request workflow if the chosen provider supports it.
-- [ ] Add finance filters/reports for online paid, online pending, webhook failed, refund requested, refunded, voided, partial, overdue, and manual adjusted.
-- [ ] Keep manual bank transfer, cheque, and cash workflows working unchanged.
+- [ ] Confirm accepted offline methods, currencies, proof requirements, approval roles, rejection rules, adjustment rules, refund policy, and legal receipt wording with PowerX.
+- [ ] Add or harden student and corporate offline payment proof upload flows for invoices and enrollments.
+- [ ] Store offline payment method, payer, amount, reference number, proof file, received date, bank/deposit details where applicable, finance reviewer, review timestamp, and review notes.
+- [ ] Add finance review actions for approve, reject, request more information, mark duplicate, mark partial, void, refund/adjust, and attach internal notes.
+- [ ] Ensure paid access is unlocked only after approved offline payment and revoked or preserved correctly for rejected, voided, refunded, partial, or adjusted payments.
+- [ ] Add finance filters/reports for pending proof, approved, rejected, duplicate, partial, overdue, refunded, voided, adjusted, and unmatched payments.
+- [ ] Update student payments page to show invoice status, offline payment instructions, proof upload status, rejection/request-more-information notes, receipt links, and outstanding balance.
+- [ ] Update corporate portal to show company invoice status, offline payment instructions, proof upload status, receipt links, and outstanding balance without exposing internal finance notes.
+- [ ] Ensure invoice and receipt PDFs include payment method, amount, date, reference, payer, student/company, course/package, approver, and offline proof/audit reference.
+- [ ] Keep the online `PaymentGateway` seam disabled/null-provider-only until PowerX signs off a provider.
 
 ### Deliverables
 
-- Provider-specific payment adapter.
-- Online checkout, callback, cancel, and webhook routes.
-- Payment reconciliation workflow and finance-facing status views.
-- Student and corporate payment actions.
-- Updated receipts/invoices if provider, tax, or settlement wording requires it.
-- Tests for checkout creation, webhook signature handling, idempotency, paid enrollment activation, failed/cancelled payments, partial payments, refunds/voids where supported, and manual payment regression.
+- Offline payment proof upload workflow for students and corporate coordinators.
+- Finance review queue and audited approval/rejection/adjustment actions.
+- Offline payment reconciliation workflow and finance-facing status views.
+- Student and corporate payment status views with receipt and outstanding-balance visibility.
+- Updated invoice and receipt PDFs for offline payment references and approval details.
+- Tests for proof upload, finance approval, rejection, request-more-information, duplicate detection, partial payment, adjustment/refund/void behavior, paid enrollment activation, access revocation rules, and receipt/invoice output.
 
 ### Acceptance Criteria
 
-- Eligible students and corporate coordinators can initiate online payment for invoices in QAR unless multi-currency is approved.
-- Successful provider confirmation updates payment, invoice, enrollment access, and audit records exactly once.
-- Failed, cancelled, duplicate, unsigned, or replayed webhooks do not unlock access.
-- Finance can reconcile online and manual payments from the admin panel.
-- Receipts and invoices show payment method, amount, date, reference, payer, course/company/student, and approver/provider reference as applicable.
-- Manual payment tests and existing finance tests continue to pass.
+- Eligible students and corporate coordinators can submit offline payment proof for invoices without accessing private storage paths.
+- Finance can approve, reject, request more information, mark duplicate, mark partial, void, refund, or adjust offline payments with audit history.
+- Approved offline payment updates payment, invoice, enrollment access, receipt, and audit records exactly once.
+- Rejected, duplicate, pending, partial, voided, or refunded offline payments do not incorrectly unlock paid lessons, exams, certificates, or access windows.
+- Receipts and invoices show payment method, amount, date, reference, payer, course/company/student, approver, and offline proof/audit reference as applicable.
+- Finance reports distinguish pending, approved, rejected, partial, overdue, refunded, voided, adjusted, and unmatched offline payments.
+- Existing online gateway seam remains disabled until explicit provider sign-off.
 
 ## Phase 4: Communications Automation For WhatsApp, SMS, And Lifecycle Reminders
 
@@ -392,7 +392,7 @@ Prepare the application for production readiness and isolate post-MVP items that
 
 1. Phase 1: Admissions, CRM, And Free Preview Completion
 2. Phase 2: Student Exam-Taking And Assessment Hardening
-3. Phase 3: Online Payment Gateway And Finance Completion
+3. Phase 3: Offline Payment And Finance Completion
 4. Phase 4: Communications Automation For WhatsApp, SMS, And Lifecycle Reminders
 5. Phase 6: Corporate Self-Service And Export Completion
 6. Phase 5: Growth Automation, AI Assistant, And Advanced Attribution
