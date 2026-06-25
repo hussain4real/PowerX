@@ -29,6 +29,19 @@ test('style guide page is publicly visible', function () {
         ->toContain('/images/brand/powerx-logo.png')
         ->not->toContain('<svg');
 
+    $brandStatusBadge = file_get_contents(resource_path('js/components/powerx/BrandStatusBadge.vue'));
+
+    expect($brandStatusBadge)
+        ->toContain('text-green-700')
+        ->toContain('dark:text-green-300')
+        ->toContain('bg-powerx-yellow/20')
+        ->toContain('dark:bg-powerx-yellow')
+        ->toContain('text-powerx-blue')
+        ->toContain('dark:text-powerx-cyan')
+        ->toContain('bg-powerx-navy/10')
+        ->toContain('text-powerx-navy')
+        ->toContain('dark:text-white');
+
     $sidebarHeader = file_get_contents(resource_path('js/components/AppSidebarHeader.vue'));
     $header = file_get_contents(resource_path('js/components/AppHeader.vue'));
     $authSimpleLayout = file_get_contents(resource_path('js/layouts/auth/AuthSimpleLayout.vue'));

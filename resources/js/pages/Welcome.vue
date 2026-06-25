@@ -173,11 +173,11 @@ const pathwayCards = [
 ] as const;
 
 const processSteps = [
-    'Choose a course or request a company batch',
-    'Submit a callback, registration, or quotation request',
-    'Confirm admissions and manual payment approval',
-    'Access lessons, PDF references, videos, and instructor guidance',
-    'Complete practical sessions, mock assessments, and eligibility checks',
+    'Pick the right course or request a company batch',
+    'Share your details and preferred training schedule',
+    'Confirm admissions, documents, and payment instructions',
+    'Prepare with lessons, references, practice tasks, and instructor support',
+    'Attend practical sessions and receive reviewed completion records',
 ] as const;
 
 const faqItems = [
@@ -614,31 +614,37 @@ const money = (amount: string | number | null, currency: string): string =>
                         Learning experience
                     </p>
                     <h2 class="mt-3 text-4xl font-black">
-                        Technical enough for engineers, clear enough for busy
-                        teams.
+                        Clear guidance from first enquiry to completion.
                     </h2>
                     <p class="mt-4 text-sm leading-7 text-muted-foreground">
-                        The public site should sell the training promise while
-                        the platform handles the operational depth behind the
-                        scenes: payments, lesson access, attendance, exams, and
-                        certificates.
+                        PowerX keeps every step easy to understand for learners
+                        and company teams, from choosing a program to preparing
+                        for class, attending practical sessions, and receiving
+                        responsible completion records.
                     </p>
 
                     <div class="mt-7 grid gap-3">
-                        <div
+                        <MotionReveal
                             v-for="(step, index) in processSteps"
                             :key="step"
-                            class="flex gap-4 rounded-2xl border border-border bg-background p-4 hover:-translate-y-0.5 hover:border-powerx-yellow/60 hover:shadow-sm motion-safe:transition-all motion-safe:duration-300 motion-reduce:hover:translate-y-0"
+                            :delay="index * 90"
+                            as="div"
+                            direction="right"
+                            distance="sm"
+                            class="group relative flex gap-4 overflow-hidden rounded-2xl border border-border bg-background p-4 hover:-translate-y-0.5 hover:border-powerx-yellow/60 hover:shadow-sm motion-safe:transition-all motion-safe:duration-300 motion-reduce:hover:translate-y-0"
                         >
                             <span
-                                class="flex size-9 shrink-0 items-center justify-center rounded-full bg-powerx-yellow text-sm font-black text-powerx-navy"
+                                class="pointer-events-none absolute inset-y-0 -left-16 w-12 rotate-12 bg-gradient-to-r from-transparent via-powerx-yellow/20 to-transparent opacity-0 group-hover:left-[110%] group-hover:opacity-100 motion-safe:transition-all motion-safe:duration-700 motion-reduce:hidden"
+                            />
+                            <span
+                                class="flex size-9 shrink-0 items-center justify-center rounded-full bg-powerx-yellow text-sm font-black text-powerx-navy shadow-[0_0_20px_rgba(255,193,7,0.26)] group-hover:scale-110 motion-safe:transition-transform motion-safe:duration-300"
                             >
                                 {{ index + 1 }}
                             </span>
                             <p class="self-center text-sm font-bold">
                                 {{ step }}
                             </p>
-                        </div>
+                        </MotionReveal>
                     </div>
                 </MotionReveal>
             </div>
