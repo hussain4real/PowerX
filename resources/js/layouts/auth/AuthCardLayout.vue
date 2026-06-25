@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import PublicThemeSwitcher from '@/components/powerx/PublicThemeSwitcher.vue';
 import {
     Card,
     CardContent,
@@ -18,8 +19,12 @@ defineProps<{
 
 <template>
     <div
-        class="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10"
+        class="relative flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10"
     >
+        <div class="fixed top-4 right-4 z-20">
+            <PublicThemeSwitcher />
+        </div>
+
         <div class="flex w-full max-w-md flex-col gap-6">
             <Link
                 :href="home()"

@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\CoursePackage;
+use App\Support\PowerXFeatureFlags;
 use Inertia\Inertia;
 use Inertia\Response;
-use Laravel\Pennant\Feature;
 
 class WelcomeController extends Controller
 {
@@ -49,7 +49,7 @@ class WelcomeController extends Controller
      */
     private function assistantPayload(string $source, ?Course $course = null): array
     {
-        $enabled = Feature::active(config('powerx_growth.ai_assistant.feature', 'powerx-ai-assistant'));
+        $enabled = PowerXFeatureFlags::aiAssistantIsActive();
 
         return [
             'enabled' => $enabled,

@@ -32,6 +32,23 @@ it('renders the public course catalog with published courses only', function () 
             ->has('courses', 1)
             ->where('courses.0.slug', $publishedCourse->slug)
             ->where('leadCourseOptions.0.id', $publishedCourse->id));
+
+    $source = file_get_contents(resource_path('js/pages/Courses/Index.vue'));
+    $assistantSource = file_get_contents(resource_path('js/components/powerx/PowerXAssistantPanel.vue'));
+
+    expect($source)
+        ->toContain('PublicThemeSwitcher')
+        ->toContain('MotionReveal')
+        ->toContain('motion-safe:animate-powerx-scan')
+        ->toContain('motion-safe:transition-all')
+        ->toContain('motion-reduce')
+        ->toContain('bg-background text-foreground dark:bg-powerx-ink dark:text-white')
+        ->toContain('dark:bg-white/[0.04]')
+        ->not->toContain('min-h-screen bg-powerx-ink text-white')
+        ->not->toContain('tone="dark"')
+        ->and($assistantSource)
+        ->toContain("tone?: 'dark' | 'light' | 'adaptive'")
+        ->toContain('dark:border-white/10');
 });
 
 it('renders a course detail page with packages and modules', function () {
@@ -55,6 +72,35 @@ it('renders a course detail page with packages and modules', function () {
             ->where('course.packages.0.name', $package->name)
             ->where('course.modules.0.title', $module->title)
             ->where('course.modules.0.lessons.0.title', 'Lockout basics'));
+
+    $source = file_get_contents(resource_path('js/pages/Courses/Show.vue'));
+
+    expect($source)
+        ->toContain('PublicThemeSwitcher')
+        ->toContain('MotionReveal')
+        ->toContain('motion-safe:animate-powerx-scan')
+        ->toContain('motion-safe:transition-all')
+        ->toContain('motion-reduce')
+        ->toContain('bg-background text-foreground dark:bg-powerx-ink dark:text-white')
+        ->toContain('dark:bg-white/[0.04]')
+        ->not->toContain('min-h-screen bg-powerx-ink text-white')
+        ->not->toContain('tone="dark"');
+});
+
+it('keeps public motion enhancements reduced-motion aware', function (): void {
+    $revealSource = file_get_contents(resource_path('js/components/powerx/MotionReveal.vue'));
+    $scrollRevealSource = file_get_contents(resource_path('js/composables/useScrollReveal.ts'));
+
+    expect($revealSource)
+        ->toContain('useScrollReveal')
+        ->toContain('motion-safe:transition-[opacity,transform,filter]')
+        ->toContain('motion-reduce:transition-none')
+        ->toContain('transitionDelay')
+        ->and($scrollRevealSource)
+        ->toContain('IntersectionObserver')
+        ->toContain('prefers-reduced-motion')
+        ->toContain('requestAnimationFrame')
+        ->toContain('showImmediately');
 });
 
 it('captures public lead inquiries', function () {

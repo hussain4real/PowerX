@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import PublicThemeSwitcher from '@/components/powerx/PublicThemeSwitcher.vue';
 import { home } from '@/routes';
 
 const page = usePage();
@@ -16,6 +17,10 @@ defineProps<{
     <div
         class="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0"
     >
+        <div class="fixed top-4 right-4 z-20">
+            <PublicThemeSwitcher />
+        </div>
+
         <div
             class="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r"
         >

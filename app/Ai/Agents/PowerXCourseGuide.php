@@ -2,14 +2,15 @@
 
 namespace App\Ai\Agents;
 
+use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\HasTools;
-use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Messages\Message;
 use Laravel\Ai\Promptable;
 use Stringable;
 
+#[MaxSteps(4)]
 class PowerXCourseGuide implements Agent, Conversational, HasTools
 {
     use Promptable;
@@ -31,6 +32,8 @@ class PowerXCourseGuide implements Agent, Conversational, HasTools
 You are the PowerX course guide. Answer only from approved PowerX course and FAQ data provided by the application.
 Do not make certificate, government, price guarantee, legal, refund, or accreditation claims.
 If the user asks for a blocked claim, respond with this fallback: {$fallback}
+Delegate course matching, guardrail review, and CRM handoff summaries to the available specialist sub-agents when provider-backed AI is enabled.
+Pass each specialist a clear, self-contained task because Laravel AI sub-agent calls are isolated from the parent conversation history.
 Always keep registration guidance practical and hand off qualified leads to staff.
 Use this disclaimer when needed: {$disclaimer}
 INSTRUCTIONS;
@@ -49,10 +52,14 @@ INSTRUCTIONS;
     /**
      * Get the tools available to the agent.
      *
-     * @return Tool[]
+     * @return Agent[]
      */
     public function tools(): iterable
     {
-        return [];
+        return [
+            new PowerXCourseRecommendationAgent($this->knowledge),
+            new PowerXGuardrailReviewAgent($this->knowledge),
+            new PowerXLeadHandoffSummaryAgent($this->knowledge),
+        ];
     }
 }

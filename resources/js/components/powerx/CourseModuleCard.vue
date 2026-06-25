@@ -30,7 +30,7 @@ const statusClasses = computed(() => {
     const classes = {
         complete: 'text-powerx-success',
         current: 'text-powerx-yellow',
-        locked: 'text-white/45',
+        locked: 'text-muted-foreground dark:text-white/45',
     };
 
     return classes[props.status];
@@ -39,7 +39,7 @@ const statusClasses = computed(() => {
 
 <template>
     <article
-        class="group rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition hover:-translate-y-0.5 hover:border-powerx-yellow/50 hover:bg-white/[0.07]"
+        class="group rounded-2xl border border-border bg-muted/70 p-4 transition hover:-translate-y-0.5 hover:border-powerx-yellow/50 hover:bg-accent/60 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.07]"
     >
         <div class="flex items-start gap-4">
             <span
@@ -49,13 +49,17 @@ const statusClasses = computed(() => {
             </span>
             <div class="min-w-0 flex-1">
                 <div class="flex items-start justify-between gap-3">
-                    <h3 class="font-bold text-white">{{ title }}</h3>
+                    <h3 class="font-bold text-foreground dark:text-white">
+                        {{ title }}
+                    </h3>
                     <component
                         :is="statusIcon"
                         :class="['size-5 shrink-0', statusClasses]"
                     />
                 </div>
-                <p class="mt-2 text-sm leading-6 text-white/65">
+                <p
+                    class="mt-2 text-sm leading-6 text-muted-foreground dark:text-white/65"
+                >
                     {{ description }}
                 </p>
             </div>

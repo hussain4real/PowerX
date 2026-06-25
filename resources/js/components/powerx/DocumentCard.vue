@@ -8,7 +8,7 @@ defineProps<{
 
 <template>
     <article
-        class="rounded-2xl border border-powerx-yellow/25 bg-gradient-to-br from-powerx-yellow/15 via-white/[0.04] to-white/[0.02] p-5"
+        class="rounded-2xl border border-powerx-yellow/25 bg-gradient-to-br from-powerx-yellow/15 via-card to-muted p-5 dark:via-white/[0.04] dark:to-white/[0.02]"
     >
         <div class="flex items-start gap-4">
             <div
@@ -22,8 +22,14 @@ defineProps<{
                 >
                     {{ meta }}
                 </p>
-                <h3 class="mt-2 text-lg font-black text-white">{{ title }}</h3>
-                <p class="mt-2 text-sm leading-6 text-white/65">
+                <h3
+                    class="mt-2 text-lg font-black text-foreground dark:text-white"
+                >
+                    {{ title }}
+                </h3>
+                <p
+                    class="mt-2 text-sm leading-6 text-muted-foreground dark:text-white/65"
+                >
                     {{ description }}
                 </p>
             </div>

@@ -39,7 +39,7 @@ const icon = computed(() => {
 <template>
     <span
         :class="[
-            'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[0.72rem] leading-none font-black tracking-[0.14em] uppercase backdrop-blur',
+            'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[0.72rem] leading-none font-black tracking-[0.14em] uppercase backdrop-blur hover:-translate-y-0.5 motion-safe:transition-transform motion-safe:duration-300 motion-reduce:hover:translate-y-0',
             toneClasses[props.tone],
         ]"
     >

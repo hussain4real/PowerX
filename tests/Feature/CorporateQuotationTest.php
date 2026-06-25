@@ -28,6 +28,14 @@ test('corporate quotation request page lists published course packages', functio
             ->has('courseOptions', 1)
             ->where('courseOptions.0.title', 'Corporate Electrical Safety')
             ->where('courseOptions.0.packages.0.name', $package->name));
+
+    $source = file_get_contents(resource_path('js/pages/Corporate/QuotationRequest.vue'));
+
+    expect($source)
+        ->toContain('PublicThemeSwitcher')
+        ->toContain('bg-background text-foreground dark:bg-powerx-ink dark:text-white')
+        ->toContain('dark:bg-white/[0.04]')
+        ->not->toContain('min-h-screen bg-powerx-ink text-white');
 });
 
 test('corporate quotation requests create company employees enrollments and quotation invoices', function () {

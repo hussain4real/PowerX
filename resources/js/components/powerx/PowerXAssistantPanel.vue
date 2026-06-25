@@ -28,7 +28,7 @@ interface AssistantResponse {
 
 const props = defineProps<{
     assistant: PowerXAssistantConfig;
-    tone?: 'dark' | 'light';
+    tone?: 'dark' | 'light' | 'adaptive';
 }>();
 
 const page = usePage();
@@ -42,7 +42,8 @@ const errors = ref<Record<string, string[]>>({});
 const isSubmitting = ref(false);
 const hasSubmitted = ref(false);
 
-const isDark = computed(() => props.tone === 'dark');
+const isFixedDark = computed(() => props.tone === 'dark');
+const isFixedLight = computed(() => props.tone === 'light');
 
 const trackingFields = computed(() => {
     const params = new URLSearchParams(page.url.split('?')[1] ?? '');
@@ -62,21 +63,41 @@ const trackingFields = computed(() => {
     };
 });
 
-const panelClass = computed(() =>
-    isDark.value
-        ? 'border-white/10 bg-white/[0.05] text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)]'
-        : 'border-border bg-card text-card-foreground shadow-xl',
-);
+const panelClass = computed(() => {
+    if (isFixedDark.value) {
+        return 'border-white/10 bg-white/[0.05] text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)]';
+    }
 
-const mutedClass = computed(() =>
-    isDark.value ? 'text-white/60' : 'text-muted-foreground',
-);
+    if (isFixedLight.value) {
+        return 'border-border bg-card text-card-foreground shadow-xl';
+    }
 
-const fieldClass = computed(() =>
-    isDark.value
-        ? 'border-white/10 bg-white/[0.07] text-white placeholder:text-white/35 focus:border-powerx-yellow'
-        : 'border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-powerx-yellow',
-);
+    return 'border-border bg-card text-card-foreground shadow-xl dark:border-white/10 dark:bg-white/[0.05] dark:text-white dark:shadow-[0_24px_70px_rgba(0,0,0,0.28)]';
+});
+
+const mutedClass = computed(() => {
+    if (isFixedDark.value) {
+        return 'text-white/60';
+    }
+
+    if (isFixedLight.value) {
+        return 'text-muted-foreground';
+    }
+
+    return 'text-muted-foreground dark:text-white/60';
+});
+
+const fieldClass = computed(() => {
+    if (isFixedDark.value) {
+        return 'border-white/10 bg-white/[0.07] text-white placeholder:text-white/35 focus:border-powerx-yellow';
+    }
+
+    if (isFixedLight.value) {
+        return 'border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-powerx-yellow';
+    }
+
+    return 'border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-powerx-yellow dark:border-white/10 dark:bg-white/[0.07] dark:text-white dark:placeholder:text-white/35';
+});
 
 const csrfToken = (): string =>
     document

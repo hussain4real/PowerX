@@ -243,7 +243,7 @@ Move from WhatsApp-ready drafts and queued email to provider-backed messaging wi
 
 ### Status
 
-Code implemented and verified on June 25, 2026, with feature-flagged AI assistant, approved knowledge source, CRM handoff, guardrails, referral tracking, renewal campaign scheduling, enhanced attribution, `composer ci:check`, and 100% test coverage. PowerX business sign-off is still required for AI assistant scope, approved FAQ/disclaimer wording, production AI/provider behavior, and external advertising/analytics pixels.
+Code implemented and verified on June 25, 2026, with feature-flagged AI assistant, approved knowledge source, CRM handoff, guardrails, referral tracking, renewal campaign scheduling, enhanced attribution, `composer ci:check`, and 100% test coverage. PowerX has confirmed the AI assistant scope covers FAQ answers, course recommendations, and registration help. PowerX business sign-off is still required for approved FAQ/disclaimer wording, production AI/provider behavior, and external advertising/analytics pixels.
 
 ### Goal
 
@@ -260,7 +260,7 @@ Implement the BRS growth features that help PowerX convert leads faster: AI-assi
 
 ### Checklist
 
-- [ ] Confirm AI assistant scope: FAQ only, course recommendation, registration help, or all three.
+- [x] Confirm AI assistant scope: FAQ answers, course recommendations, and registration help.
 - [x] Build an approved knowledge source from public course data, package data, schedule availability, pricing, FAQ content, and PowerX-approved disclaimers.
 - [x] Add a public AI assistant entry point on course/landing pages behind a feature flag (use laravel/ai sdk package and laravel/pennant both already installed).
 - [x] Create CRM leads from AI conversations when contact details or buying intent are captured.
@@ -270,6 +270,22 @@ Implement the BRS growth features that help PowerX convert leads faster: AI-assi
 - [x] Convert renewal opportunities into campaign workflows with scheduled reminders and recommended next courses.
 - [x] Improve campaign attribution with UTM capture, paid-ad cost inputs, channel grouping, and revenue matching.
 - [x] Add dashboards for source performance, conversion rate, cost, revenue, ROI, renewal opportunities, and referral conversion.
+
+### AI Assistant Architecture Note
+
+The current `PowerXCourseGuide` Laravel AI agent defines approved instructions, bounds provider-backed tool use with `MaxSteps`, and returns specialist sub-agents from `tools()` using Laravel AI's documented sub-agent pattern. Each sub-agent also exposes scoped Laravel AI tools: published course/package/batch lookup from the database, approved assistant policy lookup, and limited CRM handoff context lookup. The public assistant endpoint remains deterministic through `AnswerProspectAssistantPrompt` until PowerX signs off production AI/provider behavior. If PowerX enables provider-backed AI behavior, the parent agent can delegate course recommendation, guardrail review, and lead handoff summary tasks to the wired sub-agents, and those sub-agents can call their tools for approved app data. The relevant Laravel AI docs are:
+
+- Tools: https://laravel.com/docs/13.x/ai-sdk#tools
+- Sub-agents: https://github.com/laravel/docs/blob/13.x/ai-sdk.md#sub-agents
+- Agent configuration, including `MaxSteps` for tool use: https://github.com/laravel/docs/blob/13.x/ai-sdk.md#agent-configuration
+- Testing agents with fakes and `preventStrayPrompts`: https://github.com/laravel/docs/blob/13.x/ai-sdk.md#testing-agents
+
+Implemented sub-agent split:
+
+- `PowerXCourseGuide` remains the parent orchestrator.
+- `PowerXCourseRecommendationAgent` handles approved course/package/schedule matching with `SearchPowerXCourseCatalog` and `LookupPowerXAssistantPolicy`.
+- `PowerXGuardrailReviewAgent` handles blocked certificate, government, price guarantee, legal, refund, and accreditation claims with `LookupPowerXAssistantPolicy`.
+- `PowerXLeadHandoffSummaryAgent` summarizes the conversation for CRM handoff with `LookupPowerXLeadHandoffContext`, while Laravel actions remain responsible for database writes.
 
 ### Deliverables
 

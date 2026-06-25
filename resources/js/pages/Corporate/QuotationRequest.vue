@@ -11,18 +11,17 @@ import {
 } from 'lucide-vue-next';
 import { computed, watch } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import PublicThemeSwitcher from '@/components/powerx/PublicThemeSwitcher.vue';
 import { Button } from '@/components/ui/button';
 import { home } from '@/routes';
 import { store as storeQuotation } from '@/routes/corporate/quotations';
 import { index as coursesIndex } from '@/routes/courses';
-
 interface PackageOption {
     id: number;
     name: string;
     currency: string;
     price: number;
 }
-
 interface CourseOption {
     id: number;
     title: string;
@@ -31,7 +30,6 @@ interface CourseOption {
     basePrice: number;
     packages: PackageOption[];
 }
-
 interface EmployeeForm {
     full_name: string;
     email: string;
@@ -40,7 +38,6 @@ interface EmployeeForm {
     preferred_schedule: string;
     notes: string;
 }
-
 interface CorporateQuotationForm {
     company_name: string;
     contact_name: string;
@@ -52,11 +49,7 @@ interface CorporateQuotationForm {
     notes: string;
     employees: EmployeeForm[];
 }
-
-const props = defineProps<{
-    courseOptions: CourseOption[];
-}>();
-
+const props = defineProps<{ courseOptions: CourseOption[] }>();
 const blankEmployee = (): EmployeeForm => ({
     full_name: '',
     email: '',
@@ -65,7 +58,6 @@ const blankEmployee = (): EmployeeForm => ({
     preferred_schedule: '',
     notes: '',
 });
-
 const form = useForm<CorporateQuotationForm>({
     company_name: '',
     contact_name: '',
@@ -77,24 +69,19 @@ const form = useForm<CorporateQuotationForm>({
     notes: '',
     employees: [blankEmployee()],
 });
-
 const selectedCourse = computed(() =>
     props.courseOptions.find((course) => course.id === Number(form.course_id)),
 );
-
 const selectedPackages = computed(() => selectedCourse.value?.packages ?? []);
-
 watch(
     () => form.course_id,
     () => {
         form.course_package_id = '';
     },
 );
-
 const addEmployee = (): void => {
     form.employees.push(blankEmployee());
 };
-
 const removeEmployee = (index: number): void => {
     if (form.employees.length === 1) {
         form.employees = [blankEmployee()];
@@ -104,13 +91,9 @@ const removeEmployee = (index: number): void => {
 
     form.employees.splice(index, 1);
 };
-
 const submit = (): void => {
-    form.post(storeQuotation().url, {
-        preserveScroll: true,
-    });
+    form.post(storeQuotation().url, { preserveScroll: true });
 };
-
 const employeeError = (
     index: number,
     field: keyof EmployeeForm,
@@ -121,25 +104,30 @@ const employeeError = (
     return form.errors[key];
 };
 </script>
-
 <template>
     <Head title="Corporate quotation request" />
-
-    <main class="min-h-screen bg-powerx-ink text-white">
+    <main
+        class="min-h-screen bg-background text-foreground dark:bg-powerx-ink dark:text-white"
+    >
         <section
-            class="relative isolate overflow-hidden border-b border-white/10"
+            class="relative isolate overflow-hidden border-b border-border dark:border-white/10"
         >
             <div
-                class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_18%,rgba(255,193,7,0.22),transparent_28%),radial-gradient(circle_at_82%_10%,rgba(13,202,240,0.16),transparent_26%),linear-gradient(135deg,#020101_0%,#071523_46%,#0b2034_100%)]"
+                class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_18%,rgba(255,193,7,0.28),transparent_28%),radial-gradient(circle_at_82%_10%,rgba(13,202,240,0.12),transparent_26%),linear-gradient(135deg,#f8fafc_0%,#edf3f8_48%,#dce9f5_100%)] dark:hidden"
             />
             <div
-                class="absolute inset-0 -z-10 [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:72px_72px] opacity-25"
+                class="absolute inset-0 -z-10 hidden bg-[radial-gradient(circle_at_18%_18%,rgba(255,193,7,0.22),transparent_28%),radial-gradient(circle_at_82%_10%,rgba(13,202,240,0.16),transparent_26%),linear-gradient(135deg,#020101_0%,#071523_46%,#0b2034_100%)] dark:block"
             />
-
+            <div
+                class="absolute inset-0 -z-10 [background-image:linear-gradient(rgba(7,21,35,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(7,21,35,0.08)_1px,transparent_1px)] [background-size:72px_72px] opacity-25 dark:hidden"
+            />
+            <div
+                class="absolute inset-0 -z-10 hidden [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:72px_72px] opacity-25 dark:block"
+            />
             <header
-                class="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-6 lg:px-8"
+                class="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-6 sm:px-6 lg:px-8"
             >
-                <Link :href="home()" class="flex items-center gap-3">
+                <Link :href="home()" class="flex min-w-0 items-center gap-3">
                     <span
                         class="flex size-12 items-center justify-center overflow-hidden rounded-2xl bg-white p-1 shadow-[0_0_34px_rgba(255,193,7,0.45)]"
                     >
@@ -150,22 +138,22 @@ const employeeError = (
                             POWER<span class="text-powerx-yellow">X</span>
                         </span>
                         <span
-                            class="text-[11px] font-bold tracking-[0.28em] text-white/60 uppercase"
+                            class="text-[11px] font-bold tracking-[0.28em] text-muted-foreground uppercase dark:text-white/60"
                         >
                             Corporate training
                         </span>
                     </span>
                 </Link>
-
-                <Link
-                    :href="coursesIndex()"
-                    class="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-bold text-white/80 transition hover:border-powerx-yellow hover:text-powerx-yellow"
-                >
-                    <ArrowLeft class="size-4" />
-                    Courses
-                </Link>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <PublicThemeSwitcher />
+                    <Link
+                        :href="coursesIndex()"
+                        class="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-bold text-muted-foreground transition hover:border-powerx-yellow hover:text-powerx-yellow dark:border-white/15 dark:text-white/80"
+                    >
+                        <ArrowLeft class="size-4" /> Courses
+                    </Link>
+                </div>
             </header>
-
             <div
                 class="mx-auto grid max-w-7xl gap-10 px-6 py-16 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:py-24"
             >
@@ -173,15 +161,17 @@ const employeeError = (
                     <div
                         class="inline-flex items-center gap-2 rounded-full border border-powerx-yellow/30 bg-powerx-yellow/10 px-4 py-2 text-sm font-black text-powerx-yellow"
                     >
-                        <Building2 class="size-4" />
-                        Quotation and bulk enrollment
+                        <Building2 class="size-4" /> Quotation and bulk
+                        enrollment
                     </div>
                     <h1
-                        class="mt-8 max-w-4xl text-5xl leading-[0.95] font-black tracking-tight uppercase sm:text-6xl"
+                        class="mt-8 max-w-4xl text-5xl leading-[0.95] font-black uppercase sm:text-6xl"
                     >
                         Train your team with PowerX
                     </h1>
-                    <p class="mt-6 max-w-2xl text-lg leading-8 text-white/70">
+                    <p
+                        class="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground dark:text-white/70"
+                    >
                         Submit a company profile, requested course, and employee
                         list. PowerX will generate a quotation, link the
                         requested enrollments, and follow up on payment and
@@ -189,38 +179,43 @@ const employeeError = (
                     </p>
                     <div class="mt-10 grid gap-4 sm:grid-cols-3">
                         <div
-                            class="rounded-2xl border border-white/10 bg-white/[0.05] p-5"
+                            class="rounded-2xl border border-border bg-muted/70 p-5 dark:border-white/10 dark:bg-white/[0.05]"
                         >
                             <UsersRound class="size-7 text-powerx-yellow" />
-                            <p class="mt-4 text-sm text-white/70">
+                            <p
+                                class="mt-4 text-sm text-muted-foreground dark:text-white/70"
+                            >
                                 Bulk employee enrollment
                             </p>
                         </div>
                         <div
-                            class="rounded-2xl border border-white/10 bg-white/[0.05] p-5"
+                            class="rounded-2xl border border-border bg-muted/70 p-5 dark:border-white/10 dark:bg-white/[0.05]"
                         >
                             <Building2 class="size-7 text-powerx-cyan" />
-                            <p class="mt-4 text-sm text-white/70">
+                            <p
+                                class="mt-4 text-sm text-muted-foreground dark:text-white/70"
+                            >
                                 Company quotation record
                             </p>
                         </div>
                         <div
-                            class="rounded-2xl border border-white/10 bg-white/[0.05] p-5"
+                            class="rounded-2xl border border-border bg-muted/70 p-5 dark:border-white/10 dark:bg-white/[0.05]"
                         >
                             <Send class="size-7 text-powerx-success" />
-                            <p class="mt-4 text-sm text-white/70">
+                            <p
+                                class="mt-4 text-sm text-muted-foreground dark:text-white/70"
+                            >
                                 Finance follow-up ready
                             </p>
                         </div>
                     </div>
                 </div>
-
                 <form
-                    class="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 shadow-[0_36px_100px_rgba(0,0,0,0.45)] backdrop-blur"
+                    class="rounded-[2rem] border border-border bg-card/90 p-5 shadow-[0_36px_100px_rgba(0,0,0,0.45)] backdrop-blur dark:border-white/10 dark:bg-white/[0.06]"
                     @submit.prevent="submit"
                 >
                     <div
-                        class="grid gap-5 rounded-[1.5rem] border border-white/10 bg-powerx-navy p-6"
+                        class="grid gap-5 rounded-[1.5rem] border border-border bg-card p-6 dark:border-white/10 dark:bg-powerx-navy"
                     >
                         <div>
                             <p
@@ -232,15 +227,16 @@ const employeeError = (
                                 Request a quotation
                             </h2>
                         </div>
-
                         <div class="grid gap-4 sm:grid-cols-2">
                             <label class="grid gap-2">
-                                <span class="text-sm font-bold text-white/75">
+                                <span
+                                    class="text-sm font-bold text-muted-foreground dark:text-white/75"
+                                >
                                     Company name
                                 </span>
                                 <input
                                     v-model="form.company_name"
-                                    class="h-12 rounded-2xl border border-white/10 bg-white/[0.07] px-4 text-white transition outline-none placeholder:text-white/35 focus:border-powerx-yellow"
+                                    class="h-12 rounded-2xl border border-border bg-background px-4 text-foreground outline-none placeholder:text-muted-foreground focus:border-powerx-yellow dark:border-white/10 dark:bg-white/[0.07] dark:text-white dark:placeholder:text-white/35"
                                     placeholder="Company legal name"
                                 />
                                 <span
@@ -251,12 +247,14 @@ const employeeError = (
                                 </span>
                             </label>
                             <label class="grid gap-2">
-                                <span class="text-sm font-bold text-white/75">
+                                <span
+                                    class="text-sm font-bold text-muted-foreground dark:text-white/75"
+                                >
                                     Contact person
                                 </span>
                                 <input
                                     v-model="form.contact_name"
-                                    class="h-12 rounded-2xl border border-white/10 bg-white/[0.07] px-4 text-white transition outline-none placeholder:text-white/35 focus:border-powerx-yellow"
+                                    class="h-12 rounded-2xl border border-border bg-background px-4 text-foreground outline-none placeholder:text-muted-foreground focus:border-powerx-yellow dark:border-white/10 dark:bg-white/[0.07] dark:text-white dark:placeholder:text-white/35"
                                     placeholder="Training coordinator"
                                 />
                                 <span
@@ -267,13 +265,15 @@ const employeeError = (
                                 </span>
                             </label>
                             <label class="grid gap-2">
-                                <span class="text-sm font-bold text-white/75">
+                                <span
+                                    class="text-sm font-bold text-muted-foreground dark:text-white/75"
+                                >
                                     Email
                                 </span>
                                 <input
                                     v-model="form.email"
                                     type="email"
-                                    class="h-12 rounded-2xl border border-white/10 bg-white/[0.07] px-4 text-white transition outline-none placeholder:text-white/35 focus:border-powerx-yellow"
+                                    class="h-12 rounded-2xl border border-border bg-background px-4 text-foreground outline-none placeholder:text-muted-foreground focus:border-powerx-yellow dark:border-white/10 dark:bg-white/[0.07] dark:text-white dark:placeholder:text-white/35"
                                     placeholder="training@example.com"
                                 />
                                 <span
@@ -284,12 +284,14 @@ const employeeError = (
                                 </span>
                             </label>
                             <label class="grid gap-2">
-                                <span class="text-sm font-bold text-white/75">
+                                <span
+                                    class="text-sm font-bold text-muted-foreground dark:text-white/75"
+                                >
                                     Phone / WhatsApp
                                 </span>
                                 <input
                                     v-model="form.phone"
-                                    class="h-12 rounded-2xl border border-white/10 bg-white/[0.07] px-4 text-white transition outline-none placeholder:text-white/35 focus:border-powerx-yellow"
+                                    class="h-12 rounded-2xl border border-border bg-background px-4 text-foreground outline-none placeholder:text-muted-foreground focus:border-powerx-yellow dark:border-white/10 dark:bg-white/[0.07] dark:text-white dark:placeholder:text-white/35"
                                     placeholder="+974..."
                                 />
                                 <span
@@ -300,26 +302,28 @@ const employeeError = (
                                 </span>
                             </label>
                         </div>
-
                         <label class="grid gap-2">
-                            <span class="text-sm font-bold text-white/75">
+                            <span
+                                class="text-sm font-bold text-muted-foreground dark:text-white/75"
+                            >
                                 Address
                             </span>
                             <input
                                 v-model="form.address"
-                                class="h-12 rounded-2xl border border-white/10 bg-white/[0.07] px-4 text-white transition outline-none placeholder:text-white/35 focus:border-powerx-yellow"
+                                class="h-12 rounded-2xl border border-border bg-background px-4 text-foreground outline-none placeholder:text-muted-foreground focus:border-powerx-yellow dark:border-white/10 dark:bg-white/[0.07] dark:text-white dark:placeholder:text-white/35"
                                 placeholder="Company address or site location"
                             />
                         </label>
-
                         <div class="grid gap-4 sm:grid-cols-2">
                             <label class="grid gap-2">
-                                <span class="text-sm font-bold text-white/75">
+                                <span
+                                    class="text-sm font-bold text-muted-foreground dark:text-white/75"
+                                >
                                     Course
                                 </span>
                                 <select
                                     v-model="form.course_id"
-                                    class="h-12 rounded-2xl border border-white/10 bg-powerx-panel px-4 text-white transition outline-none focus:border-powerx-yellow"
+                                    class="h-12 rounded-2xl border border-border bg-background px-4 text-foreground outline-none focus:border-powerx-yellow dark:border-white/10 dark:bg-powerx-panel dark:text-white"
                                 >
                                     <option value="">Select a course</option>
                                     <option
@@ -338,12 +342,14 @@ const employeeError = (
                                 </span>
                             </label>
                             <label class="grid gap-2">
-                                <span class="text-sm font-bold text-white/75">
+                                <span
+                                    class="text-sm font-bold text-muted-foreground dark:text-white/75"
+                                >
                                     Package
                                 </span>
                                 <select
                                     v-model="form.course_package_id"
-                                    class="h-12 rounded-2xl border border-white/10 bg-powerx-panel px-4 text-white transition outline-none focus:border-powerx-yellow"
+                                    class="h-12 rounded-2xl border border-border bg-background px-4 text-foreground outline-none focus:border-powerx-yellow dark:border-white/10 dark:bg-powerx-panel dark:text-white"
                                     :disabled="selectedPackages.length === 0"
                                 >
                                     <option value="">
@@ -361,7 +367,6 @@ const employeeError = (
                                 </select>
                             </label>
                         </div>
-
                         <div class="grid gap-4">
                             <div
                                 class="flex items-center justify-between gap-4"
@@ -372,24 +377,24 @@ const employeeError = (
                                     >
                                         Employee list
                                     </p>
-                                    <p class="mt-1 text-sm text-white/55">
+                                    <p
+                                        class="mt-1 text-sm text-muted-foreground dark:text-white/55"
+                                    >
                                         Add each employee who needs enrollment.
                                     </p>
                                 </div>
                                 <button
                                     type="button"
-                                    class="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-black text-white/80 transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                                    class="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-black text-muted-foreground transition hover:border-powerx-yellow hover:text-powerx-yellow dark:border-white/15 dark:text-white/80"
                                     @click="addEmployee"
                                 >
-                                    <Plus class="size-4" />
-                                    Add
+                                    <Plus class="size-4" /> Add
                                 </button>
                             </div>
-
                             <div
                                 v-for="(employee, index) in form.employees"
                                 :key="index"
-                                class="grid gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4"
+                                class="grid gap-3 rounded-2xl border border-border bg-card/70 p-4 dark:border-white/10 dark:bg-white/[0.04]"
                             >
                                 <div
                                     class="flex items-center justify-between gap-4"
@@ -399,7 +404,7 @@ const employeeError = (
                                     </p>
                                     <button
                                         type="button"
-                                        class="text-white/55 transition hover:text-powerx-yellow"
+                                        class="text-muted-foreground transition hover:text-powerx-yellow dark:text-white/55"
                                         @click="removeEmployee(index)"
                                     >
                                         <Trash2 class="size-4" />
@@ -408,13 +413,13 @@ const employeeError = (
                                 <div class="grid gap-3 sm:grid-cols-2">
                                     <label class="grid gap-2">
                                         <span
-                                            class="text-sm font-bold text-white/75"
+                                            class="text-sm font-bold text-muted-foreground dark:text-white/75"
                                         >
                                             Full name
                                         </span>
                                         <input
                                             v-model="employee.full_name"
-                                            class="h-11 rounded-2xl border border-white/10 bg-white/[0.07] px-4 text-white outline-none focus:border-powerx-yellow"
+                                            class="h-11 rounded-2xl border border-border bg-background px-4 text-foreground outline-none focus:border-powerx-yellow dark:border-white/10 dark:bg-white/[0.07] dark:text-white"
                                             placeholder="Employee full name"
                                         />
                                         <span
@@ -436,38 +441,38 @@ const employeeError = (
                                     </label>
                                     <label class="grid gap-2">
                                         <span
-                                            class="text-sm font-bold text-white/75"
+                                            class="text-sm font-bold text-muted-foreground dark:text-white/75"
                                         >
                                             Email
                                         </span>
                                         <input
                                             v-model="employee.email"
                                             type="email"
-                                            class="h-11 rounded-2xl border border-white/10 bg-white/[0.07] px-4 text-white outline-none focus:border-powerx-yellow"
+                                            class="h-11 rounded-2xl border border-border bg-background px-4 text-foreground outline-none focus:border-powerx-yellow dark:border-white/10 dark:bg-white/[0.07] dark:text-white"
                                             placeholder="employee@example.com"
                                         />
                                     </label>
                                     <label class="grid gap-2">
                                         <span
-                                            class="text-sm font-bold text-white/75"
+                                            class="text-sm font-bold text-muted-foreground dark:text-white/75"
                                         >
                                             Mobile
                                         </span>
                                         <input
                                             v-model="employee.mobile"
-                                            class="h-11 rounded-2xl border border-white/10 bg-white/[0.07] px-4 text-white outline-none focus:border-powerx-yellow"
+                                            class="h-11 rounded-2xl border border-border bg-background px-4 text-foreground outline-none focus:border-powerx-yellow dark:border-white/10 dark:bg-white/[0.07] dark:text-white"
                                             placeholder="+974..."
                                         />
                                     </label>
                                     <label class="grid gap-2">
                                         <span
-                                            class="text-sm font-bold text-white/75"
+                                            class="text-sm font-bold text-muted-foreground dark:text-white/75"
                                         >
                                             Profession
                                         </span>
                                         <input
                                             v-model="employee.profession"
-                                            class="h-11 rounded-2xl border border-white/10 bg-white/[0.07] px-4 text-white outline-none focus:border-powerx-yellow"
+                                            class="h-11 rounded-2xl border border-border bg-background px-4 text-foreground outline-none focus:border-powerx-yellow dark:border-white/10 dark:bg-white/[0.07] dark:text-white"
                                             placeholder="Technician / Engineer"
                                         />
                                     </label>
@@ -480,19 +485,19 @@ const employeeError = (
                                 {{ form.errors.employees }}
                             </span>
                         </div>
-
                         <label class="grid gap-2">
-                            <span class="text-sm font-bold text-white/75">
+                            <span
+                                class="text-sm font-bold text-muted-foreground dark:text-white/75"
+                            >
                                 Notes
                             </span>
                             <textarea
                                 v-model="form.notes"
                                 rows="4"
-                                class="rounded-2xl border border-white/10 bg-white/[0.07] px-4 py-3 text-white transition outline-none placeholder:text-white/35 focus:border-powerx-yellow"
+                                class="rounded-2xl border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-powerx-yellow dark:border-white/10 dark:bg-white/[0.07] dark:text-white dark:placeholder:text-white/35"
                                 placeholder="Preferred timing, site constraints, target dates, or quotation notes."
                             />
                         </label>
-
                         <Button
                             type="submit"
                             class="h-12 rounded-2xl bg-powerx-yellow text-base font-black text-powerx-navy hover:bg-powerx-yellow/90"

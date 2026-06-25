@@ -5,6 +5,12 @@ use App\Actions\PowerX\BuildOperationalReport;
 use App\Actions\PowerX\BuildOperationsDashboard;
 use App\Actions\PowerX\CreateRenewalCampaignCommunications;
 use App\Ai\Agents\PowerXCourseGuide;
+use App\Ai\Agents\PowerXCourseRecommendationAgent;
+use App\Ai\Agents\PowerXGuardrailReviewAgent;
+use App\Ai\Agents\PowerXLeadHandoffSummaryAgent;
+use App\Ai\Tools\LookupPowerXAssistantPolicy;
+use App\Ai\Tools\LookupPowerXLeadHandoffContext;
+use App\Ai\Tools\SearchPowerXCourseCatalog;
 use App\Models\Certificate;
 use App\Models\Communication;
 use App\Models\Company;
@@ -17,8 +23,13 @@ use App\Models\PaymentTransaction;
 use App\Models\StudentProfile;
 use App\Models\Team;
 use App\Models\TrainingBatch;
+use Illuminate\JsonSchema\JsonSchemaTypeFactory;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Inertia\Testing\AssertableInertia as Assert;
+use Laravel\Ai\Attributes\MaxSteps;
+use Laravel\Ai\Tools\AgentTool;
+use Laravel\Ai\Tools\Request as AgentToolRequest;
+use Laravel\Ai\Tools\ToolNameResolver;
 use Laravel\Pennant\Feature;
 
 test('assistant feature flag controls public endpoint and page props', function (): void {
@@ -481,16 +492,149 @@ test('renewal campaign action schedules reportable reminders idempotently', func
         ]);
 });
 
-test('course guide agent instructions enforce approved knowledge guardrails', function (): void {
+test('course guide agent wires documented Laravel AI sub agents', function (): void {
+    $course = Course::factory()->create([
+        'title' => 'Kahramaa Exam Preparation',
+        'category' => 'Kahramaa',
+        'status' => 'published',
+        'summary' => 'Structured preparation for Qatar electrical approval exams.',
+        'delivery_mode' => 'blended',
+        'currency' => 'QAR',
+        'base_price' => 1200,
+        'published_at' => now()->subDay(),
+    ]);
+    CoursePackage::factory()->for($course)->create([
+        'name' => 'Exam Ready',
+        'currency' => 'QAR',
+        'price' => 1500,
+        'discount_price' => 1350,
+        'is_active' => true,
+    ]);
+    TrainingBatch::factory()->for($course)->for($course->team)->create([
+        'name' => 'Weekend Batch 07',
+        'delivery_mode' => 'in_person',
+        'venue' => 'Doha Training Center',
+        'status' => 'scheduled',
+        'starts_at' => now()->addDays(12)->setTime(9, 0),
+        'ends_at' => now()->addDays(12)->setTime(15, 0),
+    ]);
+    $company = Company::factory()->for($course->team)->create(['name' => 'Doha Electrical Works']);
+    Lead::factory()
+        ->for($course->team)
+        ->for($company)
+        ->for($course)
+        ->create([
+            'name' => 'Maha Electrician',
+            'email' => 'maha@example.com',
+            'phone' => '+97450001122',
+            'source' => 'ai_chat',
+            'campaign' => 'kahramaa-q3',
+            'status' => Lead::STATUS_QUALIFIED,
+            'course_interest' => 'Kahramaa Exam Preparation',
+            'follow_up_at' => now()->addHours(3),
+            'metadata' => [
+                'ai_assistant' => [
+                    'intent' => 'registration_help',
+                    'preferred_course_title' => 'Kahramaa Exam Preparation',
+                    'guardrail_triggered' => false,
+                    'next_action' => 'Sales/support follow-up',
+                ],
+            ],
+        ]);
+
     $agent = new PowerXCourseGuide([
         'fallback' => 'Approved fallback only.',
         'disclaimer' => 'Approved disclaimer.',
+        'scope' => 'faq_course_recommendation_registration_help',
+        'blockedTopics' => ['certificate guarantee', 'government approval'],
     ]);
+
+    $tools = iterator_to_array($agent->tools());
+    $wrappedTools = collect($tools)->map(fn ($tool): AgentTool => new AgentTool($tool));
+    $maxSteps = (new ReflectionClass(PowerXCourseGuide::class))->getAttributes(MaxSteps::class)[0]->newInstance();
+    $recommendationTools = iterator_to_array($tools[0]->tools());
+    $guardrailTools = iterator_to_array($tools[1]->tools());
+    $handoffTools = iterator_to_array($tools[2]->tools());
+    $subAgentTools = collect([...$recommendationTools, ...$guardrailTools, ...$handoffTools]);
+    $catalogPayload = json_decode((string) $recommendationTools[0]->handle(new AgentToolRequest([
+        'query' => 'Kahramaa',
+        'course_id' => $course->id,
+        'limit' => 5,
+    ])), true, 512, JSON_THROW_ON_ERROR);
+    $policyPayload = json_decode((string) $guardrailTools[0]->handle(new AgentToolRequest([
+        'topic' => 'certificate guarantee registration follow-up',
+    ])), true, 512, JSON_THROW_ON_ERROR);
+    $handoffPayload = json_decode((string) $handoffTools[0]->handle(new AgentToolRequest([
+        'email' => 'maha@example.com',
+        'phone' => '+97450001122',
+        'course_id' => $course->id,
+        'message' => 'Please call me to register for the next batch.',
+    ])), true, 512, JSON_THROW_ON_ERROR);
+    $emptyHandoffPayload = json_decode((string) $handoffTools[0]->handle(new AgentToolRequest([
+        'message' => 'I am browsing options.',
+    ])), true, 512, JSON_THROW_ON_ERROR);
 
     expect((string) $agent->instructions())->toContain('approved PowerX course and FAQ data')
         ->and((string) $agent->instructions())->toContain('Approved fallback only.')
+        ->and((string) $agent->instructions())->toContain('Delegate course matching, guardrail review, and CRM handoff summaries')
         ->and(iterator_to_array($agent->messages()))->toBe([])
-        ->and(iterator_to_array($agent->tools()))->toBe([]);
+        ->and($maxSteps->value)->toBe(4)
+        ->and($tools)->toHaveCount(3)
+        ->and($tools[0])->toBeInstanceOf(PowerXCourseRecommendationAgent::class)
+        ->and($tools[1])->toBeInstanceOf(PowerXGuardrailReviewAgent::class)
+        ->and($tools[2])->toBeInstanceOf(PowerXLeadHandoffSummaryAgent::class)
+        ->and($wrappedTools->map->name()->all())->toBe([
+            'powerx_course_recommendation',
+            'powerx_guardrail_review',
+            'powerx_lead_handoff_summary',
+        ])
+        ->and($wrappedTools->map(fn (AgentTool $tool): string => (string) $tool->description())->all())->toBe([
+            'Recommend PowerX courses, packages, pricing, and scheduled batches using only approved catalog and FAQ data.',
+            'Check a PowerX prospect question or draft answer for unsupported certificate, government, legal, refund, pricing, or accreditation claims.',
+            'Summarize a PowerX AI assistant conversation into factual CRM handoff notes and a recommended next staff action.',
+        ])
+        ->and((string) $tools[0]->instructions())->toContain('search_powerx_course_catalog')
+        ->and((string) $tools[0]->instructions())->toContain('application database')
+        ->and((string) $tools[1]->instructions())->toContain('lookup_powerx_assistant_policy')
+        ->and((string) $tools[1]->instructions())->toContain('Approved fallback only.')
+        ->and((string) $tools[2]->instructions())->toContain('faq_course_recommendation_registration_help')
+        ->and((string) $tools[2]->instructions())->toContain('lookup_powerx_lead_handoff_context')
+        ->and((string) $tools[2]->instructions())->toContain('Do not create or update CRM records')
+        ->and($recommendationTools)->toHaveCount(2)
+        ->and($recommendationTools[0])->toBeInstanceOf(SearchPowerXCourseCatalog::class)
+        ->and($recommendationTools[1])->toBeInstanceOf(LookupPowerXAssistantPolicy::class)
+        ->and($guardrailTools)->toHaveCount(1)
+        ->and($guardrailTools[0])->toBeInstanceOf(LookupPowerXAssistantPolicy::class)
+        ->and($handoffTools)->toHaveCount(1)
+        ->and($handoffTools[0])->toBeInstanceOf(LookupPowerXLeadHandoffContext::class)
+        ->and($subAgentTools->map(fn ($tool): string => ToolNameResolver::resolve($tool))->all())->toBe([
+            'search_powerx_course_catalog',
+            'lookup_powerx_assistant_policy',
+            'lookup_powerx_assistant_policy',
+            'lookup_powerx_lead_handoff_context',
+        ])
+        ->and($subAgentTools->map(fn ($tool): string => (string) $tool->description())->all())->toContain(
+            'Search approved published PowerX courses, active packages, and scheduled batches from the application database.',
+            'Look up approved PowerX AI assistant policy, blocked topics, fallback copy, disclaimers, and FAQ answers.',
+            'Look up limited read-only PowerX CRM and course context for an AI assistant handoff using supplied contact details.',
+        )
+        ->and($subAgentTools->map(fn ($tool): array => $tool->schema(new JsonSchemaTypeFactory))->every(fn (array $schema): bool => $schema !== []))->toBeTrue()
+        ->and($catalogPayload['source'])->toBe('powerx_database')
+        ->and($catalogPayload['courses'][0]['title'])->toBe('Kahramaa Exam Preparation')
+        ->and($catalogPayload['courses'][0]['packages'][0]['name'])->toBe('Exam Ready')
+        ->and($catalogPayload['courses'][0]['scheduledBatches'][0]['name'])->toBe('Weekend Batch 07')
+        ->and($policyPayload['source'])->toBe('powerx_approved_configuration')
+        ->and($policyPayload['matchingBlockedTopics'])->toContain('certificate guarantee')
+        ->and(collect($policyPayload['faqMatches'])->pluck('question')->all())->toContain('What happens after I submit an inquiry?')
+        ->and($handoffPayload['source'])->toBe('powerx_database')
+        ->and($handoffPayload['selectedCourse']['title'])->toBe('Kahramaa Exam Preparation')
+        ->and($handoffPayload['existingLead']['status'])->toBe(Lead::STATUS_QUALIFIED)
+        ->and($handoffPayload['existingLead']['company']['name'])->toBe('Doha Electrical Works')
+        ->and($handoffPayload['existingLead']['aiAssistant']['intent'])->toBe('registration_help')
+        ->and($handoffPayload['messageSignals']['registrationIntent'])->toBeTrue()
+        ->and($emptyHandoffPayload['contactProvided'])->toBeFalse()
+        ->and($emptyHandoffPayload['selectedCourse'])->toBeNull()
+        ->and($emptyHandoffPayload['existingLead'])->toBeNull();
 });
 
 function powerxEnableAssistant(): void

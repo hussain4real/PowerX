@@ -28,4 +28,22 @@ test('style guide page is publicly visible', function () {
         ->and($logoComponent)
         ->toContain('/images/brand/powerx-logo.png')
         ->not->toContain('<svg');
+
+    $sidebarHeader = file_get_contents(resource_path('js/components/AppSidebarHeader.vue'));
+    $header = file_get_contents(resource_path('js/components/AppHeader.vue'));
+    $authSimpleLayout = file_get_contents(resource_path('js/layouts/auth/AuthSimpleLayout.vue'));
+    $authCardLayout = file_get_contents(resource_path('js/layouts/auth/AuthCardLayout.vue'));
+    $authSplitLayout = file_get_contents(resource_path('js/layouts/auth/AuthSplitLayout.vue'));
+
+    expect($sidebarHeader)
+        ->toContain('PublicThemeSwitcher')
+        ->toContain('justify-between')
+        ->and($header)
+        ->toContain('PublicThemeSwitcher')
+        ->and($authSimpleLayout)
+        ->toContain('PublicThemeSwitcher')
+        ->and($authCardLayout)
+        ->toContain('PublicThemeSwitcher')
+        ->and($authSplitLayout)
+        ->toContain('PublicThemeSwitcher');
 });

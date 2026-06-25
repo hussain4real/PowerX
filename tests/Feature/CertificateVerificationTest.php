@@ -56,6 +56,13 @@ it('issues an eligible certificate and verifies it publicly', function () {
             ->missing('certificate.student.email')
             ->missing('certificate.student.mobile')
             ->missing('certificate.metadata'));
+
+    $source = file_get_contents(resource_path('js/pages/Certificates/Verify.vue'));
+
+    expect($source)
+        ->toContain('PublicThemeSwitcher')
+        ->toContain('bg-background text-foreground dark:bg-powerx-ink dark:text-white')
+        ->not->toContain('min-h-screen bg-powerx-ink text-white');
 });
 
 it('blocks certificates until lessons are completed', function () {

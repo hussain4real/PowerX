@@ -72,6 +72,11 @@
     --color-powerx-surface: var(--powerx-surface);
     --color-powerx-line: var(--powerx-line);
     --color-powerx-soft: var(--powerx-soft);
+
+    --animate-powerx-float: powerx-float 8s ease-in-out infinite;
+    --animate-powerx-scan: powerx-scan 9s linear infinite;
+    --animate-powerx-shimmer: powerx-shimmer 3.2s ease-in-out infinite;
+    --animate-powerx-pulse: powerx-pulse 4.5s ease-in-out infinite;
 }
 
 /*
@@ -200,5 +205,55 @@
     }
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+@keyframes powerx-float {
+    0%,
+    100% {
+        transform: translate3d(0, 0, 0);
+    }
+    50% {
+        transform: translate3d(0, -10px, 0);
+    }
+}
+
+@keyframes powerx-scan {
+    0% {
+        transform: translate3d(-16%, -100%, 0);
+        opacity: 0;
+    }
+    16%,
+    72% {
+        opacity: 0.62;
+    }
+    100% {
+        transform: translate3d(16%, 100%, 0);
+        opacity: 0;
+    }
+}
+
+@keyframes powerx-shimmer {
+    0%,
+    100% {
+        transform: translateX(-120%);
+        opacity: 0;
+    }
+    45%,
+    55% {
+        opacity: 0.62;
+    }
+    100% {
+        transform: translateX(120%);
+    }
+}
+
+@keyframes powerx-pulse {
+    0%,
+    100% {
+        opacity: 0.52;
+    }
+    50% {
+        opacity: 1;
     }
 }

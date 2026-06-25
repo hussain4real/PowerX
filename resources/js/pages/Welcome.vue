@@ -17,6 +17,7 @@ import {
 import { computed } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import BrandStatusBadge from '@/components/powerx/BrandStatusBadge.vue';
+import MotionReveal from '@/components/powerx/MotionReveal.vue';
 import PowerXAssistantPanel from '@/components/powerx/PowerXAssistantPanel.vue';
 import PublicThemeSwitcher from '@/components/powerx/PublicThemeSwitcher.vue';
 import { Button } from '@/components/ui/button';
@@ -220,9 +221,25 @@ const money = (amount: string | number | null, currency: string): string =>
             <div
                 class="absolute inset-0 -z-10 [background-image:linear-gradient(rgba(255,255,255,0.14)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.14)_1px,transparent_1px)] [background-size:72px_72px] opacity-25"
             />
+            <div
+                class="absolute inset-x-0 top-0 -z-10 h-28 bg-gradient-to-b from-powerx-yellow/18 to-transparent motion-safe:animate-powerx-pulse motion-reduce:animate-none"
+            />
+            <div
+                class="absolute inset-0 -z-10 overflow-hidden opacity-35 motion-reduce:hidden"
+            >
+                <span
+                    class="absolute top-0 left-1/2 h-full w-20 -translate-x-1/2 rotate-12 bg-gradient-to-b from-transparent via-powerx-yellow/20 to-transparent blur-xl motion-safe:animate-powerx-scan"
+                />
+                <span
+                    class="absolute top-24 right-10 h-28 w-44 rounded-3xl border border-white/15"
+                />
+                <span
+                    class="absolute bottom-16 left-8 h-20 w-32 rounded-3xl border border-powerx-yellow/25 motion-safe:animate-powerx-float"
+                />
+            </div>
 
             <header
-                class="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-5 sm:gap-4 sm:px-6 lg:px-8"
+                class="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-5 motion-safe:animate-in motion-safe:duration-700 motion-safe:ease-out motion-safe:fade-in-0 motion-safe:slide-in-from-top-4 sm:gap-4 sm:px-6 lg:px-8"
             >
                 <Link :href="home()" class="flex min-w-0 items-center gap-3">
                     <span
@@ -291,7 +308,7 @@ const money = (amount: string | number | null, currency: string): string =>
 
             <div class="mx-auto max-w-7xl px-6 pt-12 pb-24 lg:px-8 lg:pt-24">
                 <div class="max-w-4xl">
-                    <div class="flex flex-wrap gap-3">
+                    <MotionReveal class="flex flex-wrap gap-3">
                         <BrandStatusBadge
                             label="Qatar electrical training"
                             tone="warning"
@@ -300,37 +317,48 @@ const money = (amount: string | number | null, currency: string): string =>
                             label="Individual and corporate tracks"
                             tone="info"
                         />
-                    </div>
+                    </MotionReveal>
 
-                    <h1
+                    <MotionReveal
+                        as="h1"
+                        :delay="120"
                         class="mt-8 max-w-5xl text-4xl leading-[0.98] font-black text-white uppercase sm:text-6xl lg:text-7xl"
                     >
                         Practical electrical training for Qatar's site-ready
                         professionals.
-                    </h1>
+                    </MotionReveal>
 
-                    <p class="mt-6 max-w-2xl text-lg leading-8 text-white/76">
+                    <MotionReveal
+                        as="p"
+                        :delay="220"
+                        class="mt-6 max-w-2xl text-lg leading-8 text-white/76"
+                    >
                         PowerX combines Kahramaa-aware exam preparation,
                         hands-on workshops, mock assessments, and clear
                         completion records for learners and technical teams.
-                    </p>
+                    </MotionReveal>
 
-                    <div class="mt-9 flex flex-col gap-3 sm:flex-row">
+                    <MotionReveal
+                        :delay="320"
+                        class="mt-9 flex flex-col gap-3 sm:flex-row"
+                    >
                         <Link
                             :href="coursesIndex()"
-                            class="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-powerx-yellow px-6 py-3 text-sm font-black tracking-wide text-powerx-navy uppercase shadow-[0_0_34px_rgba(255,193,7,0.34)] transition hover:-translate-y-0.5 hover:bg-white"
+                            class="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-powerx-yellow px-6 py-3 text-sm font-black tracking-wide text-powerx-navy uppercase shadow-[0_0_34px_rgba(255,193,7,0.34)] hover:-translate-y-0.5 hover:bg-white motion-safe:transition-all motion-safe:duration-300 motion-safe:ease-out motion-reduce:hover:translate-y-0"
                         >
                             Explore courses
-                            <ArrowRight class="size-4" />
+                            <ArrowRight
+                                class="size-4 group-hover:translate-x-1 motion-safe:transition-transform motion-safe:duration-300 motion-reduce:group-hover:translate-x-0"
+                            />
                         </Link>
                         <Link
                             :href="corporateQuotationCreate()"
-                            class="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/8 px-6 py-3 text-sm font-bold text-white backdrop-blur transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                            class="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/8 px-6 py-3 text-sm font-bold text-white backdrop-blur hover:-translate-y-0.5 hover:border-powerx-yellow hover:text-powerx-yellow motion-safe:transition-all motion-safe:duration-300 motion-reduce:hover:translate-y-0"
                         >
                             Corporate training
                             <Building2 class="size-4" />
                         </Link>
-                    </div>
+                    </MotionReveal>
                 </div>
             </div>
         </section>
@@ -339,10 +367,12 @@ const money = (amount: string | number | null, currency: string): string =>
             <div
                 class="mx-auto grid max-w-7xl gap-4 px-6 py-5 sm:grid-cols-3 lg:px-8"
             >
-                <article
-                    v-for="signal in trustSignals"
+                <MotionReveal
+                    v-for="(signal, index) in trustSignals"
                     :key="signal.label"
-                    class="grid gap-1 border-border py-3 sm:border-r sm:pr-5 last:sm:border-r-0"
+                    as="article"
+                    :delay="index * 80"
+                    class="grid gap-1 border-border py-3 hover:-translate-y-0.5 motion-safe:transition-transform motion-safe:duration-300 motion-reduce:hover:translate-y-0 sm:border-r sm:pr-5 last:sm:border-r-0"
                 >
                     <p
                         class="text-2xl font-black text-powerx-navy dark:text-powerx-yellow"
@@ -355,7 +385,7 @@ const money = (amount: string | number | null, currency: string): string =>
                     <p class="text-sm leading-6 text-muted-foreground">
                         {{ signal.detail }}
                     </p>
-                </article>
+                </MotionReveal>
             </div>
         </section>
 
@@ -364,7 +394,7 @@ const money = (amount: string | number | null, currency: string): string =>
                 <div
                     class="flex flex-col justify-between gap-5 md:flex-row md:items-end"
                 >
-                    <div>
+                    <MotionReveal>
                         <p
                             class="text-sm font-black tracking-[0.26em] text-powerx-gold uppercase dark:text-powerx-yellow"
                         >
@@ -374,25 +404,29 @@ const money = (amount: string | number | null, currency: string): string =>
                             Built for exam confidence, field practice, and
                             company readiness.
                         </h2>
-                    </div>
+                    </MotionReveal>
                     <Link
                         :href="coursesIndex()"
-                        class="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-sm font-bold text-card-foreground shadow-sm transition hover:border-powerx-yellow hover:text-powerx-navy dark:hover:text-powerx-yellow"
+                        class="group inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-sm font-bold text-card-foreground shadow-sm hover:-translate-y-0.5 hover:border-powerx-yellow hover:text-powerx-navy motion-safe:transition-all motion-safe:duration-300 motion-reduce:hover:translate-y-0 dark:hover:text-powerx-yellow"
                     >
                         View all courses
-                        <ArrowRight class="size-4" />
+                        <ArrowRight
+                            class="size-4 group-hover:translate-x-1 motion-safe:transition-transform motion-safe:duration-300 motion-reduce:group-hover:translate-x-0"
+                        />
                     </Link>
                 </div>
 
                 <div class="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-                    <article
-                        v-for="program in programAreas"
+                    <MotionReveal
+                        v-for="(program, index) in programAreas"
                         :key="program.title"
-                        class="rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-1 hover:border-powerx-yellow"
+                        as="article"
+                        :delay="index * 90"
+                        class="group rounded-2xl border border-border bg-card p-5 shadow-sm hover:-translate-y-1 hover:border-powerx-yellow hover:shadow-[0_22px_60px_rgba(255,193,7,0.14)] motion-safe:transition-all motion-safe:duration-300 motion-reduce:hover:translate-y-0"
                     >
                         <component
                             :is="program.icon"
-                            class="size-9 text-powerx-gold dark:text-powerx-yellow"
+                            class="size-9 text-powerx-gold group-hover:scale-110 motion-safe:transition-transform motion-safe:duration-300 dark:text-powerx-yellow"
                         />
                         <h3 class="mt-5 text-xl font-black">
                             {{ program.title }}
@@ -400,7 +434,7 @@ const money = (amount: string | number | null, currency: string): string =>
                         <p class="mt-3 text-sm leading-6 text-muted-foreground">
                             {{ program.description }}
                         </p>
-                    </article>
+                    </MotionReveal>
                 </div>
             </div>
         </section>
@@ -413,7 +447,7 @@ const money = (amount: string | number | null, currency: string): string =>
                 <div
                     class="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-start"
                 >
-                    <div>
+                    <MotionReveal>
                         <p
                             class="text-sm font-black tracking-[0.26em] text-powerx-gold uppercase dark:text-powerx-yellow"
                         >
@@ -427,13 +461,16 @@ const money = (amount: string | number | null, currency: string): string =>
                             catalog, while this page gives prospects a polished
                             path into the right program.
                         </p>
-                    </div>
+                    </MotionReveal>
 
                     <div class="grid gap-5 md:grid-cols-3">
-                        <article
-                            v-for="course in featuredCourses"
+                        <MotionReveal
+                            v-for="(course, index) in featuredCourses"
                             :key="course.id"
-                            class="flex min-h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-sm"
+                            as="article"
+                            direction="up"
+                            :delay="index * 110"
+                            class="group flex min-h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-sm hover:-translate-y-1 hover:border-powerx-yellow hover:shadow-[0_24px_70px_rgba(255,193,7,0.14)] motion-safe:transition-all motion-safe:duration-300 motion-reduce:hover:translate-y-0"
                         >
                             <BrandStatusBadge
                                 :label="course.category ?? 'PowerX course'"
@@ -476,12 +513,14 @@ const money = (amount: string | number | null, currency: string): string =>
                             </div>
                             <Link
                                 :href="courseShow(course.slug)"
-                                class="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-bold text-secondary-foreground transition hover:bg-powerx-yellow hover:text-powerx-navy"
+                                class="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-bold text-secondary-foreground hover:bg-powerx-yellow hover:text-powerx-navy motion-safe:transition-all motion-safe:duration-300"
                             >
                                 View course
-                                <ArrowRight class="size-4" />
+                                <ArrowRight
+                                    class="size-4 group-hover:translate-x-1 motion-safe:transition-transform motion-safe:duration-300 motion-reduce:group-hover:translate-x-0"
+                                />
                             </Link>
-                        </article>
+                        </MotionReveal>
                     </div>
                 </div>
             </div>
@@ -490,7 +529,7 @@ const money = (amount: string | number | null, currency: string): string =>
         <section id="pathways" class="bg-background py-16 lg:py-20">
             <div class="mx-auto max-w-7xl px-6 lg:px-8">
                 <div class="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-                    <div>
+                    <MotionReveal direction="left">
                         <p
                             class="text-sm font-black tracking-[0.26em] text-powerx-gold uppercase dark:text-powerx-yellow"
                         >
@@ -505,17 +544,20 @@ const money = (amount: string | number | null, currency: string): string =>
                             training, practical readiness, and direct conversion
                             paths.
                         </p>
-                    </div>
+                    </MotionReveal>
 
                     <div class="grid gap-5 md:grid-cols-2">
-                        <article
-                            v-for="pathway in pathwayCards"
+                        <MotionReveal
+                            v-for="(pathway, index) in pathwayCards"
                             :key="pathway.title"
-                            class="rounded-2xl border border-border bg-card p-6 shadow-sm"
+                            as="article"
+                            direction="right"
+                            :delay="index * 120"
+                            class="group rounded-2xl border border-border bg-card p-6 shadow-sm hover:-translate-y-1 hover:border-powerx-yellow hover:shadow-[0_24px_70px_rgba(255,193,7,0.12)] motion-safe:transition-all motion-safe:duration-300 motion-reduce:hover:translate-y-0"
                         >
                             <component
                                 :is="pathway.icon"
-                                class="size-10 text-powerx-gold dark:text-powerx-yellow"
+                                class="size-10 text-powerx-gold group-hover:scale-110 motion-safe:transition-transform motion-safe:duration-300 dark:text-powerx-yellow"
                             />
                             <h3 class="mt-5 text-2xl font-black">
                                 {{ pathway.title }}
@@ -530,9 +572,11 @@ const money = (amount: string | number | null, currency: string): string =>
                                 class="mt-6 inline-flex items-center gap-2 text-sm font-black text-powerx-navy transition hover:text-powerx-gold dark:text-powerx-yellow"
                             >
                                 {{ pathway.cta }}
-                                <ArrowRight class="size-4" />
+                                <ArrowRight
+                                    class="size-4 group-hover:translate-x-1 motion-safe:transition-transform motion-safe:duration-300 motion-reduce:group-hover:translate-x-0"
+                                />
                             </Link>
-                        </article>
+                        </MotionReveal>
                     </div>
                 </div>
             </div>
@@ -542,11 +586,11 @@ const money = (amount: string | number | null, currency: string): string =>
             <div
                 class="mx-auto grid max-w-7xl gap-10 px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:px-8"
             >
-                <div class="relative">
+                <MotionReveal direction="left" class="relative">
                     <img
                         :src="marketingAssets.practicalTraining"
                         alt="Electrical meter testing during practical training"
-                        class="aspect-[4/3] w-full rounded-2xl object-cover shadow-xl"
+                        class="aspect-[4/3] w-full rounded-2xl object-cover shadow-xl hover:scale-[1.015] motion-safe:transition-transform motion-safe:duration-700 motion-reduce:hover:scale-100"
                     />
                     <div
                         class="absolute right-4 bottom-4 rounded-2xl border border-white/20 bg-powerx-ink/82 p-4 text-white shadow-xl backdrop-blur"
@@ -561,9 +605,9 @@ const money = (amount: string | number | null, currency: string): string =>
                             preparation.
                         </p>
                     </div>
-                </div>
+                </MotionReveal>
 
-                <div>
+                <MotionReveal direction="right">
                     <p
                         class="text-sm font-black tracking-[0.26em] text-powerx-gold uppercase dark:text-powerx-yellow"
                     >
@@ -584,7 +628,7 @@ const money = (amount: string | number | null, currency: string): string =>
                         <div
                             v-for="(step, index) in processSteps"
                             :key="step"
-                            class="flex gap-4 rounded-2xl border border-border bg-background p-4"
+                            class="flex gap-4 rounded-2xl border border-border bg-background p-4 hover:-translate-y-0.5 hover:border-powerx-yellow/60 hover:shadow-sm motion-safe:transition-all motion-safe:duration-300 motion-reduce:hover:translate-y-0"
                         >
                             <span
                                 class="flex size-9 shrink-0 items-center justify-center rounded-full bg-powerx-yellow text-sm font-black text-powerx-navy"
@@ -596,7 +640,7 @@ const money = (amount: string | number | null, currency: string): string =>
                             </p>
                         </div>
                     </div>
-                </div>
+                </MotionReveal>
             </div>
         </section>
 
@@ -604,7 +648,7 @@ const money = (amount: string | number | null, currency: string): string =>
             <div
                 class="mx-auto grid max-w-7xl gap-10 px-6 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:px-8"
             >
-                <div>
+                <MotionReveal direction="left">
                     <p
                         class="text-sm font-black tracking-[0.26em] text-powerx-gold uppercase dark:text-powerx-yellow"
                     >
@@ -633,9 +677,10 @@ const money = (amount: string | number | null, currency: string): string =>
                             tone="neutral"
                         />
                     </div>
-                </div>
+                </MotionReveal>
 
-                <div
+                <MotionReveal
+                    direction="right"
                     class="grid gap-5 rounded-2xl border border-border bg-card p-6 shadow-sm md:grid-cols-[0.8fr_1.2fr]"
                 >
                     <div
@@ -644,7 +689,7 @@ const money = (amount: string | number | null, currency: string): string =>
                         <img
                             :src="marketingAssets.trainingMeter"
                             alt="PowerX electrical training illustration"
-                            class="max-h-72 object-contain"
+                            class="max-h-72 object-contain motion-safe:animate-powerx-float motion-reduce:animate-none"
                         />
                     </div>
                     <div class="grid content-center gap-4">
@@ -695,7 +740,7 @@ const money = (amount: string | number | null, currency: string): string =>
                             </div>
                         </div>
                     </div>
-                </div>
+                </MotionReveal>
             </div>
         </section>
 
@@ -706,7 +751,7 @@ const money = (amount: string | number | null, currency: string): string =>
             <div
                 class="mx-auto grid max-w-7xl gap-10 px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8"
             >
-                <div>
+                <MotionReveal direction="left">
                     <p
                         class="text-sm font-black tracking-[0.26em] text-powerx-gold uppercase dark:text-powerx-yellow"
                     >
@@ -745,9 +790,11 @@ const money = (amount: string | number | null, currency: string): string =>
                             </span>
                         </div>
                     </div>
-                </div>
+                </MotionReveal>
 
-                <aside
+                <MotionReveal
+                    as="aside"
+                    direction="right"
                     class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-xl"
                 >
                     <div class="grid gap-5 md:grid-cols-[0.58fr_1.42fr]">
@@ -757,7 +804,7 @@ const money = (amount: string | number | null, currency: string): string =>
                             <img
                                 :src="marketingAssets.support"
                                 alt="PowerX support"
-                                class="max-h-56 object-contain"
+                                class="max-h-56 object-contain motion-safe:animate-powerx-float motion-reduce:animate-none"
                             />
                         </div>
 
@@ -796,7 +843,7 @@ const money = (amount: string | number | null, currency: string): string =>
                                     <span class="text-sm font-bold">Name</span>
                                     <input
                                         name="name"
-                                        class="h-12 rounded-xl border border-input bg-background px-4 text-foreground transition outline-none placeholder:text-muted-foreground focus:border-powerx-yellow"
+                                        class="h-12 rounded-xl border border-input bg-background px-4 text-foreground outline-none placeholder:text-muted-foreground focus:border-powerx-yellow focus:shadow-[0_0_0_3px_rgba(255,193,7,0.16)] motion-safe:transition-[border-color,box-shadow] motion-safe:duration-200"
                                         placeholder="Your full name"
                                     />
                                     <span
@@ -815,7 +862,7 @@ const money = (amount: string | number | null, currency: string): string =>
                                         <input
                                             name="email"
                                             type="email"
-                                            class="h-12 rounded-xl border border-input bg-background px-4 text-foreground transition outline-none placeholder:text-muted-foreground focus:border-powerx-yellow"
+                                            class="h-12 rounded-xl border border-input bg-background px-4 text-foreground outline-none placeholder:text-muted-foreground focus:border-powerx-yellow focus:shadow-[0_0_0_3px_rgba(255,193,7,0.16)] motion-safe:transition-[border-color,box-shadow] motion-safe:duration-200"
                                             placeholder="name@example.com"
                                         />
                                         <span
@@ -831,7 +878,7 @@ const money = (amount: string | number | null, currency: string): string =>
                                         </span>
                                         <input
                                             name="phone"
-                                            class="h-12 rounded-xl border border-input bg-background px-4 text-foreground transition outline-none placeholder:text-muted-foreground focus:border-powerx-yellow"
+                                            class="h-12 rounded-xl border border-input bg-background px-4 text-foreground outline-none placeholder:text-muted-foreground focus:border-powerx-yellow focus:shadow-[0_0_0_3px_rgba(255,193,7,0.16)] motion-safe:transition-[border-color,box-shadow] motion-safe:duration-200"
                                             placeholder="+974..."
                                         />
                                         <span
@@ -849,7 +896,7 @@ const money = (amount: string | number | null, currency: string): string =>
                                     </span>
                                     <select
                                         name="course_id"
-                                        class="h-12 rounded-xl border border-input bg-background px-4 text-foreground transition outline-none focus:border-powerx-yellow"
+                                        class="h-12 rounded-xl border border-input bg-background px-4 text-foreground outline-none focus:border-powerx-yellow focus:shadow-[0_0_0_3px_rgba(255,193,7,0.16)] motion-safe:transition-[border-color,box-shadow] motion-safe:duration-200"
                                     >
                                         <option value="">Not sure yet</option>
                                         <option
@@ -875,7 +922,7 @@ const money = (amount: string | number | null, currency: string): string =>
                                     <textarea
                                         name="message"
                                         rows="4"
-                                        class="rounded-xl border border-input bg-background px-4 py-3 text-foreground transition outline-none placeholder:text-muted-foreground focus:border-powerx-yellow"
+                                        class="rounded-xl border border-input bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-powerx-yellow focus:shadow-[0_0_0_3px_rgba(255,193,7,0.16)] motion-safe:transition-[border-color,box-shadow] motion-safe:duration-200"
                                         placeholder="Tell us what you want to learn or when your team prefers to attend."
                                     />
                                     <span
@@ -889,7 +936,7 @@ const money = (amount: string | number | null, currency: string): string =>
                                 <Button
                                     type="submit"
                                     :disabled="processing"
-                                    class="h-12 rounded-full bg-powerx-yellow text-sm font-black tracking-wide text-powerx-navy uppercase hover:bg-powerx-gold disabled:opacity-60"
+                                    class="h-12 rounded-full bg-powerx-yellow text-sm font-black tracking-wide text-powerx-navy uppercase hover:-translate-y-0.5 hover:bg-powerx-gold disabled:opacity-60 motion-safe:transition-all motion-safe:duration-300 motion-reduce:hover:translate-y-0"
                                 >
                                     {{
                                         processing
@@ -901,7 +948,7 @@ const money = (amount: string | number | null, currency: string): string =>
 
                                 <p
                                     v-if="wasSuccessful"
-                                    class="rounded-xl border border-powerx-success/30 bg-powerx-success/10 px-4 py-3 text-sm font-bold text-powerx-success"
+                                    class="rounded-xl border border-powerx-success/30 bg-powerx-success/10 px-4 py-3 text-sm font-bold text-powerx-success motion-safe:animate-in motion-safe:duration-300 motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2"
                                 >
                                     Inquiry received. PowerX will follow up
                                     shortly.
@@ -909,7 +956,7 @@ const money = (amount: string | number | null, currency: string): string =>
                             </Form>
                         </div>
                     </div>
-                </aside>
+                </MotionReveal>
             </div>
         </section>
 
@@ -920,7 +967,7 @@ const money = (amount: string | number | null, currency: string): string =>
                 <div
                     class="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-start"
                 >
-                    <div>
+                    <MotionReveal direction="left">
                         <p
                             class="text-sm font-black tracking-[0.26em] text-powerx-gold uppercase dark:text-powerx-yellow"
                         >
@@ -929,12 +976,15 @@ const money = (amount: string | number | null, currency: string): string =>
                         <h2 class="mt-3 text-4xl font-black">
                             Public copy that stays clear and responsible.
                         </h2>
-                    </div>
+                    </MotionReveal>
                     <div class="grid gap-4">
-                        <article
-                            v-for="item in faqItems"
+                        <MotionReveal
+                            v-for="(item, index) in faqItems"
                             :key="item.question"
-                            class="rounded-2xl border border-border bg-card p-5 shadow-sm"
+                            as="article"
+                            direction="right"
+                            :delay="index * 90"
+                            class="rounded-2xl border border-border bg-card p-5 shadow-sm hover:-translate-y-0.5 hover:border-powerx-yellow/60 motion-safe:transition-all motion-safe:duration-300 motion-reduce:hover:translate-y-0"
                         >
                             <h3 class="font-black">{{ item.question }}</h3>
                             <p
@@ -942,7 +992,7 @@ const money = (amount: string | number | null, currency: string): string =>
                             >
                                 {{ item.answer }}
                             </p>
-                        </article>
+                        </MotionReveal>
                     </div>
                 </div>
             </div>
