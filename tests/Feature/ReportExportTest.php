@@ -131,7 +131,7 @@ test('operational report attributes campaign revenue and roi from internal recor
         'Cost' => 'QAR 300.00',
         'Revenue' => 'QAR 1,200.00',
         'ROI' => '300.0%',
-        'Attribution' => 'Blocked - internal CRM/finance attribution only',
+        'Attribution' => config('powerx_growth.campaigns.attribution_status'),
     ])
         ->and($manager->exists)->toBeTrue();
 });

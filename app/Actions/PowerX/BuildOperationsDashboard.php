@@ -209,6 +209,7 @@ class BuildOperationsDashboard
             'campaign_cost_label' => $summary['campaign_cost_label'],
             'campaign_roi_label' => $summary['campaign_roi_label'],
             'campaign_roi_leader' => $summary['campaign_roi_leader'],
+            'referral_conversion_label' => $summary['referral_conversion_label'],
             'tracking_status' => $summary['tracking_status'],
         ];
     }

@@ -17,6 +17,7 @@ import {
 import { computed } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import BrandStatusBadge from '@/components/powerx/BrandStatusBadge.vue';
+import PowerXAssistantPanel from '@/components/powerx/PowerXAssistantPanel.vue';
 import PublicThemeSwitcher from '@/components/powerx/PublicThemeSwitcher.vue';
 import { Button } from '@/components/ui/button';
 import { dashboard, home, login, styleGuide } from '@/routes';
@@ -51,18 +52,52 @@ interface FeaturedCourse {
     packages: CoursePackage[];
 }
 
+interface PowerXAssistantConfig {
+    enabled: boolean;
+    endpoint: string | null;
+    source: string;
+    courseId?: number | null;
+    courseTitle?: string | null;
+}
+
 defineProps<{
     featuredCourses: FeaturedCourse[];
     leadCourseOptions: Array<{
         id: number;
         title: string;
     }>;
+    aiAssistant: PowerXAssistantConfig;
 }>();
 
 const page = usePage();
 
 const dashboardUrl = computed(() =>
     page.props.currentTeam ? dashboard(page.props.currentTeam.slug).url : '/',
+);
+
+const trackingFields = computed(() => {
+    const params = new URLSearchParams(page.url.split('?')[1] ?? '');
+
+    return {
+        source: params.get('source') ?? 'homepage',
+        campaign: params.get('campaign') ?? params.get('utm_campaign') ?? '',
+        utm_source: params.get('utm_source') ?? '',
+        utm_medium: params.get('utm_medium') ?? '',
+        utm_campaign: params.get('utm_campaign') ?? '',
+        utm_content: params.get('utm_content') ?? '',
+        utm_term: params.get('utm_term') ?? '',
+        referral_name: params.get('referral_name') ?? '',
+        referral_phone: params.get('referral_phone') ?? '',
+        referral_email: params.get('referral_email') ?? '',
+        referral_relationship: params.get('referral_relationship') ?? '',
+    };
+});
+
+const trackingEntries = computed(() =>
+    Object.entries(trackingFields.value).map(([name, value]) => ({
+        name,
+        value,
+    })),
 );
 
 const marketingAssets = {
@@ -750,9 +785,11 @@ const money = (amount: string | number | null, currency: string): string =>
                                 #default="{ errors, processing, wasSuccessful }"
                             >
                                 <input
+                                    v-for="field in trackingEntries"
+                                    :key="field.name"
                                     type="hidden"
-                                    name="source"
-                                    value="homepage"
+                                    :name="field.name"
+                                    :value="field.value"
                                 />
 
                                 <label class="grid gap-2">
@@ -875,6 +912,8 @@ const money = (amount: string | number | null, currency: string): string =>
                 </aside>
             </div>
         </section>
+
+        <PowerXAssistantPanel :assistant="aiAssistant" tone="light" />
 
         <section class="bg-background py-16">
             <div class="mx-auto max-w-7xl px-6 lg:px-8">

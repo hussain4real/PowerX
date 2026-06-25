@@ -87,6 +87,43 @@ class LeadForm
                                             ->columnSpanFull(),
                                     ]),
                             ]),
+                        Tab::make('Attribution')
+                            ->schema([
+                                Section::make('Campaign and referral')
+                                    ->description('Track source performance, referral handoff details, and internal campaign spend.')
+                                    ->columns(2)
+                                    ->schema([
+                                        TextInput::make('metadata.channel_group')
+                                            ->label('Channel group')
+                                            ->maxLength(120),
+                                        TextInput::make('metadata.campaign_cost')
+                                            ->label('Campaign cost')
+                                            ->numeric()
+                                            ->minValue(0),
+                                        TextInput::make('metadata.campaign_cost_currency')
+                                            ->label('Campaign cost currency')
+                                            ->default(config('powerx_growth.campaigns.default_currency', 'QAR'))
+                                            ->maxLength(3),
+                                        TextInput::make('metadata.referral.name')
+                                            ->label('Referral name')
+                                            ->maxLength(120),
+                                        TextInput::make('metadata.referral.phone')
+                                            ->label('Referral phone')
+                                            ->tel()
+                                            ->maxLength(40),
+                                        TextInput::make('metadata.referral.email')
+                                            ->label('Referral email')
+                                            ->email()
+                                            ->maxLength(255),
+                                        TextInput::make('metadata.referral.relationship')
+                                            ->label('Referral relationship')
+                                            ->maxLength(120),
+                                        Textarea::make('metadata.ai_assistant.handoff_summary')
+                                            ->label('AI handoff summary')
+                                            ->autosize()
+                                            ->columnSpanFull(),
+                                    ]),
+                            ]),
                     ])
                     ->columnSpanFull(),
                 PowerXForm::metadataSection(),

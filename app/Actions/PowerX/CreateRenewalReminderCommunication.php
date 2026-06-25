@@ -36,6 +36,10 @@ class CreateRenewalReminderCommunication
             'metadata' => [
                 'certificate_id' => $certificate->id,
                 'certificate_number' => $certificate->certificate_number,
+                'source' => config('powerx_growth.renewals.source', 'renewal'),
+                'campaign' => config('powerx_growth.renewals.campaign', 'certificate-renewal'),
+                'channel_group' => 'Renewal',
+                'campaign_workflow' => 'certificate_renewal',
                 'recommended_courses' => Arr::pluck($opportunity['recommendedCourses'], 'title'),
                 'days_until_expiry' => $opportunity['daysUntilExpiry'],
             ],

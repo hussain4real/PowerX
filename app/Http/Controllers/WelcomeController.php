@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Models\CoursePackage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Pennant\Feature;
 
 class WelcomeController extends Controller
 {
@@ -39,7 +40,24 @@ class WelcomeController extends Controller
                     'title' => $course->title,
                 ])
                 ->values(),
+            'aiAssistant' => $this->assistantPayload('ai_chat'),
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function assistantPayload(string $source, ?Course $course = null): array
+    {
+        $enabled = Feature::active(config('powerx_growth.ai_assistant.feature', 'powerx-ai-assistant'));
+
+        return [
+            'enabled' => $enabled,
+            'endpoint' => $enabled ? route('powerx-assistant.store') : null,
+            'source' => $source,
+            'courseId' => $course?->id,
+            'courseTitle' => $course?->title,
+        ];
     }
 
     /**

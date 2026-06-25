@@ -70,6 +70,7 @@ defineProps<{
             campaign_cost_label: string;
             campaign_roi_label: string;
             campaign_roi_leader: string | null;
+            referral_conversion_label: string;
             tracking_status: string;
         };
     };
@@ -443,6 +444,14 @@ const toneClasses: Record<SummaryCard['tone'], string> = {
                                     metrics.growth.campaign_roi_leader ??
                                     'No internal cost set'
                                 }}
+                            </p>
+                        </div>
+                        <div class="rounded-xl border border-border p-4">
+                            <p class="text-sm text-muted-foreground">
+                                Referral conversion
+                            </p>
+                            <p class="mt-2 text-2xl font-black">
+                                {{ metrics.growth.referral_conversion_label }}
                             </p>
                         </div>
                     </div>

@@ -24,8 +24,10 @@ class RegisterCourseInterest
             $package = $this->selectedPackage($course, $data['course_package_id'] ?? null);
             $company = $this->companyFromRegistration($data, $course->team_id);
             $attribution = $this->attributionMetadata($data);
-            $source = $data['source'] ?? $attribution['utm_source'] ?? 'public_registration';
+            $referral = $this->referralMetadata($data);
+            $source = $data['source'] ?? $attribution['utm_source'] ?? ($referral === [] ? 'public_registration' : 'referral');
             $campaign = $data['campaign'] ?? $attribution['utm_campaign'] ?? null;
+            $channelGroup = $this->channelGroup($source, $attribution, $referral);
 
             $profile = StudentProfile::create([
                 'team_id' => $course->team_id,
@@ -40,7 +42,9 @@ class RegisterCourseInterest
                 'metadata' => [
                     'source' => $source,
                     'campaign' => $campaign,
+                    'channel_group' => $channelGroup,
                     'attribution' => $attribution,
+                    'referral' => $referral,
                 ],
             ]);
 
@@ -62,7 +66,9 @@ class RegisterCourseInterest
                     'channel' => 'public_registration',
                     'student_profile_id' => $profile->id,
                     'requested_package' => $package?->name,
+                    'channel_group' => $channelGroup,
                     'attribution' => $attribution,
+                    'referral' => $referral,
                 ],
             ]);
 
@@ -81,7 +87,9 @@ class RegisterCourseInterest
                     'lead_id' => $lead->id,
                     'source' => $source,
                     'campaign' => $campaign,
+                    'channel_group' => $channelGroup,
                     'attribution' => $attribution,
+                    'referral' => $referral,
                 ],
             ]);
 
@@ -106,6 +114,7 @@ class RegisterCourseInterest
                     'enrollment_id' => $enrollment->id,
                     'source' => $source,
                     'campaign' => $campaign,
+                    'channel_group' => $channelGroup,
                 ],
             ]);
 
@@ -160,5 +169,43 @@ class RegisterCourseInterest
             'utm_content',
             'utm_term',
         ]), fn (mixed $value): bool => filled($value));
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function referralMetadata(array $data): array
+    {
+        return array_filter([
+            'name' => $data['referral_name'] ?? null,
+            'phone' => $data['referral_phone'] ?? null,
+            'email' => $data['referral_email'] ?? null,
+            'relationship' => $data['referral_relationship'] ?? null,
+        ], fn (mixed $value): bool => filled($value));
+    }
+
+    /**
+     * @param  array<string, mixed>  $attribution
+     * @param  array<string, mixed>  $referral
+     */
+    private function channelGroup(?string $source, array $attribution, array $referral): string
+    {
+        $source = str((string) ($source ?? data_get($attribution, 'utm_source')))->lower()->value();
+        $medium = str((string) data_get($attribution, 'utm_medium'))->lower()->value();
+
+        if ($referral !== [] || $source === 'referral') {
+            return 'Referral';
+        }
+
+        if (in_array($source, ['instagram', 'linkedin', 'youtube', 'google', 'meta', 'facebook', 'paid_ads'], true) || in_array($medium, ['cpc', 'paid', 'paid-social'], true)) {
+            return 'Paid / social';
+        }
+
+        if (in_array($source, ['whatsapp', 'phone', 'walk-in'], true)) {
+            return 'Direct';
+        }
+
+        return 'Website';
     }
 }

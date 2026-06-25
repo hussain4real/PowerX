@@ -54,6 +54,17 @@ class LeadsTable
                     ->searchable(),
                 TextColumn::make('campaign')
                     ->searchable(),
+                TextColumn::make('metadata.channel_group')
+                    ->label('Channel group')
+                    ->searchable()
+                    ->toggleable(),
+                TextColumn::make('metadata.referral.name')
+                    ->label('Referral')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('metadata.ai_assistant.next_action')
+                    ->label('AI next action')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')
                     ->searchable(),
                 TextColumn::make('course_interest')

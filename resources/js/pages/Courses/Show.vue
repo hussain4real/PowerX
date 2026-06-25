@@ -17,6 +17,7 @@ import { computed } from 'vue';
 import type { Component } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import BrandStatusBadge from '@/components/powerx/BrandStatusBadge.vue';
+import PowerXAssistantPanel from '@/components/powerx/PowerXAssistantPanel.vue';
 import { Button } from '@/components/ui/button';
 import { home } from '@/routes';
 import { index as coursesIndex } from '@/routes/courses';
@@ -72,8 +73,17 @@ interface CourseDetail {
     modules: CourseModule[];
 }
 
+interface PowerXAssistantConfig {
+    enabled: boolean;
+    endpoint: string | null;
+    source: string;
+    courseId?: number | null;
+    courseTitle?: string | null;
+}
+
 defineProps<{
     course: CourseDetail;
+    aiAssistant: PowerXAssistantConfig;
 }>();
 
 const page = usePage();
@@ -89,6 +99,10 @@ const trackingFields = computed(() => {
         utm_campaign: params.get('utm_campaign') ?? '',
         utm_content: params.get('utm_content') ?? '',
         utm_term: params.get('utm_term') ?? '',
+        referral_name: params.get('referral_name') ?? '',
+        referral_phone: params.get('referral_phone') ?? '',
+        referral_email: params.get('referral_email') ?? '',
+        referral_relationship: params.get('referral_relationship') ?? '',
     };
 });
 
@@ -441,6 +455,8 @@ const lessonIcon = (lessonType: string) => {
                 </aside>
             </div>
         </section>
+
+        <PowerXAssistantPanel :assistant="aiAssistant" tone="dark" />
 
         <section
             class="mx-auto grid max-w-7xl gap-10 px-6 py-16 lg:grid-cols-[0.92fr_1.08fr] lg:px-8"

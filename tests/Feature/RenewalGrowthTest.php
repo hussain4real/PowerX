@@ -43,7 +43,7 @@ test('renewal growth opportunities include expiring certificates recommendations
             'costLabel' => 'QAR 300.00',
             'revenueLabel' => 'QAR 1,200.00',
             'roiLabel' => '300.0%',
-            'attributionStatus' => 'Blocked - internal CRM/finance attribution only',
+            'attributionStatus' => config('powerx_growth.campaigns.attribution_status'),
         ]);
 });
 

@@ -34,8 +34,24 @@ class LeadInfolist
                     ->placeholder('-'),
                 TextEntry::make('campaign')
                     ->placeholder('-'),
+                TextEntry::make('metadata.channel_group')
+                    ->label('Channel group')
+                    ->placeholder('-'),
                 TextEntry::make('status'),
                 TextEntry::make('course_interest')
+                    ->placeholder('-'),
+                TextEntry::make('metadata.referral.name')
+                    ->label('Referral')
+                    ->placeholder('-'),
+                TextEntry::make('metadata.campaign_cost')
+                    ->label('Campaign cost')
+                    ->placeholder('-'),
+                TextEntry::make('metadata.ai_assistant.handoff_summary')
+                    ->label('AI handoff summary')
+                    ->placeholder('-')
+                    ->columnSpanFull(),
+                TextEntry::make('metadata.ai_assistant.next_action')
+                    ->label('AI next action')
                     ->placeholder('-'),
                 TextEntry::make('notes')
                     ->placeholder('-')

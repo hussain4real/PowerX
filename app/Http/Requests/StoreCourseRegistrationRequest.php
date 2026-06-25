@@ -49,6 +49,10 @@ class StoreCourseRegistrationRequest extends FormRequest
             'utm_campaign' => ['nullable', 'string', 'max:160'],
             'utm_content' => ['nullable', 'string', 'max:160'],
             'utm_term' => ['nullable', 'string', 'max:160'],
+            'referral_name' => ['nullable', 'string', 'max:120'],
+            'referral_phone' => ['nullable', 'string', 'max:40'],
+            'referral_email' => ['nullable', 'email', 'max:255'],
+            'referral_relationship' => ['nullable', 'string', 'max:120'],
         ];
     }
 }

@@ -55,9 +55,13 @@ class BuildOperationalReport
             ->map(fn (array $campaign): array => [
                 'Source' => $campaign['source'],
                 'Campaign' => $campaign['campaign'],
+                'Channel group' => $campaign['channelGroup'],
                 'Lead count' => (string) $campaign['leadCount'],
                 'Qualified count' => (string) $campaign['qualifiedCount'],
                 'Converted count' => (string) $campaign['convertedCount'],
+                'Enrollment count' => (string) $campaign['enrollmentCount'],
+                'Referral count' => (string) $campaign['referralCount'],
+                'Referral conversion' => $campaign['referralConversionRate'],
                 'Conversion rate' => $campaign['conversionRate'],
                 'Cost' => $campaign['costLabel'],
                 'Revenue' => $campaign['revenueLabel'],
@@ -68,8 +72,8 @@ class BuildOperationalReport
         return $this->section(
             'lead_source',
             'Lead source report',
-            'Measures internal CRM campaign conversion, approved finance revenue, spend, and ROI with external tracking blocked.',
-            ['Source', 'Campaign', 'Lead count', 'Qualified count', 'Converted count', 'Conversion rate', 'Cost', 'Revenue', 'ROI', 'Attribution'],
+            'Measures CRM campaign conversion, referral activity, approved finance revenue, spend, and ROI from internal attribution records.',
+            ['Source', 'Campaign', 'Channel group', 'Lead count', 'Qualified count', 'Converted count', 'Enrollment count', 'Referral count', 'Referral conversion', 'Conversion rate', 'Cost', 'Revenue', 'ROI', 'Attribution'],
             $rows,
         );
     }

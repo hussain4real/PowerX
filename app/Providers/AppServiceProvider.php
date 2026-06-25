@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Pennant\Feature;
 use Psr\Log\LoggerInterface;
 
 class AppServiceProvider extends ServiceProvider
@@ -38,6 +39,11 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
+
+        Feature::define(
+            config('powerx_growth.ai_assistant.feature', 'powerx-ai-assistant'),
+            fn (): bool => (bool) config('powerx_growth.ai_assistant.enabled', false),
+        );
 
         DB::prohibitDestructiveCommands(
             app()->isProduction(),

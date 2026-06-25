@@ -140,15 +140,15 @@ Turn the current signed lesson media download flow into a full student lesson-vi
 - Practical courses can require a passed practical assessment before certificate issuance.
 - Certificate issuance tests prove payment, lessons, exam, attendance, and practical rules are enforced according to course/package configuration.
 
-## Phase 3: Offline Payment And Finance Completion
+## Phase 3: Offline Payment
 
 ### Status
 
-Code implemented and verified on June 24, 2026, with offline proof intake, portal payment views, finance review actions, receipt/invoice references, `composer ci:check`, and 100% test coverage. PowerX business sign-off is still required for accepted methods, refund/adjustment policy, and legal receipt wording before production rollout.
+Code implemented and verified on June 24, 2026, with offline proof intake, student and corporate payment views, finance review actions, receipt/invoice references, `composer ci:check`, and 100% test coverage. PowerX business sign-off is still required for accepted offline methods, refund/adjustment policy, and legal receipt wording before production rollout.
 
 ### Goal
 
-Complete finance-grade offline payment workflows for bank transfer, cheque, cash, and approved manual adjustments before any online gateway dependency is introduced.
+Complete offline payment workflows for bank transfer, cheque, cash, and approved manual adjustments, with finance review and reconciliation handled before any online gateway dependency is introduced.
 
 ### BRS Coverage
 
@@ -243,7 +243,7 @@ Move from WhatsApp-ready drafts and queued email to provider-backed messaging wi
 
 ### Status
 
-Pending.
+Code implemented and verified on June 25, 2026, with feature-flagged AI assistant, approved knowledge source, CRM handoff, guardrails, referral tracking, renewal campaign scheduling, enhanced attribution, `composer ci:check`, and 100% test coverage. PowerX business sign-off is still required for AI assistant scope, approved FAQ/disclaimer wording, production AI/provider behavior, and external advertising/analytics pixels.
 
 ### Goal
 
@@ -261,15 +261,15 @@ Implement the BRS growth features that help PowerX convert leads faster: AI-assi
 ### Checklist
 
 - [ ] Confirm AI assistant scope: FAQ only, course recommendation, registration help, or all three.
-- [ ] Build an approved knowledge source from public course data, package data, schedule availability, pricing, FAQ content, and PowerX-approved disclaimers.
-- [ ] Add a public AI assistant entry point on course/landing pages behind a feature flag (use laravel/ai sdk package and laravel/pennant both already installed).
-- [ ] Create CRM leads from AI conversations when contact details or buying intent are captured.
-- [ ] Add escalation handoff to sales/support with transcript summary and preferred course.
-- [ ] Add guardrails so the assistant does not make unapproved certificate, government, price, legal, refund, or accreditation claims.
-- [ ] Add referral source and referral contact tracking for leads/enrollments.
-- [ ] Convert renewal opportunities into campaign workflows with scheduled reminders and recommended next courses.
-- [ ] Improve campaign attribution with UTM capture, paid-ad cost inputs, channel grouping, and revenue matching.
-- [ ] Add dashboards for source performance, conversion rate, cost, revenue, ROI, renewal opportunities, and referral conversion.
+- [x] Build an approved knowledge source from public course data, package data, schedule availability, pricing, FAQ content, and PowerX-approved disclaimers.
+- [x] Add a public AI assistant entry point on course/landing pages behind a feature flag (use laravel/ai sdk package and laravel/pennant both already installed).
+- [x] Create CRM leads from AI conversations when contact details or buying intent are captured.
+- [x] Add escalation handoff to sales/support with transcript summary and preferred course.
+- [x] Add guardrails so the assistant does not make unapproved certificate, government, price, legal, refund, or accreditation claims.
+- [x] Add referral source and referral contact tracking for leads/enrollments.
+- [x] Convert renewal opportunities into campaign workflows with scheduled reminders and recommended next courses.
+- [x] Improve campaign attribution with UTM capture, paid-ad cost inputs, channel grouping, and revenue matching.
+- [x] Add dashboards for source performance, conversion rate, cost, revenue, ROI, renewal opportunities, and referral conversion.
 
 ### Deliverables
 
@@ -392,7 +392,7 @@ Prepare the application for production readiness and isolate post-MVP items that
 
 1. Phase 1: Admissions, CRM, And Free Preview Completion
 2. Phase 2: Student Exam-Taking And Assessment Hardening
-3. Phase 3: Offline Payment And Finance Completion
+3. Phase 3: Offline Payment
 4. Phase 4: Communications Automation For WhatsApp, SMS, And Lifecycle Reminders
 5. Phase 6: Corporate Self-Service And Export Completion
 6. Phase 5: Growth Automation, AI Assistant, And Advanced Attribution

@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 
 class BuildCampaignAttributionMetrics
 {
-    public const TRACKING_STATUS_LABEL = 'Blocked - internal CRM/finance attribution only';
+    public const TRACKING_STATUS_LABEL = 'Internal CRM attribution with UTM, referral, campaign cost, and approved finance revenue matching.';
 
     /**
      * @return Collection<int, array<string, mixed>>
@@ -52,7 +52,7 @@ class BuildCampaignAttributionMetrics
 
     /**
      * @param  Collection<int, array<string, mixed>>  $campaigns
-     * @return array{campaign_revenue_label: string, campaign_cost_label: string, campaign_roi_label: string, campaign_roi_leader: string|null, tracking_status: string}
+     * @return array{campaign_revenue_label: string, campaign_cost_label: string, campaign_roi_label: string, campaign_roi_leader: string|null, referral_conversion_label: string, tracking_status: string}
      */
     public function summarize(Collection $campaigns): array
     {
@@ -67,7 +67,8 @@ class BuildCampaignAttributionMetrics
             'campaign_cost_label' => $this->moneySummary($this->sumCurrencyBuckets($campaigns, 'costByCurrency')),
             'campaign_roi_label' => $topCampaign['roiLabel'] ?? 'Not set',
             'campaign_roi_leader' => $topCampaign ? "{$topCampaign['source']} / {$topCampaign['campaign']}" : null,
-            'tracking_status' => self::TRACKING_STATUS_LABEL,
+            'referral_conversion_label' => $this->referralConversionLabel($campaigns),
+            'tracking_status' => $this->trackingStatusLabel(),
         ];
     }
 
@@ -85,12 +86,21 @@ class BuildCampaignAttributionMetrics
                 /** @var Lead $firstLead */
                 $firstLead = $leads->first();
 
+                $convertedCount = $leads
+                    ->whereIn('status', [Lead::STATUS_CONVERTED_LEGACY, Lead::STATUS_ENROLLED, Lead::STATUS_WON])
+                    ->count();
+
                 return [
                     'source' => $this->sourceLabel($firstLead->source),
                     'campaign' => $this->campaignLabel($firstLead->campaign),
+                    'channelGroup' => $this->channelGroup($firstLead),
                     'leadCount' => $leads->count(),
                     'qualifiedCount' => $leads->where('status', 'qualified')->count(),
-                    'convertedCount' => $leads
+                    'convertedCount' => $convertedCount,
+                    'enrollmentCount' => $convertedCount,
+                    'referralCount' => $leads->filter(fn (Lead $lead): bool => $this->isReferralLead($lead))->count(),
+                    'referralConvertedCount' => $leads
+                        ->filter(fn (Lead $lead): bool => $this->isReferralLead($lead))
                         ->whereIn('status', [Lead::STATUS_CONVERTED_LEGACY, Lead::STATUS_ENROLLED, Lead::STATUS_WON])
                         ->count(),
                     'costByCurrency' => $this->leadCostByCurrency($leads),
@@ -159,7 +169,7 @@ class BuildCampaignAttributionMetrics
             ?? data_get($metadata, 'marketing.cost');
 
         if (! is_numeric($amount)) {
-            return ['QAR', 0.0];
+            return [$this->currency(null), 0.0];
         }
 
         return [
@@ -223,13 +233,14 @@ class BuildCampaignAttributionMetrics
         return [
             ...$campaign,
             'conversionRate' => $this->percentage($campaign['convertedCount'], $campaign['leadCount']),
+            'referralConversionRate' => $this->percentage($campaign['referralConvertedCount'], max((int) $campaign['referralCount'], 0)),
             'costByCurrency' => $costByCurrency,
             'costLabel' => $this->moneySummary($costByCurrency),
             'revenueByCurrency' => $revenueByCurrency,
             'revenueLabel' => $this->moneySummary($revenueByCurrency),
             'roi' => $roi,
             'roiLabel' => $roi === null ? 'Not set' : number_format($roi, 1).'%',
-            'attributionStatus' => self::TRACKING_STATUS_LABEL,
+            'attributionStatus' => $this->trackingStatusLabel(),
         ];
     }
 
@@ -305,7 +316,67 @@ class BuildCampaignAttributionMetrics
 
     private function currency(mixed $currency): string
     {
-        return str(filled($currency) ? (string) $currency : 'QAR')->upper()->value();
+        return str(filled($currency) ? (string) $currency : config('powerx_growth.campaigns.default_currency', 'QAR'))->upper()->value();
+    }
+
+    private function trackingStatusLabel(): string
+    {
+        return (string) config('powerx_growth.campaigns.attribution_status', self::TRACKING_STATUS_LABEL);
+    }
+
+    private function channelGroup(Lead $lead): string
+    {
+        $metadata = $lead->metadata ?? [];
+        $source = str((string) ($lead->source ?? data_get($metadata, 'attribution.utm_source')))->lower()->value();
+        $medium = str((string) data_get($metadata, 'attribution.utm_medium'))->lower()->value();
+        $stored = data_get($metadata, 'channel_group');
+
+        if (filled($stored)) {
+            return (string) $stored;
+        }
+
+        if ($this->isReferralLead($lead)) {
+            return 'Referral';
+        }
+
+        if ($source === 'ai_chat' || data_get($metadata, 'channel') === 'ai_assistant') {
+            return 'AI assistant';
+        }
+
+        if (in_array($source, ['instagram', 'linkedin', 'youtube', 'google', 'meta', 'facebook', 'paid_ads'], true) || in_array($medium, ['cpc', 'paid', 'paid-social'], true)) {
+            return 'Paid / social';
+        }
+
+        if (in_array($source, ['email', 'newsletter'], true)) {
+            return 'Email';
+        }
+
+        if (in_array($source, ['whatsapp', 'phone', 'walk-in'], true)) {
+            return 'Direct';
+        }
+
+        return 'Website';
+    }
+
+    private function isReferralLead(Lead $lead): bool
+    {
+        return $lead->source === 'referral' || filled(data_get($lead->metadata ?? [], 'referral.name'));
+    }
+
+    /**
+     * @param  Collection<int, array<string, mixed>>  $campaigns
+     */
+    private function referralConversionLabel(Collection $campaigns): string
+    {
+        $referrals = (int) $campaigns->sum('referralCount');
+
+        if ($referrals === 0) {
+            return '0 / 0';
+        }
+
+        $converted = (int) $campaigns->filter(fn (array $campaign): bool => $campaign['referralCount'] > 0)->sum('referralConvertedCount');
+
+        return $converted.' / '.$referrals.' ('.$this->percentage($converted, $referrals).')';
     }
 
     private function normalizeEmail(?string $email): ?string

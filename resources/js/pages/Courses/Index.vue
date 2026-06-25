@@ -16,6 +16,7 @@ import { computed } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import BrandStatusBadge from '@/components/powerx/BrandStatusBadge.vue';
 import MetricCard from '@/components/powerx/MetricCard.vue';
+import PowerXAssistantPanel from '@/components/powerx/PowerXAssistantPanel.vue';
 import { Button } from '@/components/ui/button';
 import { home } from '@/routes';
 import { index as coursesIndex, show as showCourse } from '@/routes/courses';
@@ -49,12 +50,21 @@ interface CourseCard {
     packages: CoursePackage[];
 }
 
+interface PowerXAssistantConfig {
+    enabled: boolean;
+    endpoint: string | null;
+    source: string;
+    courseId?: number | null;
+    courseTitle?: string | null;
+}
+
 defineProps<{
     courses: CourseCard[];
     leadCourseOptions: Array<{
         id: number;
         title: string;
     }>;
+    aiAssistant: PowerXAssistantConfig;
 }>();
 
 const page = usePage();
@@ -70,6 +80,10 @@ const trackingFields = computed(() => {
         utm_campaign: params.get('utm_campaign') ?? '',
         utm_content: params.get('utm_content') ?? '',
         utm_term: params.get('utm_term') ?? '',
+        referral_name: params.get('referral_name') ?? '',
+        referral_phone: params.get('referral_phone') ?? '',
+        referral_email: params.get('referral_email') ?? '',
+        referral_relationship: params.get('referral_relationship') ?? '',
     };
 });
 
@@ -249,6 +263,26 @@ const money = (amount: string | number | null, currency: string): string =>
                                 name="utm_term"
                                 :value="trackingFields.utm_term"
                             />
+                            <input
+                                type="hidden"
+                                name="referral_name"
+                                :value="trackingFields.referral_name"
+                            />
+                            <input
+                                type="hidden"
+                                name="referral_phone"
+                                :value="trackingFields.referral_phone"
+                            />
+                            <input
+                                type="hidden"
+                                name="referral_email"
+                                :value="trackingFields.referral_email"
+                            />
+                            <input
+                                type="hidden"
+                                name="referral_relationship"
+                                :value="trackingFields.referral_relationship"
+                            />
 
                             <label class="grid gap-2">
                                 <span class="text-sm font-bold text-white/75">
@@ -374,6 +408,8 @@ const money = (amount: string | number | null, currency: string): string =>
                 </aside>
             </div>
         </section>
+
+        <PowerXAssistantPanel :assistant="aiAssistant" tone="dark" />
 
         <section class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
             <div

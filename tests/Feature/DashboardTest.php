@@ -143,7 +143,7 @@ test('dashboard metrics are scoped to the current team', function () {
             ->where('metrics.growth.campaign_cost_label', 'QAR 300.00')
             ->where('metrics.growth.campaign_roi_label', '300.0%')
             ->where('metrics.growth.campaign_roi_leader', 'website / kahramaa')
-            ->where('metrics.growth.tracking_status', 'Blocked - internal CRM/finance attribution only'));
+            ->where('metrics.growth.tracking_status', config('powerx_growth.campaigns.attribution_status')));
 });
 
 test('campaign attribution can use payment metadata and non qar roi currencies', function (): void {

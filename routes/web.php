@@ -17,6 +17,7 @@ use App\Http\Controllers\OfflinePaymentProofController;
 use App\Http\Controllers\PaymentReceiptPdfController;
 use App\Http\Controllers\PortalInvoicePdfController;
 use App\Http\Controllers\PortalPaymentReceiptPdfController;
+use App\Http\Controllers\PowerXAssistantController;
 use App\Http\Controllers\ReportExportController;
 use App\Http\Controllers\StudentCertificatesController;
 use App\Http\Controllers\StudentCourseCatalogController;
@@ -41,6 +42,7 @@ Route::get('courses/{course:slug}', [CourseCatalogController::class, 'show'])->n
 Route::get('corporate/quotation', [CorporateQuotationController::class, 'create'])->name('corporate.quotations.create');
 Route::post('corporate/quotation', [CorporateQuotationController::class, 'store'])->middleware('throttle:10,1')->name('corporate.quotations.store');
 Route::post('leads', [LeadInquiryController::class, 'store'])->middleware('throttle:10,1')->name('leads.store');
+Route::post('powerx-assistant', PowerXAssistantController::class)->middleware('throttle:30,1')->name('powerx-assistant.store');
 Route::post('courses/{course:slug}/registrations', [CourseRegistrationController::class, 'store'])->middleware('throttle:10,1')->name('courses.registrations.store');
 Route::post('courses/{course:slug}/preview-events', [FreePreviewEventController::class, 'store'])->middleware('throttle:30,1')->name('courses.preview-events.store');
 Route::get('certificates/verify/{token}', [CertificateVerificationController::class, 'show'])->name('certificates.verify');

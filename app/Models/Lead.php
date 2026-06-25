@@ -61,12 +61,18 @@ class Lead extends Model
     {
         return [
             'website' => 'Website',
+            'ai_chat' => 'AI chat',
             'catalog' => 'Catalog',
             'course_detail' => 'Course detail',
             'whatsapp' => 'WhatsApp',
             'phone' => 'Phone',
             'referral' => 'Referral',
             'walk-in' => 'Walk-in',
+            'paid_ads' => 'Paid ads',
+            'email' => 'Email',
+            'linkedin' => 'LinkedIn',
+            'instagram' => 'Instagram',
+            'youtube' => 'YouTube',
             'campaign' => 'Campaign',
             'corporate' => 'Corporate inquiry',
             'public_registration' => 'Public registration',
@@ -124,6 +130,11 @@ class Lead extends Model
         return $this->hasMany(FreePreviewEvent::class);
     }
 
+    public function setMetadataAttribute(mixed $value): void
+    {
+        $this->attributes['metadata'] = json_encode($this->pruneMetadata($value));
+    }
+
     /**
      * @return array<string, string>
      */
@@ -134,5 +145,26 @@ class Lead extends Model
             'converted_at' => 'datetime',
             'metadata' => 'array',
         ];
+    }
+
+    private function pruneMetadata(mixed $value): mixed
+    {
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        $metadata = [];
+
+        foreach ($value as $key => $item) {
+            $cleaned = $this->pruneMetadata($item);
+
+            if ($cleaned === null || $cleaned === '' || $cleaned === []) {
+                continue;
+            }
+
+            $metadata[$key] = $cleaned;
+        }
+
+        return $metadata;
     }
 }
