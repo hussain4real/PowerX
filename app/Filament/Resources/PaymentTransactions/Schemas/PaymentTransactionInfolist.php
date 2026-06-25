@@ -45,6 +45,31 @@ class PaymentTransactionInfolist
                 TextEntry::make('approved_at')
                     ->dateTime()
                     ->placeholder('-'),
+                TextEntry::make('metadata.offline_payment.payer_name')
+                    ->label('Payer')
+                    ->placeholder('-'),
+                TextEntry::make('metadata.offline_payment.payer_email')
+                    ->label('Payer email')
+                    ->placeholder('-'),
+                TextEntry::make('metadata.offline_payment.bank_name')
+                    ->label('Bank/deposit')
+                    ->placeholder('-'),
+                TextEntry::make('metadata.offline_payment.deposit_date')
+                    ->label('Deposit date')
+                    ->placeholder('-'),
+                TextEntry::make('metadata.finance_review.reviewer_name')
+                    ->label('Finance reviewer')
+                    ->placeholder('-'),
+                TextEntry::make('metadata.finance_review.reviewed_at')
+                    ->label('Reviewed at')
+                    ->placeholder('-'),
+                TextEntry::make('metadata.finance_review.notes')
+                    ->label('Review notes')
+                    ->placeholder('-')
+                    ->columnSpanFull(),
+                TextEntry::make('payment_proof_count')
+                    ->label('Proof files')
+                    ->state(fn (PaymentTransaction $record): int => $record->getMedia('payment-proofs')->count()),
                 TextEntry::make('metadata')
                     ->placeholder('-')
                     ->columnSpanFull(),

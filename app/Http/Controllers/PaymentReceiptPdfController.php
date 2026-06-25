@@ -17,7 +17,9 @@ class PaymentReceiptPdfController extends Controller
             'approvedBy',
             'company',
             'enrollment.course',
+            'enrollment.coursePackage',
             'invoice',
+            'media',
             'studentProfile',
             'team',
         ]);

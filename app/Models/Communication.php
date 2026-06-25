@@ -63,6 +63,14 @@ class Communication extends Model
 
     public const STATUS_SENT = 'sent';
 
+    public const STATUS_ACCEPTED = 'accepted';
+
+    public const STATUS_READ = 'read';
+
+    public const STATUS_FALLBACK = 'fallback';
+
+    public const STATUS_DEAD_LETTER = 'dead_letter';
+
     /**
      * @var array<string, mixed>
      */
@@ -94,10 +102,14 @@ class Communication extends Model
             self::STATUS_DRAFT => 'Draft',
             self::STATUS_SCHEDULED => 'Scheduled',
             self::STATUS_QUEUED => 'Queued',
+            self::STATUS_ACCEPTED => 'Provider accepted',
             self::STATUS_SENT => 'Sent',
             self::STATUS_DELIVERED => 'Delivered',
+            self::STATUS_READ => 'Read',
+            self::STATUS_FALLBACK => 'Manual fallback',
             self::STATUS_FAILED => 'Failed',
             self::STATUS_RETRY => 'Retry',
+            self::STATUS_DEAD_LETTER => 'Dead letter',
             self::STATUS_OPTED_OUT => 'Opted out',
         ];
     }
@@ -150,10 +162,51 @@ class Communication extends Model
         ])->save();
     }
 
+    public function markAccepted(?CarbonInterface $acceptedAt = null): bool
+    {
+        $acceptedAt ??= now();
+
+        return $this->forceFill([
+            'status' => self::STATUS_ACCEPTED,
+            'sent_at' => $this->sent_at ?? $acceptedAt,
+        ])->save();
+    }
+
+    public function markRead(?CarbonInterface $readAt = null): bool
+    {
+        $readAt ??= now();
+
+        return $this->forceFill([
+            'status' => self::STATUS_READ,
+            'sent_at' => $this->sent_at ?? $readAt,
+            'delivered_at' => $this->delivered_at ?? $readAt,
+        ])->save();
+    }
+
+    public function markFallbackAvailable(?CarbonInterface $fallbackAt = null, ?string $reason = null): bool
+    {
+        return $this->forceFill([
+            'status' => self::STATUS_FALLBACK,
+            'queued_at' => $this->queued_at ?? ($fallbackAt ?? now()),
+            'failure_reason' => $reason,
+            'retry_at' => null,
+        ])->save();
+    }
+
     public function markFailed(string $failureReason, ?CarbonInterface $failedAt = null): bool
     {
         return $this->forceFill([
             'status' => self::STATUS_FAILED,
+            'failed_at' => $failedAt ?? now(),
+            'failure_reason' => $failureReason,
+            'retry_at' => null,
+        ])->save();
+    }
+
+    public function markDeadLetter(string $failureReason, ?CarbonInterface $failedAt = null): bool
+    {
+        return $this->forceFill([
+            'status' => self::STATUS_DEAD_LETTER,
             'failed_at' => $failedAt ?? now(),
             'failure_reason' => $failureReason,
             'retry_at' => null,
@@ -167,6 +220,19 @@ class Communication extends Model
             'retry_at' => $retryAt,
             'retry_count' => ((int) $this->retry_count) + 1,
             'failure_reason' => $failureReason ?? $this->failure_reason,
+        ])->save();
+    }
+
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
+    public function mergeMetadata(array $metadata): bool
+    {
+        return $this->forceFill([
+            'metadata' => [
+                ...($this->metadata ?? []),
+                ...$metadata,
+            ],
         ])->save();
     }
 

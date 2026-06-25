@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, usePage } from '@inertiajs/vue3';
+import { Form, Head, usePage } from '@inertiajs/vue3';
 import {
     AlertTriangle,
     Award,
@@ -13,6 +13,7 @@ import {
     FileText,
     ReceiptText,
     ShieldCheck,
+    Upload,
     UsersRound,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -56,9 +57,13 @@ interface CorporateInvoice {
     status: string;
     currency: string;
     total: number;
+    outstandingAmount: number;
     issuedAt: string | null;
     dueAt: string | null;
     paidAt: string | null;
+    offlineInstructions: string | null;
+    offlinePaymentProofUrl: string | null;
+    invoicePdfUrl: string | null;
     companyName: string;
     courseTitle: string;
     packageName: string | null;
@@ -70,10 +75,14 @@ interface CorporatePayment {
     companyName: string;
     invoiceNumber: string;
     method: string;
+    reference: string | null;
     status: string;
     currency: string;
     amount: number;
     paidAt: string | null;
+    reviewStatus: string | null;
+    proofStatus: string | null;
+    receiptUrl: string | null;
 }
 
 interface CorporateEnrollment {
@@ -237,9 +246,15 @@ const statusClasses: Record<string, string> = {
     late: 'bg-powerx-yellow/10 text-powerx-yellow',
     pending: 'bg-powerx-yellow/10 text-powerx-yellow',
     partial: 'bg-powerx-yellow/10 text-powerx-yellow',
+    information_requested: 'bg-powerx-yellow/10 text-powerx-yellow',
     draft: 'bg-muted text-muted-foreground',
     absent: 'bg-red-500/10 text-red-300',
+    adjusted: 'bg-red-500/10 text-red-300',
+    duplicate: 'bg-red-500/10 text-red-300',
     failed: 'bg-red-500/10 text-red-300',
+    refunded: 'bg-red-500/10 text-red-300',
+    rejected: 'bg-red-500/10 text-red-300',
+    voided: 'bg-red-500/10 text-red-300',
 };
 
 const label = (value: string | number | null | undefined): string =>
@@ -581,7 +596,7 @@ const statusClass = (status: string | null | undefined): string =>
                                 Invoices and payments
                             </p>
                             <h2 class="mt-2 text-2xl font-black">
-                                Read-only finance summary
+                                Company finance summary
                             </h2>
                         </div>
                         <ReceiptText class="size-8 text-powerx-yellow" />
@@ -611,13 +626,26 @@ const statusClass = (status: string | null | undefined): string =>
                                     {{ label(invoice.status) }}
                                 </span>
                             </div>
-                            <div class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+                            <div class="mt-4 grid gap-3 text-sm sm:grid-cols-4">
                                 <div>
                                     <p class="text-muted-foreground">Total</p>
                                     <p class="font-black">
                                         {{
                                             money(
                                                 invoice.total,
+                                                invoice.currency,
+                                            )
+                                        }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-muted-foreground">
+                                        Outstanding
+                                    </p>
+                                    <p class="font-black">
+                                        {{
+                                            money(
+                                                invoice.outstandingAmount,
                                                 invoice.currency,
                                             )
                                         }}
@@ -636,6 +664,176 @@ const statusClass = (status: string | null | undefined): string =>
                                     </p>
                                 </div>
                             </div>
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <a
+                                    v-if="invoice.invoicePdfUrl"
+                                    :href="invoice.invoicePdfUrl"
+                                    class="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-2 text-xs font-black uppercase transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                                >
+                                    <FileText class="size-4" />
+                                    Invoice PDF
+                                </a>
+                            </div>
+                            <p
+                                v-if="invoice.offlineInstructions"
+                                class="mt-4 rounded-xl border border-powerx-yellow/30 bg-powerx-yellow/10 p-3 text-xs leading-5 text-powerx-yellow"
+                            >
+                                {{ invoice.offlineInstructions }}
+                            </p>
+                            <Form
+                                v-if="invoice.offlinePaymentProofUrl"
+                                :action="invoice.offlinePaymentProofUrl"
+                                method="post"
+                                reset-on-success
+                                class="mt-4 grid gap-3 rounded-xl border border-border bg-background p-3 text-sm"
+                                #default="{
+                                    errors,
+                                    processing,
+                                    progress,
+                                    wasSuccessful,
+                                }"
+                            >
+                                <div class="grid gap-3 md:grid-cols-4">
+                                    <label class="grid gap-1">
+                                        <span
+                                            class="text-xs font-black text-muted-foreground uppercase"
+                                        >
+                                            Method
+                                        </span>
+                                        <select
+                                            name="method"
+                                            class="rounded-md border border-border bg-background px-3 py-2"
+                                        >
+                                            <option value="bank_transfer">
+                                                Bank transfer
+                                            </option>
+                                            <option value="cash">Cash</option>
+                                            <option value="cheque">
+                                                Cheque
+                                            </option>
+                                        </select>
+                                        <span
+                                            v-if="errors.method"
+                                            class="text-xs text-red-400"
+                                        >
+                                            {{ errors.method }}
+                                        </span>
+                                    </label>
+                                    <label class="grid gap-1">
+                                        <span
+                                            class="text-xs font-black text-muted-foreground uppercase"
+                                        >
+                                            Amount
+                                        </span>
+                                        <input
+                                            name="amount"
+                                            type="number"
+                                            min="1"
+                                            step="0.01"
+                                            :value="invoice.outstandingAmount"
+                                            class="rounded-md border border-border bg-background px-3 py-2"
+                                        />
+                                        <span
+                                            v-if="errors.amount"
+                                            class="text-xs text-red-400"
+                                        >
+                                            {{ errors.amount }}
+                                        </span>
+                                    </label>
+                                    <label class="grid gap-1">
+                                        <span
+                                            class="text-xs font-black text-muted-foreground uppercase"
+                                        >
+                                            Reference
+                                        </span>
+                                        <input
+                                            name="reference"
+                                            type="text"
+                                            class="rounded-md border border-border bg-background px-3 py-2"
+                                        />
+                                    </label>
+                                    <label class="grid gap-1">
+                                        <span
+                                            class="text-xs font-black text-muted-foreground uppercase"
+                                        >
+                                            Paid date
+                                        </span>
+                                        <input
+                                            name="paid_at"
+                                            type="date"
+                                            class="rounded-md border border-border bg-background px-3 py-2"
+                                        />
+                                    </label>
+                                </div>
+                                <div class="grid gap-3 md:grid-cols-3">
+                                    <input
+                                        name="payer_name"
+                                        type="hidden"
+                                        :value="invoice.companyName"
+                                    />
+                                    <label class="grid gap-1 md:col-span-2">
+                                        <span
+                                            class="text-xs font-black text-muted-foreground uppercase"
+                                        >
+                                            Proof
+                                        </span>
+                                        <input
+                                            name="proof"
+                                            type="file"
+                                            accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                            class="rounded-md border border-border bg-background px-3 py-2"
+                                        />
+                                        <span
+                                            v-if="errors.proof"
+                                            class="text-xs text-red-400"
+                                        >
+                                            {{ errors.proof }}
+                                        </span>
+                                    </label>
+                                    <label class="grid gap-1">
+                                        <span
+                                            class="text-xs font-black text-muted-foreground uppercase"
+                                        >
+                                            Bank/deposit
+                                        </span>
+                                        <input
+                                            name="bank_name"
+                                            type="text"
+                                            class="rounded-md border border-border bg-background px-3 py-2"
+                                        />
+                                    </label>
+                                </div>
+                                <progress
+                                    v-if="progress"
+                                    :value="progress.percentage"
+                                    max="100"
+                                    class="h-2 w-full"
+                                >
+                                    {{ progress.percentage }}%
+                                </progress>
+                                <div
+                                    class="flex flex-wrap items-center justify-between gap-3"
+                                >
+                                    <p
+                                        v-if="wasSuccessful"
+                                        class="text-xs font-bold text-powerx-success"
+                                    >
+                                        Submitted for finance review.
+                                    </p>
+                                    <button
+                                        type="submit"
+                                        :disabled="processing"
+                                        class="inline-flex items-center gap-2 rounded-full bg-powerx-yellow px-4 py-2 text-xs font-black text-powerx-ink uppercase transition hover:bg-powerx-yellow/90 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        <Upload class="size-4" />
+                                        {{
+                                            processing
+                                                ? 'Submitting'
+                                                : 'Submit proof'
+                                        }}
+                                    </button>
+                                </div>
+                            </Form>
                         </div>
                         <div
                             v-if="finance.payments.length > 0"
@@ -659,6 +857,12 @@ const statusClass = (status: string | null | undefined): string =>
                                             {{ label(payment.method) }} ·
                                             {{ dateLabel(payment.paidAt) }}
                                         </p>
+                                        <p
+                                            v-if="payment.reference"
+                                            class="text-muted-foreground"
+                                        >
+                                            Ref: {{ payment.reference }}
+                                        </p>
                                     </div>
                                     <div class="text-right">
                                         <p class="font-black">
@@ -672,6 +876,20 @@ const statusClass = (status: string | null | undefined): string =>
                                         <p class="text-muted-foreground">
                                             {{ label(payment.status) }}
                                         </p>
+                                        <p
+                                            v-if="payment.proofStatus"
+                                            class="text-muted-foreground"
+                                        >
+                                            {{ label(payment.proofStatus) }}
+                                        </p>
+                                        <a
+                                            v-if="payment.receiptUrl"
+                                            :href="payment.receiptUrl"
+                                            class="mt-2 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-2 text-xs font-black uppercase transition hover:border-powerx-yellow hover:text-powerx-yellow"
+                                        >
+                                            <Download class="size-4" />
+                                            Receipt
+                                        </a>
                                     </div>
                                 </div>
                             </div>

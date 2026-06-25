@@ -15,7 +15,7 @@ The application already includes the core training-center foundation:
 - Student portal views for enrolled courses, schedules, signed lesson media downloads, manual progress, exams readiness, payments, and certificates.
 - Instructor portal, corporate read-only portal, operational dashboard, CSV/PDF reports, PDF invoices, receipts, and certificates.
 - Exam domain actions for starting and submitting attempts, but no complete student-facing exam-taking route/UI flow.
-- Email delivery automation and WhatsApp-ready communication templates, but no WhatsApp Business API or SMS provider integration.
+- Email delivery automation, WhatsApp-ready communication templates, configurable WhatsApp/SMS provider adapters, delivery webhooks, lifecycle reminder scheduling, opt-out enforcement, and click-to-chat fallback while external credentials remain unsigned.
 - A payment gateway seam with a null provider, but no signed-off online payment provider.
 
 ## Implementation Principles
@@ -144,7 +144,7 @@ Turn the current signed lesson media download flow into a full student lesson-vi
 
 ### Status
 
-Partially implemented foundation; pending offline payment proof intake, review, reconciliation, receipt, and finance reporting hardening.
+Code implemented and verified on June 24, 2026, with offline proof intake, portal payment views, finance review actions, receipt/invoice references, `composer ci:check`, and 100% test coverage. PowerX business sign-off is still required for accepted methods, refund/adjustment policy, and legal receipt wording before production rollout.
 
 ### Goal
 
@@ -160,15 +160,15 @@ Complete finance-grade offline payment workflows for bank transfer, cheque, cash
 ### Checklist
 
 - [ ] Confirm accepted offline methods, currencies, proof requirements, approval roles, rejection rules, adjustment rules, refund policy, and legal receipt wording with PowerX.
-- [ ] Add or harden student and corporate offline payment proof upload flows for invoices and enrollments.
-- [ ] Store offline payment method, payer, amount, reference number, proof file, received date, bank/deposit details where applicable, finance reviewer, review timestamp, and review notes.
-- [ ] Add finance review actions for approve, reject, request more information, mark duplicate, mark partial, void, refund/adjust, and attach internal notes.
-- [ ] Ensure paid access is unlocked only after approved offline payment and revoked or preserved correctly for rejected, voided, refunded, partial, or adjusted payments.
-- [ ] Add finance filters/reports for pending proof, approved, rejected, duplicate, partial, overdue, refunded, voided, adjusted, and unmatched payments.
-- [ ] Update student payments page to show invoice status, offline payment instructions, proof upload status, rejection/request-more-information notes, receipt links, and outstanding balance.
-- [ ] Update corporate portal to show company invoice status, offline payment instructions, proof upload status, receipt links, and outstanding balance without exposing internal finance notes.
-- [ ] Ensure invoice and receipt PDFs include payment method, amount, date, reference, payer, student/company, course/package, approver, and offline proof/audit reference.
-- [ ] Keep the online `PaymentGateway` seam disabled/null-provider-only until PowerX signs off a provider.
+- [x] Add or harden student and corporate offline payment proof upload flows for invoices and enrollments.
+- [x] Store offline payment method, payer, amount, reference number, proof file, received date, bank/deposit details where applicable, finance reviewer, review timestamp, and review notes.
+- [x] Add finance review actions for approve, reject, request more information, mark duplicate, mark partial, void, refund/adjust, and attach internal notes.
+- [x] Ensure paid access is unlocked only after approved offline payment and revoked or preserved correctly for rejected, voided, refunded, partial, or adjusted payments.
+- [x] Add finance filters/reports for pending proof, approved, rejected, duplicate, partial, overdue, refunded, voided, adjusted, and unmatched payments.
+- [x] Update student payments page to show invoice status, offline payment instructions, proof upload status, rejection/request-more-information notes, receipt links, and outstanding balance.
+- [x] Update corporate portal to show company invoice status, offline payment instructions, proof upload status, receipt links, and outstanding balance without exposing internal finance notes.
+- [x] Ensure invoice and receipt PDFs include payment method, amount, date, reference, payer, student/company, course/package, approver, and offline proof/audit reference.
+- [x] Keep the online `PaymentGateway` seam disabled/null-provider-only until PowerX signs off a provider.
 
 ### Deliverables
 
@@ -193,7 +193,7 @@ Complete finance-grade offline payment workflows for bank transfer, cheque, cash
 
 ### Status
 
-Partially implemented foundation; pending external provider integrations and lifecycle automation.
+Code implemented and verified on June 24, 2026, with provider contracts, configurable HTTP provider adapters, delivery webhooks, opt-out enforcement, retry/dead-letter states, lifecycle reminder scheduling, disabled-provider fallback, and focused Phase 4 tests. PowerX sign-off is still required for WhatsApp Business API provider, sender identity, approved template categories, SMS MVP scope, and production credentials before external delivery is enabled.
 
 ### Goal
 
@@ -211,33 +211,33 @@ Move from WhatsApp-ready drafts and queued email to provider-backed messaging wi
 
 - [ ] Confirm WhatsApp Business API provider, sender identity, template approval rules, and message categories.
 - [ ] Confirm whether SMS is required for MVP or deferred.
-- [ ] Add provider contracts for outbound message delivery and delivery status callbacks.
-- [ ] Implement WhatsApp provider adapter behind feature flags.
-- [ ] Implement SMS provider adapter only if PowerX approves SMS.
-- [ ] Add webhook endpoints for provider delivery events where supported.
-- [ ] Extend communication lifecycle states for provider accepted, delivered, read if available, failed, retried, and opted out.
-- [ ] Add opt-out enforcement for WhatsApp/SMS and clear staff visibility in Filament.
-- [ ] Convert renewal reminders, class reminders, payment reminders, registration confirmations, certificate-ready messages, and follow-up messages from drafts into scheduled sends where approved.
-- [ ] Keep click-to-chat URLs as fallback when provider delivery is disabled.
-- [ ] Add failed-message retry and dead-letter review workflow.
+- [x] Add provider contracts for outbound message delivery and delivery status callbacks.
+- [x] Implement WhatsApp provider adapter behind feature flags.
+- [x] Implement SMS provider adapter behind feature flags, with SMS disabled until PowerX approves the channel.
+- [x] Add webhook endpoints for provider delivery events where supported.
+- [x] Extend communication lifecycle states for provider accepted, delivered, read if available, failed, retried, and opted out.
+- [x] Add opt-out enforcement for WhatsApp/SMS and clear staff visibility in Filament.
+- [x] Convert renewal reminders, class reminders, payment reminders, registration confirmations, certificate-ready messages, and follow-up messages from drafts into scheduled sends where approved.
+- [x] Keep click-to-chat URLs as fallback when provider delivery is disabled.
+- [x] Add failed-message retry and dead-letter review workflow.
 
 ### Deliverables
 
-- WhatsApp provider integration.
-- Optional SMS provider integration.
-- Delivery callback routes and communication status updates.
-- Communication scheduling and retry workflow.
-- Filament tools for reviewing failures, opt-outs, and provider references.
+- WhatsApp provider adapter behind feature flags, pending approved Business API credentials.
+- Optional SMS provider adapter behind feature flags, disabled until PowerX confirms SMS scope.
+- Delivery callback route and communication status updates.
+- Communication scheduling, opt-out, retry, fallback, and dead-letter workflow.
+- Filament visibility for failures, opt-outs, provider status, provider references, and last webhook state.
 - Tests for provider send, disabled-provider fallback, opt-out, retries, failure handling, delivery callback validation, and scheduled reminder dispatch.
 
 ### Acceptance Criteria
 
-- Approved templates can be sent through WhatsApp Business API when enabled.
+- Approved templates can be sent through a configured WhatsApp provider endpoint when PowerX enables the channel and supplies production credentials.
 - Email delivery continues through the existing queue.
-- SMS sends only when PowerX explicitly enables the provider.
+- SMS sends only when PowerX explicitly enables the SMS provider configuration.
 - Opted-out recipients are not sent WhatsApp/SMS messages.
-- Delivery failures are visible to staff and can be retried or resolved.
-- Renewal, payment, class, registration, and certificate reminders are scheduled and traceable.
+- Delivery failures are visible to staff and can be retried or moved to dead-letter review.
+- Renewal, payment, class, registration, certificate-ready, and lead follow-up reminders are scheduled and traceable to their source records.
 
 ## Phase 5: Growth Automation, AI Assistant, And Advanced Attribution
 
@@ -262,7 +262,7 @@ Implement the BRS growth features that help PowerX convert leads faster: AI-assi
 
 - [ ] Confirm AI assistant scope: FAQ only, course recommendation, registration help, or all three.
 - [ ] Build an approved knowledge source from public course data, package data, schedule availability, pricing, FAQ content, and PowerX-approved disclaimers.
-- [ ] Add a public AI assistant entry point on course/landing pages behind a feature flag.
+- [ ] Add a public AI assistant entry point on course/landing pages behind a feature flag (use laravel/ai sdk package and laravel/pennant both already installed).
 - [ ] Create CRM leads from AI conversations when contact details or buying intent are captured.
 - [ ] Add escalation handoff to sales/support with transcript summary and preferred course.
 - [ ] Add guardrails so the assistant does not make unapproved certificate, government, price, legal, refund, or accreditation claims.

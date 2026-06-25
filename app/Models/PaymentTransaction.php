@@ -30,7 +30,17 @@ class PaymentTransaction extends Model implements HasMedia
 
     public const STATUS_REJECTED = 'rejected';
 
+    public const STATUS_INFORMATION_REQUESTED = 'information_requested';
+
+    public const STATUS_DUPLICATE = 'duplicate';
+
+    public const STATUS_PARTIAL = 'partial';
+
+    public const STATUS_VOIDED = 'voided';
+
     public const STATUS_REFUNDED = 'refunded';
+
+    public const STATUS_ADJUSTED = 'adjusted';
 
     /**
      * @return array<string, string>
@@ -53,7 +63,25 @@ class PaymentTransaction extends Model implements HasMedia
             self::STATUS_PENDING => 'Pending',
             self::STATUS_APPROVED => 'Approved',
             self::STATUS_REJECTED => 'Rejected',
+            self::STATUS_INFORMATION_REQUESTED => 'Information requested',
+            self::STATUS_DUPLICATE => 'Duplicate',
+            self::STATUS_PARTIAL => 'Partial',
+            self::STATUS_VOIDED => 'Voided',
             self::STATUS_REFUNDED => 'Refunded',
+            self::STATUS_ADJUSTED => 'Adjusted',
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function reviewableStatuses(): array
+    {
+        return [
+            self::STATUS_PENDING,
+            self::STATUS_APPROVED,
+            self::STATUS_INFORMATION_REQUESTED,
+            self::STATUS_PARTIAL,
         ];
     }
 

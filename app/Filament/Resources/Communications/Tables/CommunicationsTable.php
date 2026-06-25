@@ -10,6 +10,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
@@ -39,6 +40,18 @@ class CommunicationsTable
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => Communication::statusOptions()[$state] ?? str($state)->headline()->toString())
                     ->searchable(),
+                TextColumn::make('metadata.provider.name')
+                    ->label('Provider')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('metadata.provider.status')
+                    ->label('Provider status')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('metadata.provider.message_id')
+                    ->label('Provider message')
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('scheduled_at')
                     ->dateTime()
                     ->sortable(),
@@ -83,6 +96,10 @@ class CommunicationsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('channel')
+                    ->options(Communication::channelOptions()),
+                SelectFilter::make('status')
+                    ->options(Communication::statusOptions()),
                 TrashedFilter::make(),
             ])
             ->recordActions([

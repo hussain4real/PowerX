@@ -3,6 +3,7 @@
 namespace App\Actions\PowerX;
 
 use App\Models\Communication;
+use Illuminate\Support\Str;
 
 class CreateCommunicationFromTemplate
 {
@@ -16,6 +17,9 @@ class CreateCommunicationFromTemplate
     {
         $rendered = $this->renderCommunicationTemplate->handle($templateKey, $context);
         $channel = $attributes['channel'] ?? Communication::CHANNEL_EMAIL;
+        $recipientPhone = $context['recipient_phone'] ?? null;
+        $recipientEmail = $context['recipient_email'] ?? null;
+        $recipientName = $context['recipient_name'] ?? $context['student_name'] ?? $context['lead_name'] ?? null;
 
         return Communication::query()->create([
             'team_id' => $attributes['team_id'] ?? null,
@@ -40,10 +44,25 @@ class CreateCommunicationFromTemplate
             'opt_out_reason' => $attributes['opt_out_reason'] ?? null,
             'metadata' => [
                 'template_context' => $context,
+                'recipient_email' => $recipientEmail,
+                'recipient_name' => $recipientName,
+                'recipient_phone' => $recipientPhone,
+                'recipient_phone_normalized' => $this->normalizePhone($recipientPhone),
                 'whatsapp_text' => $rendered['whatsappText'],
                 'whatsapp_url' => $rendered['whatsappUrl'],
                 ...($attributes['metadata'] ?? []),
             ],
         ]);
+    }
+
+    private function normalizePhone(mixed $phone): ?string
+    {
+        if (blank($phone)) {
+            return null;
+        }
+
+        $digits = Str::of((string) $phone)->replaceMatches('/\D+/', '')->toString();
+
+        return $digits === '' ? null : $digits;
     }
 }

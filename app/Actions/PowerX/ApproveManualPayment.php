@@ -2,16 +2,16 @@
 
 namespace App\Actions\PowerX;
 
-use App\Models\Enrollment;
-use App\Models\Invoice;
 use App\Models\PaymentTransaction;
 use App\Models\User;
-use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 class ApproveManualPayment
 {
-    public function __construct(private RecordAuditEvent $recordAuditEvent) {}
+    public function __construct(
+        private RecordAuditEvent $recordAuditEvent,
+        private SyncOfflinePaymentLedger $syncOfflinePaymentLedger,
+    ) {}
 
     /**
      * Approve a manual payment and synchronize invoice/enrollment state.
@@ -39,23 +39,7 @@ class ApproveManualPayment
                 ]);
             }
 
-            if ($payment->invoice_id) {
-                $invoice = Invoice::query()
-                    ->whereKey($payment->invoice_id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
-                $this->syncInvoiceStatus($invoice);
-            }
-
-            if ($payment->enrollment_id) {
-                $enrollment = Enrollment::query()
-                    ->whereKey($payment->enrollment_id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
-                $this->syncEnrollmentPaymentStatus($enrollment);
-            }
+            $this->syncOfflinePaymentLedger->handle($payment);
 
             if ($wasApproved) {
                 $payment->refresh();
@@ -78,51 +62,6 @@ class ApproveManualPayment
 
             return $payment->refresh();
         });
-    }
-
-    private function syncInvoiceStatus(Invoice $invoice): void
-    {
-        $approvedTotal = (float) $invoice->paymentTransactions()->approved()->sum('amount');
-        $invoiceTotal = (float) $invoice->total;
-
-        $invoice->update([
-            'status' => match (true) {
-                $approvedTotal <= 0 => 'issued',
-                $approvedTotal < $invoiceTotal => 'partial',
-                default => 'paid',
-            },
-            'paid_at' => $approvedTotal >= $invoiceTotal ? now() : null,
-        ]);
-    }
-
-    private function syncEnrollmentPaymentStatus(Enrollment $enrollment): void
-    {
-        $approvedTotal = (float) $enrollment->paymentTransactions()->approved()->sum('amount');
-        $invoiceTotal = (float) $enrollment->invoices()->issued()->sum('total');
-        $isPaid = $invoiceTotal > 0 && $approvedTotal >= $invoiceTotal;
-
-        $enrollment->update([
-            'payment_status' => match (true) {
-                $approvedTotal <= 0 => 'pending',
-                ! $isPaid => 'partial',
-                default => 'paid',
-            },
-            'status' => $isPaid && in_array($enrollment->status, [
-                Enrollment::STATUS_PENDING,
-                Enrollment::STATUS_APPROVED,
-            ], true) ? Enrollment::STATUS_ACTIVE : $enrollment->status,
-            'access_starts_at' => $isPaid ? ($enrollment->access_starts_at ?? now()) : $enrollment->access_starts_at,
-            'access_expires_at' => $isPaid
-                ? ($enrollment->access_expires_at ?? $this->accessExpiry($enrollment))
-                : $enrollment->access_expires_at,
-        ]);
-    }
-
-    private function accessExpiry(Enrollment $enrollment): ?CarbonInterface
-    {
-        $validityDays = $enrollment->coursePackage?->validity_days ?? $enrollment->course->validity_days;
-
-        return $validityDays ? now()->addDays($validityDays) : null;
     }
 
     /**

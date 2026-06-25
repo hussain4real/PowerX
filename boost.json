@@ -16,8 +16,10 @@
     ],
     "sail": false,
     "skills": [
+        "ai-sdk-development",
         "fortify-development",
         "laravel-best-practices",
+        "pennant-development",
         "wayfinder-development",
         "pest-testing",
         "inertia-vue-development",

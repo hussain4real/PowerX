@@ -113,8 +113,17 @@ export type FinanceItem = {
     currency: string;
     total?: number;
     amount?: number;
+    outstandingAmount?: number;
+    issuedAt?: string | null;
     dueAt?: string | null;
     paidAt?: string | null;
+    offlineInstructions?: string | null;
+    offlinePaymentProofUrl?: string | null;
+    invoicePdfUrl?: string | null;
+    receiptUrl?: string | null;
+    reviewStatus?: string | null;
+    reviewNotes?: string | null;
+    proofStatus?: string | null;
 };
 
 export type StudentEnrollment = {

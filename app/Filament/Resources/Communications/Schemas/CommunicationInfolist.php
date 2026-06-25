@@ -67,6 +67,18 @@ class CommunicationInfolist
                     ->placeholder('-'),
                 TextEntry::make('opt_out_reason')
                     ->placeholder('-'),
+                TextEntry::make('metadata.provider.name')
+                    ->label('Provider')
+                    ->placeholder('-'),
+                TextEntry::make('metadata.provider.status')
+                    ->label('Provider status')
+                    ->placeholder('-'),
+                TextEntry::make('metadata.provider.message_id')
+                    ->label('Provider message')
+                    ->placeholder('-'),
+                TextEntry::make('metadata.provider.last_webhook.status')
+                    ->label('Last webhook')
+                    ->placeholder('-'),
                 TextEntry::make('metadata')
                     ->placeholder('-')
                     ->columnSpanFull(),

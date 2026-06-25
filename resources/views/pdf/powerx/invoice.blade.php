@@ -99,6 +99,11 @@
         $lineItems = $invoice->metadata['line_items'] ?? [];
         $student = $invoice->studentProfile;
         $company = $invoice->company;
+        $payments = $invoice->paymentTransactions->sortByDesc('paid_at');
+        $approvedTotal = $payments
+            ->where('status', \App\Models\PaymentTransaction::STATUS_APPROVED)
+            ->sum(fn ($payment) => (float) $payment->amount);
+        $outstanding = max(0, (float) $invoice->total - (float) $approvedTotal);
     @endphp
 
     <div class="header">
@@ -166,7 +171,51 @@
                 <td class="total">Total</td>
                 <td class="right total">{{ $invoice->currency }} {{ number_format((float) $invoice->total, 2) }}</td>
             </tr>
+            <tr>
+                <td>Approved payments</td>
+                <td class="right">{{ $invoice->currency }} {{ number_format((float) $approvedTotal, 2) }}</td>
+            </tr>
+            <tr>
+                <td>Outstanding balance</td>
+                <td class="right">{{ $invoice->currency }} {{ number_format((float) $outstanding, 2) }}</td>
+            </tr>
         </table>
     </div>
+
+    @if ($payments->isNotEmpty())
+        <div class="panel">
+            <strong>Offline payment activity</strong>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Status</th>
+                        <th>Reference</th>
+                        <th>Payer</th>
+                        <th>Approved by</th>
+                        <th>Proof/audit reference</th>
+                        <th class="right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($payments as $payment)
+                        @php
+                            $offlinePayment = data_get($payment->metadata, 'offline_payment', []);
+                            $proof = $payment->getFirstMedia('payment-proofs');
+                        @endphp
+                        <tr>
+                            <td>{{ str_replace('_', ' ', $payment->method) }}</td>
+                            <td>{{ str_replace('_', ' ', $payment->status) }}</td>
+                            <td>{{ $payment->reference ?? '-' }}</td>
+                            <td>{{ data_get($offlinePayment, 'payer_name', $student?->full_name ?? $company?->name ?? '-') }}</td>
+                            <td>{{ $payment->approvedBy?->name ?? '-' }}</td>
+                            <td>{{ $proof?->uuid ?? 'payment-'.$payment->id }}</td>
+                            <td class="right">{{ $payment->currency }} {{ number_format((float) $payment->amount, 2) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
 </body>
 </html>

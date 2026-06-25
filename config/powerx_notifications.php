@@ -13,7 +13,38 @@ return [
         ],
         'whatsapp' => [
             'enabled' => env('POWERX_WHATSAPP_NOTIFICATIONS_ENABLED', false),
+            'driver' => env('POWERX_WHATSAPP_PROVIDER_DRIVER', 'null'),
+            'endpoint' => env('POWERX_WHATSAPP_PROVIDER_ENDPOINT'),
+            'token' => env('POWERX_WHATSAPP_PROVIDER_TOKEN'),
+            'timeout' => (int) env('POWERX_WHATSAPP_PROVIDER_TIMEOUT', 10),
+            'dispatch_limit' => (int) env('POWERX_WHATSAPP_DISPATCH_LIMIT', 100),
         ],
+        'sms' => [
+            'enabled' => env('POWERX_SMS_NOTIFICATIONS_ENABLED', false),
+            'driver' => env('POWERX_SMS_PROVIDER_DRIVER', 'null'),
+            'endpoint' => env('POWERX_SMS_PROVIDER_ENDPOINT'),
+            'token' => env('POWERX_SMS_PROVIDER_TOKEN'),
+            'timeout' => (int) env('POWERX_SMS_PROVIDER_TIMEOUT', 10),
+            'dispatch_limit' => (int) env('POWERX_SMS_DISPATCH_LIMIT', 100),
+        ],
+    ],
+
+    'provider' => [
+        'pending_sign_off' => [
+            'Confirm WhatsApp Business API provider and sender identity.',
+            'Confirm approved WhatsApp template names/categories.',
+            'Confirm SMS provider, sender ID, and whether SMS is required for MVP.',
+        ],
+        'webhook_secret' => env('POWERX_COMMUNICATION_WEBHOOK_SECRET'),
+        'max_retries' => (int) env('POWERX_COMMUNICATION_MAX_RETRIES', 3),
+        'retry_delay_minutes' => (int) env('POWERX_COMMUNICATION_RETRY_DELAY_MINUTES', 15),
+    ],
+
+    'lifecycle' => [
+        'enabled' => env('POWERX_LIFECYCLE_REMINDERS_ENABLED', true),
+        'payment_reminder_days_before_due' => (int) env('POWERX_PAYMENT_REMINDER_DAYS_BEFORE_DUE', 3),
+        'class_reminder_hours_before_start' => (int) env('POWERX_CLASS_REMINDER_HOURS_BEFORE_START', 24),
+        'renewal_reminder_days_before_expiry' => (int) env('POWERX_RENEWAL_REMINDER_DAYS_BEFORE_EXPIRY', 30),
     ],
 
     'templates' => [

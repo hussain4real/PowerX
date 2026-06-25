@@ -48,8 +48,8 @@ class BuildStudentPortal
                 'enrollments.examAttempts.exam',
                 'enrollments.certificates',
                 'enrollments.attendanceRecords.trainingSession.trainingBatch.instructor',
-                'enrollments.invoices',
-                'enrollments.paymentTransactions',
+                'enrollments.invoices.paymentTransactions',
+                'enrollments.paymentTransactions.media',
             ])
             ->first();
 
@@ -58,7 +58,7 @@ class BuildStudentPortal
         }
 
         $enrollments = $profile->enrollments;
-        $portalEnrollments = $enrollments->map(fn (Enrollment $enrollment): array => $this->enrollmentPayload($enrollment));
+        $portalEnrollments = $enrollments->map(fn (Enrollment $enrollment): array => $this->enrollmentPayload($enrollment, $team));
         $nextSession = $portalEnrollments
             ->flatMap(fn (array $enrollment): array => $enrollment['schedule'])
             ->filter(fn (array $session): bool => $session['startsAt'] !== null && $session['startsAt'] >= now()->toISOString())
@@ -160,7 +160,7 @@ class BuildStudentPortal
     /**
      * @return array<string, mixed>
      */
-    private function enrollmentPayload(Enrollment $enrollment): array
+    private function enrollmentPayload(Enrollment $enrollment, Team $team): array
     {
         $accessStatus = $this->accessStatus($enrollment);
         $progress = $this->progressPayload($enrollment);
@@ -202,7 +202,19 @@ class BuildStudentPortal
                         'status' => $invoice->status,
                         'currency' => $invoice->currency,
                         'total' => (float) $invoice->total,
+                        'outstandingAmount' => $this->outstandingAmount($invoice),
+                        'issuedAt' => $this->dateTimeToIsoString($invoice->issued_at),
                         'dueAt' => $this->dateTimeToIsoString($invoice->due_at),
+                        'paidAt' => $this->dateTimeToIsoString($invoice->paid_at),
+                        'offlineInstructions' => $this->offlinePaymentInstructions($invoice),
+                        'offlinePaymentProofUrl' => route('student.payments.offline-proof.store', [
+                            'current_team' => $team,
+                            'invoice' => $invoice,
+                        ]),
+                        'invoicePdfUrl' => route('student.payments.invoices.pdf', [
+                            'current_team' => $team,
+                            'invoice' => $invoice,
+                        ]),
                     ])
                     ->values()
                     ->all(),
@@ -216,6 +228,15 @@ class BuildStudentPortal
                         'currency' => $payment->currency,
                         'amount' => (float) $payment->amount,
                         'paidAt' => $this->dateTimeToIsoString($payment->paid_at),
+                        'reviewStatus' => data_get($payment->metadata, 'finance_review.status'),
+                        'reviewNotes' => data_get($payment->metadata, 'finance_review.notes'),
+                        'proofStatus' => $payment->hasMedia('payment-proofs') ? 'proof_uploaded' : 'proof_missing',
+                        'receiptUrl' => $payment->status === PaymentTransaction::STATUS_APPROVED
+                            ? route('student.payments.receipts.pdf', [
+                                'current_team' => $team,
+                                'paymentTransaction' => $payment,
+                            ])
+                            : null,
                     ])
                     ->values()
                     ->all(),
@@ -389,6 +410,27 @@ class BuildStudentPortal
     private function dateTimeToIsoString(mixed $value): ?string
     {
         return $value instanceof CarbonInterface ? $value->toISOString() : null;
+    }
+
+    private function outstandingAmount(Invoice $invoice): float
+    {
+        $approvedTotal = $invoice->paymentTransactions
+            ->where('status', PaymentTransaction::STATUS_APPROVED)
+            ->sum(fn (PaymentTransaction $payment): float => (float) $payment->amount);
+
+        return max(0, (float) $invoice->total - (float) $approvedTotal);
+    }
+
+    private function offlinePaymentInstructions(Invoice $invoice): string
+    {
+        $methods = collect(PaymentTransaction::manualMethodOptions())->values()->join(', ', ' or ');
+        $currency = config('powerx_payments.manual.bank_transfer.currency', $invoice->currency);
+
+        return __('Submit :methods proof in :currency with invoice :invoice as the reference. Finance approval is required before paid access opens.', [
+            'methods' => $methods,
+            'currency' => $currency,
+            'invoice' => $invoice->number,
+        ]);
     }
 
     private function dateTimeIsFuture(mixed $value): bool

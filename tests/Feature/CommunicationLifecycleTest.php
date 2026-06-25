@@ -49,9 +49,13 @@ it('stores scheduler lifecycle metadata on communications', function (): void {
         ])
         ->and(Communication::statusOptions())->toMatchArray([
             Communication::STATUS_QUEUED => 'Queued',
+            Communication::STATUS_ACCEPTED => 'Provider accepted',
             Communication::STATUS_DELIVERED => 'Delivered',
+            Communication::STATUS_READ => 'Read',
+            Communication::STATUS_FALLBACK => 'Manual fallback',
             Communication::STATUS_FAILED => 'Failed',
             Communication::STATUS_RETRY => 'Retry',
+            Communication::STATUS_DEAD_LETTER => 'Dead letter',
             Communication::STATUS_OPTED_OUT => 'Opted out',
         ]);
 });
@@ -124,6 +128,12 @@ it('records lifecycle transitions without sending through a provider', function 
         ->and($communication->sent_at?->toDateTimeString())->toBe('2026-05-25 12:00:00')
         ->and($communication->delivered_at?->toDateTimeString())->toBe('2026-05-25 12:00:00')
         ->and($communication->metadata['whatsapp_url'])->toBe('https://wa.me/97450112233?text=Hello');
+
+    expect($communication->markRead($now->addHours(3)))->toBeTrue();
+    expect($communication->refresh()->status)->toBe(Communication::STATUS_READ);
+
+    expect($communication->markDeadLetter('Retries exhausted', $now->addHours(4)))->toBeTrue();
+    expect($communication->refresh()->status)->toBe(Communication::STATUS_DEAD_LETTER);
 });
 
 it('finds due scheduled and retry communications for scheduler pickup', function (): void {

@@ -15,7 +15,9 @@ class GeneratePaymentReceiptPdf
             'approvedBy',
             'company',
             'enrollment.course',
+            'enrollment.coursePackage',
             'invoice',
+            'media',
             'studentProfile',
             'team',
         ]);

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CertificatePdfController;
 use App\Http\Controllers\CertificateVerificationController;
+use App\Http\Controllers\CommunicationProviderWebhookController;
 use App\Http\Controllers\CorporatePortalController;
 use App\Http\Controllers\CorporatePortalReportController;
 use App\Http\Controllers\CorporateQuotationController;
@@ -12,7 +13,10 @@ use App\Http\Controllers\FreePreviewEventController;
 use App\Http\Controllers\InstructorPortalController;
 use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\LeadInquiryController;
+use App\Http\Controllers\OfflinePaymentProofController;
 use App\Http\Controllers\PaymentReceiptPdfController;
+use App\Http\Controllers\PortalInvoicePdfController;
+use App\Http\Controllers\PortalPaymentReceiptPdfController;
 use App\Http\Controllers\ReportExportController;
 use App\Http\Controllers\StudentCertificatesController;
 use App\Http\Controllers\StudentCourseCatalogController;
@@ -40,6 +44,9 @@ Route::post('leads', [LeadInquiryController::class, 'store'])->middleware('throt
 Route::post('courses/{course:slug}/registrations', [CourseRegistrationController::class, 'store'])->middleware('throttle:10,1')->name('courses.registrations.store');
 Route::post('courses/{course:slug}/preview-events', [FreePreviewEventController::class, 'store'])->middleware('throttle:30,1')->name('courses.preview-events.store');
 Route::get('certificates/verify/{token}', [CertificateVerificationController::class, 'show'])->name('certificates.verify');
+Route::post('communications/provider-webhooks', CommunicationProviderWebhookController::class)
+    ->middleware('throttle:120,1')
+    ->name('communications.provider-webhooks.store');
 
 Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
@@ -62,6 +69,13 @@ Route::prefix('{current_team}')
             ->name('student.exam-attempts.submit');
         Route::get('student-portal/certificates', StudentCertificatesController::class)->name('student.certificates.index');
         Route::get('student-portal/payments', StudentPaymentsController::class)->name('student.payments.index');
+        Route::post('student-portal/payments/invoices/{invoice}/offline-proof', [OfflinePaymentProofController::class, 'store'])
+            ->middleware('throttle:20,1')
+            ->name('student.payments.offline-proof.store');
+        Route::get('student-portal/payments/invoices/{invoice}/pdf', PortalInvoicePdfController::class)
+            ->name('student.payments.invoices.pdf');
+        Route::get('student-portal/payments/{paymentTransaction}/receipt', PortalPaymentReceiptPdfController::class)
+            ->name('student.payments.receipts.pdf');
         Route::get('student-portal/catalog', StudentCourseCatalogController::class)->name('student.catalog.index');
         Route::get('student-portal/enrollments/{enrollment}/lessons/{lesson}', StudentLessonViewerController::class)
             ->name('student.lessons.show');
@@ -75,6 +89,13 @@ Route::prefix('{current_team}')
             ->middleware('can:attendance.manage')
             ->name('instructor.portal');
         Route::get('corporate-portal', CorporatePortalController::class)->name('corporate.portal');
+        Route::post('corporate-portal/invoices/{invoice}/offline-proof', [OfflinePaymentProofController::class, 'store'])
+            ->middleware('throttle:20,1')
+            ->name('corporate.payments.offline-proof.store');
+        Route::get('corporate-portal/invoices/{invoice}/pdf', PortalInvoicePdfController::class)
+            ->name('corporate.payments.invoices.pdf');
+        Route::get('corporate-portal/payments/{paymentTransaction}/receipt', PortalPaymentReceiptPdfController::class)
+            ->name('corporate.payments.receipts.pdf');
         Route::get('corporate-portal/report.csv', [CorporatePortalReportController::class, 'csv'])->name('corporate.portal.report.csv');
         Route::prefix('reports')->middleware('can:reports.view')->name('reports.')->group(function () {
             Route::get('operational.csv', [ReportExportController::class, 'csv'])->name('operational.csv');

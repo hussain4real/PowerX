@@ -17,7 +17,8 @@ class InvoicePdfController extends Controller
             'company',
             'enrollment.course',
             'enrollment.coursePackage',
-            'paymentTransactions',
+            'paymentTransactions.approvedBy',
+            'paymentTransactions.media',
             'studentProfile',
             'team',
         ]);

@@ -42,11 +42,11 @@ class BuildCorporatePortal
         return [
             'companies' => $this->companyRows($companies),
             'summary' => $this->summary($companies, $enrollments, $invoices, $payments, $attendance, $certificates),
-            'quotations' => $this->invoiceRows($invoices->where('type', 'quotation')),
+            'quotations' => $this->invoiceRows($invoices->where('type', 'quotation'), $team),
             'enrollments' => $this->enrollmentRows($enrollments),
             'finance' => [
-                'invoices' => $this->invoiceRows($invoices),
-                'payments' => $this->paymentRows($payments),
+                'invoices' => $this->invoiceRows($invoices, $team),
+                'payments' => $this->paymentRows($payments, $team),
             ],
             'attendance' => $this->attendanceRows($attendance),
             'certificates' => $this->certificateRows($certificates),
@@ -262,12 +262,14 @@ class BuildCorporatePortal
                 'enrollment:id,course_id,course_package_id',
                 'enrollment.course:id,title',
                 'enrollment.coursePackage:id,name',
+                'paymentTransactions',
             ])
             ->select([
                 'id',
                 'team_id',
                 'enrollment_id',
                 'company_id',
+                'student_profile_id',
                 'number',
                 'type',
                 'status',
@@ -296,17 +298,19 @@ class BuildCorporatePortal
         return PaymentTransaction::query()
             ->whereBelongsTo($team)
             ->whereIn('company_id', $companyIds)
-            ->with(['company:id,name', 'invoice:id,number'])
+            ->with(['company:id,name', 'invoice:id,number', 'media'])
             ->select([
                 'id',
                 'team_id',
                 'invoice_id',
                 'company_id',
                 'method',
+                'reference',
                 'status',
                 'currency',
                 'amount',
                 'paid_at',
+                'metadata',
             ])
             ->orderByDesc('paid_at')
             ->orderByDesc('id')
@@ -432,7 +436,7 @@ class BuildCorporatePortal
      * @param  Collection<int, Invoice>  $invoices
      * @return array<int, array<string, mixed>>
      */
-    private function invoiceRows(Collection $invoices): array
+    private function invoiceRows(Collection $invoices, Team $team): array
     {
         return $invoices
             ->map(fn (Invoice $invoice): array => [
@@ -442,9 +446,19 @@ class BuildCorporatePortal
                 'status' => $invoice->status,
                 'currency' => $invoice->currency,
                 'total' => (float) $invoice->total,
+                'outstandingAmount' => $this->outstandingAmount($invoice),
                 'issuedAt' => $this->isoDate($invoice->issued_at),
                 'dueAt' => $this->isoDate($invoice->due_at),
                 'paidAt' => $this->isoDate($invoice->paid_at),
+                'offlineInstructions' => $this->offlinePaymentInstructions($invoice),
+                'offlinePaymentProofUrl' => route('corporate.payments.offline-proof.store', [
+                    'current_team' => $team,
+                    'invoice' => $invoice,
+                ]),
+                'invoicePdfUrl' => route('corporate.payments.invoices.pdf', [
+                    'current_team' => $team,
+                    'invoice' => $invoice,
+                ]),
                 'companyName' => $invoice->company?->name ?? 'Not linked',
                 'courseTitle' => $invoice->enrollment?->course?->title ?? data_get($invoice->metadata, 'course_title', 'Not linked'),
                 'packageName' => $invoice->enrollment?->coursePackage?->name,
@@ -458,7 +472,7 @@ class BuildCorporatePortal
      * @param  Collection<int, PaymentTransaction>  $payments
      * @return array<int, array<string, mixed>>
      */
-    private function paymentRows(Collection $payments): array
+    private function paymentRows(Collection $payments, Team $team): array
     {
         return $payments
             ->map(fn (PaymentTransaction $payment): array => [
@@ -466,10 +480,19 @@ class BuildCorporatePortal
                 'companyName' => $payment->company?->name ?? 'Not linked',
                 'invoiceNumber' => $payment->invoice?->number ?? 'Not linked',
                 'method' => $payment->method,
+                'reference' => $payment->reference,
                 'status' => $payment->status,
                 'currency' => $payment->currency,
                 'amount' => (float) $payment->amount,
                 'paidAt' => $this->isoDate($payment->paid_at),
+                'reviewStatus' => data_get($payment->metadata, 'finance_review.status'),
+                'proofStatus' => $payment->hasMedia('payment-proofs') ? 'proof_uploaded' : 'proof_missing',
+                'receiptUrl' => $payment->status === PaymentTransaction::STATUS_APPROVED
+                    ? route('corporate.payments.receipts.pdf', [
+                        'current_team' => $team,
+                        'paymentTransaction' => $payment,
+                    ])
+                    : null,
             ])
             ->values()
             ->all();
@@ -530,7 +553,7 @@ class BuildCorporatePortal
         $attendanceTotal = $attendance->count();
         $attendancePresent = $attendance->whereIn('status', ['present', 'late'])->count();
         $approvedPayments = $payments->where('status', 'approved');
-        $invoiceExposure = $invoices->reject(fn (Invoice $invoice): bool => $invoice->status === 'paid');
+        $invoiceExposure = $invoices->sum(fn (Invoice $invoice): float => $this->outstandingAmount($invoice));
 
         return [
             'companyCount' => $companies->count(),
@@ -541,7 +564,7 @@ class BuildCorporatePortal
             'pendingEnrollments' => $enrollments->where('status', 'pending')->count(),
             'quotationCount' => $invoices->where('type', 'quotation')->count(),
             'invoiceCount' => $invoices->where('type', '!=', 'quotation')->count(),
-            'outstandingAmount' => (float) $invoiceExposure->sum(fn (Invoice $invoice): float => (float) $invoice->total),
+            'outstandingAmount' => (float) $invoiceExposure,
             'paidAmount' => (float) $approvedPayments->sum(fn (PaymentTransaction $payment): float => (float) $payment->amount),
             'currency' => $invoices->first()?->currency ?? $payments->first()?->currency ?? 'QAR',
             'attendanceTotal' => $attendanceTotal,
@@ -559,8 +582,8 @@ class BuildCorporatePortal
         return [
             'status' => 'level_2_operational',
             'releaseLabel' => 'Level 2 operational sharing',
-            'summary' => 'Corporate coordinators can review company-scoped operational records approved for the MVP: profile, quotation, invoice, payment status, employee enrollment, attendance summary, practical outcome, and issued certificate verification links.',
-            'scopeRule' => 'This portal only shows company records directly matched to the signed-in coordinator; no write workflows, internal approvals, student contact details, documents, private notes, payment proofs, audit metadata, exam answers, or other-company records are exposed.',
+            'summary' => 'Corporate coordinators can review company-scoped operational records approved for the MVP: profile, quotation, invoice, payment status, employee enrollment, attendance summary, practical outcome, issued certificate verification links, and offline payment proof submission.',
+            'scopeRule' => 'This portal only shows company records directly matched to the signed-in coordinator; internal approvals, student contact details, private finance notes, proof storage paths, audit metadata, exam answers, and other-company records are not exposed.',
         ];
     }
 
@@ -594,6 +617,27 @@ class BuildCorporatePortal
     private function isoDate(?CarbonInterface $date): ?string
     {
         return $date?->toIso8601String();
+    }
+
+    private function outstandingAmount(Invoice $invoice): float
+    {
+        $approvedTotal = $invoice->paymentTransactions
+            ->where('status', PaymentTransaction::STATUS_APPROVED)
+            ->sum(fn (PaymentTransaction $payment): float => (float) $payment->amount);
+
+        return max(0, (float) $invoice->total - (float) $approvedTotal);
+    }
+
+    private function offlinePaymentInstructions(Invoice $invoice): string
+    {
+        $methods = collect(PaymentTransaction::manualMethodOptions())->values()->join(', ', ' or ');
+        $currency = config('powerx_payments.manual.bank_transfer.currency', $invoice->currency);
+
+        return __('Submit :methods proof in :currency with invoice :invoice as the reference. Finance approval is required before paid access opens.', [
+            'methods' => $methods,
+            'currency' => $currency,
+            'invoice' => $invoice->number,
+        ]);
     }
 
     private function dateLabel(mixed $date): string
